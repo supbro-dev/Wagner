@@ -1,0 +1,17 @@
+Gorm: # 只针对 gorm  操作数据库有效
+  UseDbType: "mysql"  # 备选项 mysql 、sqlserver、 postgresql
+  SqlDebug: false   # 请根据个人习惯设置，true 表示执行的sql全部会输出在终端(一般来说开发环境可能会方便调试) ，  false 表示默认不会在终端输出sql(生产环境建议设置为 false),
+  Mysql:
+    SlowThreshold: 30            # 慢 SQL 阈值(sql执行时间超过此时间单位（秒），就会触发系统日志记录)
+    Host: "127.0.0.1"
+    DataBase: "ohmywfm"
+    Port: 3306
+    Prefix: "tb_"   #  目前没有用到该配置项
+    User: "ohmywfm"
+    Pass: "ohmywfm"
+    Charset: "utf8"
+    SetMaxIdleConns: 10
+    SetMaxOpenConns: 128
+    SetConnMaxLifetime: 60    # 连接不活动时的最大生存时间(秒)
+    #ReConnectInterval: 1    # 保留项,重连数据库间隔秒数
+    #PingFailRetryTimes: 3   # 保留项,最大重连次数

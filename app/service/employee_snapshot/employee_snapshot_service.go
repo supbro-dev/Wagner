@@ -1,0 +1,34 @@
+package employee_snapshot
+
+import (
+	"time"
+	"wagner/app/domain"
+	"wagner/infrastructure/persistence/dao"
+	"wagner/infrastructure/persistence/entity"
+)
+
+type EmployeeSnapshotService struct {
+	employeeDao *dao.EmployeeDao
+}
+
+// 通过构造函数注入 DAO
+func CreateEmployeeSnapshotService(employeeDao *dao.EmployeeDao) *EmployeeSnapshotService {
+	return &EmployeeSnapshotService{employeeDao: employeeDao}
+}
+
+func (service *EmployeeSnapshotService) FindEmployeeSnapshot(employeeNumber string, operateDay time.Time) domain.EmployeeSnapshot {
+	// 生产环境需要根据员工一段时间的履历，获取在某个工作点某天的人员快照，这里简单使用人员信息代替
+	employee := service.employeeDao.FindByNumber(employeeNumber)
+	return convertEmployee(employee)
+}
+
+func convertEmployee(employee entity.EmployeeEntity) domain.EmployeeSnapshot {
+	employeeSnapshot := domain.EmployeeSnapshot{}
+	employeeSnapshot.Name = employee.Name
+	employeeSnapshot.Number = employee.Number
+	employeeSnapshot.WorkplaceCode = employee.WorkplaceCode
+	employeeSnapshot.PositionCode = employee.PositionCode
+	employeeSnapshot.WorkGroupCode = employee.WorkGroupCode
+
+	return employeeSnapshot
+}
