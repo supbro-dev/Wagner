@@ -34,7 +34,8 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 
 	// 3.根据计算粒度分布式加锁
 
-	lock.Lock(employeeNumber)
+	b, err := lock.Lock(employeeNumber)
+	fmt.Println(b, err)
 
 	// 初始化计算参数
 	// 包括动态维度，计算聚合结果，工序加工节点列表，工序映射服务
