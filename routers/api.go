@@ -30,7 +30,7 @@ func InitApiRouter() *gin.Engine {
 	_ = router.SetTrustedProxies(nil)
 
 	router.GET("/", func(context *gin.Context) {
-		context.String(http.StatusOK, "Api 模块接口 hello my WFM！")
+		context.String(http.StatusOK, "Api 模块接口 hello Wagner！")
 	})
 
 	//处理静态资源（不建议gin框架处理静态资源，参见 Public/readme.md 说明 ）

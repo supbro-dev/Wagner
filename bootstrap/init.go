@@ -41,7 +41,7 @@ func init() {
 
 	service.DomainHolder = domainServiceHolder
 
-	pprComputeService := service.PprComputeService{}
+	pprComputeService := service.EfficiencyComputeService{}
 	serviceHolder := service.ServiceHolder{
 		PprComputeService: &pprComputeService,
 	}
