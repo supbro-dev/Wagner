@@ -1,6 +1,13 @@
+/*
+* @Author: supbro
+* @Date:   2025/6/2 10:48
+* @Last Modified by:   supbro
+* @Last Modified time: 2025/6/2 10:48
+ */
 package action
 
 import (
+	"github.com/jinzhu/copier"
 	"time"
 	"wagner/app/domain"
 	"wagner/app/global/my_const"
@@ -11,16 +18,15 @@ import (
 )
 
 type ActionService struct {
-	actionRepo *dao.ActionDao
+	actionDao *dao.ActionDao
 }
 
-// 通过构造函数注入 DAO
-func CreateActionService(actionRepo *dao.ActionDao) *ActionService {
-	return &ActionService{actionRepo: actionRepo}
+func CreateActionService(actionDao *dao.ActionDao) *ActionService {
+	return &ActionService{actionDao: actionDao}
 }
 
 func (service *ActionService) FindEmployeeActions(employeeNumber, operateDayList []string) []domain.Action {
-	actionList := service.actionRepo.FindBy(employeeNumber, operateDayList)
+	actionList := service.actionDao.FindBy(employeeNumber, operateDayList)
 	return convertAction(actionList)
 }
 
@@ -33,12 +39,7 @@ func convertAction(actionEntities []entity.ActionEntity) []domain.Action {
 
 	for _, e := range actionEntities {
 		action := domain.Action{}
-		action.EmployeeNumber = e.EmployeeNumber
-		action.OperateDay = e.OperateDay
-		action.WorkplaceCode = e.WorkplaceCode
-		action.ActionCode = e.ActionCode
-		action.Properties = e.Properties
-		action.ActionType = e.ActionType
+		copier.Copy(action, e)
 		startTime, err := time.Parse(my_const.DateTimeLayout, e.StartTime)
 		if err == nil {
 			action.StartTime = startTime
@@ -51,7 +52,6 @@ func convertAction(actionEntities []entity.ActionEntity) []domain.Action {
 		} else {
 			log.SystemLogger.Error(my_error.ServerOccurredErrorMsg)
 		}
-
 		actions = append(actions, action)
 	}
 

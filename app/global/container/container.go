@@ -9,7 +9,7 @@ import (
 var sMap sync.Map
 
 // getOrCreateContainer 创建一个容器工厂
-func GetOrCreateContainer(cacheKey string) *container {
+func GetOrCreateContainer(cacheKey string) *Container {
 	value, _ := sMap.Load(cacheKey)
 	if value == nil {
 		theCache, err := ristretto.NewCache(&ristretto.Config{
@@ -20,24 +20,24 @@ func GetOrCreateContainer(cacheKey string) *container {
 		if err != nil {
 			panic(err)
 		}
-		value = &container{cache: theCache}
+		value = &Container{cache: theCache}
 		sMap.Store(cacheKey, value)
-		return value.(*container)
+		return value.(*Container)
 	}
 
-	if v, ok := value.(*container); ok {
+	if v, ok := value.(*Container); ok {
 		return v
 	} else {
 		panic("contains类型有误")
 	}
 }
 
-type container struct {
+type Container struct {
 	cache *ristretto.Cache
 }
 
 // Set  1.以键值对的形式将代码注册到容器
-func (c *container) Set(key string, value interface{}) (res bool) {
+func (c *Container) Set(key string, value interface{}) (res bool) {
 
 	if _, exists := c.KeyIsExists(key); exists == false {
 		c.cache.Set(key, value, 1)
@@ -49,12 +49,12 @@ func (c *container) Set(key string, value interface{}) (res bool) {
 }
 
 // Delete  2.删除
-func (c *container) Delete(key string) {
+func (c *Container) Delete(key string) {
 	c.cache.Del(key)
 }
 
 // Get 3.传递键，从容器获取值
-func (c *container) Get(key string) interface{} {
+func (c *Container) Get(key string) interface{} {
 	if value, exists := c.KeyIsExists(key); exists {
 		return value
 	}
@@ -62,10 +62,10 @@ func (c *container) Get(key string) interface{} {
 }
 
 // KeyIsExists 4. 判断键是否被注册
-func (c *container) KeyIsExists(key string) (interface{}, bool) {
+func (c *Container) KeyIsExists(key string) (interface{}, bool) {
 	return c.cache.Get(key)
 }
 
-func (c *container) ClearCache() {
+func (c *Container) ClearCache() {
 	c.cache.Clear()
 }

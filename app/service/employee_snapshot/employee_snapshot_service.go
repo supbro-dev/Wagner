@@ -1,6 +1,7 @@
 package employee_snapshot
 
 import (
+	"github.com/jinzhu/copier"
 	"time"
 	"wagner/app/domain"
 	"wagner/infrastructure/persistence/dao"
@@ -24,11 +25,7 @@ func (service *EmployeeSnapshotService) FindEmployeeSnapshot(employeeNumber stri
 
 func convertEmployee(employee entity.EmployeeEntity) domain.EmployeeSnapshot {
 	employeeSnapshot := domain.EmployeeSnapshot{}
-	employeeSnapshot.Name = employee.Name
-	employeeSnapshot.Number = employee.Number
-	employeeSnapshot.WorkplaceCode = employee.WorkplaceCode
-	employeeSnapshot.PositionCode = employee.PositionCode
-	employeeSnapshot.WorkGroupCode = employee.WorkGroupCode
+	copier.Copy(employeeSnapshot, employee)
 
 	return employeeSnapshot
 }

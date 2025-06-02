@@ -5,6 +5,7 @@ import (
 	"wagner/app/global/variable"
 	"wagner/app/service"
 	"wagner/app/service/action"
+	"wagner/app/service/calc_dynamic_param"
 	"wagner/app/service/employee_snapshot"
 	"wagner/app/service/standard_position"
 	"wagner/app/utils/gorm"
@@ -27,16 +28,21 @@ func init() {
 		panic(err)
 	}
 
+	workplaceDao := dao.CreateWorkplaceDao(client)
+
 	actionService := action.CreateActionService(dao.CreateActionRepository(client))
 
 	employeeSnapshotService := employee_snapshot.CreateEmployeeSnapshotService(dao.CreateEmployeeDao(client))
 
-	standardPositionService := standard_position.CreateStandardPositionService(dao.CreateStandardPositionDao(client))
+	standardPositionService := standard_position.CreateStandardPositionService(dao.CreateStandardPositionDao(client), workplaceDao)
+
+	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao)
 
 	domainServiceHolder := service.DomainServiceHolder{
 		EmployeeSnapshotService: employeeSnapshotService,
 		ActionService:           actionService,
 		StandardPositionService: standardPositionService,
+		CalcDynamicParamService: calcDynamicParamService,
 	}
 
 	service.DomainHolder = domainServiceHolder

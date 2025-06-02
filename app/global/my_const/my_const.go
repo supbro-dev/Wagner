@@ -10,7 +10,8 @@ var ()
 
 // container_key
 var (
-	API     string = "api"
-	CONFIG  string = "config"
-	SERVICE string = "service"
+	API           string = "api"
+	CONFIG        string = "config"
+	SERVICE       string = "service"
+	DYNAMIC_PARAM string = "dynamic_param"
 )

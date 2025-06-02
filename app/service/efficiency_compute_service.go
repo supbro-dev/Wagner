@@ -35,7 +35,7 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	// 3.根据计算粒度分布式加锁
 
 	b, err := lock.Lock(employeeNumber)
-	
+
 	fmt.Println(b, err)
 
 	// 初始化计算参数
@@ -46,6 +46,10 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 // Parameters: 工作点编码
 // Returns: 人效计算参数
 func (service *EfficiencyComputeService) initComputeParams(workplaceCode string) ComputeParams {
+	calcDynamicParamService := DomainHolder.CalcDynamicParamService
+
+	calcDynamicParamService.FindParamsByWorkplace(workplaceCode)
+
 	computeParams := ComputeParams{}
 
 	return computeParams
