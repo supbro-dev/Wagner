@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 	"wagner/app/global/container"
-	"wagner/app/global/my_const"
 	"wagner/app/global/my_error"
 	"wagner/app/global/variable"
 	"wagner/app/utils/yml_config"
@@ -19,10 +18,15 @@ type ymlConfig struct {
 }
 
 var lastChangeTime time.Time
-var containerFactory = container.GetOrCreateContainer(my_const.CONFIG)
+var containerFactory *container.GenericCache[string, interface{}]
 
 func init() {
 	lastChangeTime = time.Now()
+	cache, err := container.GetOrCreateCache[string, interface{}](container.CONFIG)
+	if err != nil {
+		panic(err)
+	}
+	containerFactory = cache
 }
 
 // CreateYamlFactory 创建一个yaml配置文件工厂

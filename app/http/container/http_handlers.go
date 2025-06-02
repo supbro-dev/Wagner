@@ -3,7 +3,6 @@ package container
 import (
 	"github.com/gin-gonic/gin"
 	"wagner/app/global/container"
-	"wagner/app/global/my_const"
 	"wagner/app/http/controller"
 	"wagner/app/utils/log"
 )
@@ -12,16 +11,21 @@ type ApiInvoker interface {
 	Invoke(context *gin.Context)
 }
 
+var apiCache *container.GenericCache[string, ApiInvoker]
+
 func init() {
 	//创建容器
-	containers := container.GetOrCreateContainer(my_const.API)
+	cache, err := container.GetOrCreateCache[string, ApiInvoker](container.API)
+	if err != nil {
+		panic(err)
+	}
 
-	containers.Set("pprCompute", controller.PprComputeHandler{})
+	apiCache = cache
+	apiCache.Set("pprCompute", controller.PprComputeHandler{})
 }
 
 func GetHandler(key string) func(context *gin.Context) {
-	containers := container.GetOrCreateContainer(my_const.API)
-	if value := containers.Get(key); value != nil {
+	if value := apiCache.Get(key); value != nil {
 		if val, isOk := value.(ApiInvoker); isOk {
 			return val.Invoke
 		}

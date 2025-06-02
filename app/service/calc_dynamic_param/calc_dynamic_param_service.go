@@ -8,19 +8,24 @@ package calc_dynamic_param
 
 import (
 	"wagner/app/global/container"
-	"wagner/app/global/my_const"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
 )
 
+type CalcParam struct {
+}
+
 type CalcDynamicParamService struct {
 	calcDynamicParamDao *dao.CalcDynamicParamDao
 	workplaceDao        *dao.WorkplaceDao
-	cache               *container.Container
+	cache               *container.GenericCache[string, CalcParam]
 }
 
 func CreateCalcDynamicParamService(calcDynamicParamDao *dao.CalcDynamicParamDao, workplaceDao *dao.WorkplaceDao) *CalcDynamicParamService {
-	cache := container.GetOrCreateContainer(my_const.DYNAMIC_PARAM)
+	cache, err := container.GetOrCreateCache[string, CalcParam](container.DYNAMIC_PARAM)
+	if err != nil {
+		panic(err)
+	}
 	return &CalcDynamicParamService{calcDynamicParamDao: calcDynamicParamDao, workplaceDao: workplaceDao, cache: cache}
 }
 
