@@ -29,6 +29,7 @@ func init() {
 	}
 
 	workplaceDao := dao.CreateWorkplaceDao(client)
+	scriptDao := dao.CreateScriptDao(client)
 
 	actionService := action.CreateActionService(dao.CreateActionRepository(client))
 
@@ -36,7 +37,7 @@ func init() {
 
 	standardPositionService := standard_position.CreateStandardPositionService(dao.CreateStandardPositionDao(client), workplaceDao)
 
-	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao)
+	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao, scriptDao)
 
 	domainServiceHolder := service.DomainServiceHolder{
 		EmployeeSnapshotService: employeeSnapshotService,

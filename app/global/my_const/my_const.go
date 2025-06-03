@@ -18,15 +18,3 @@ const (
 	// 个人当日状态
 	INDIVIDUAL_DATE_STATUS = "INDIVIDUAL_DATE_STATUS"
 )
-
-// 计算节点的类型
-type NodeType int
-
-const (
-	DYNAMIC_RUN NodeType = iota
-	REFLECT
-)
-
-func (f NodeType) String() string {
-	return [...]string{"DYNAMIC_RUN", "REFLECT"}[f]
-}

@@ -25,3 +25,12 @@ const (
 	DYNAMIC_CALC_NODES                 = "DYNAMIC_CALC_NODES"
 	DYNAMIC_CALC_PARAMS                = "DYNAMIC_CALC_PARAMS"
 )
+
+// json格式解析
+var (
+	// DYNAMIC_DIMENSION_STORAGE_FIELDS
+	SINK_TYPE         = "SinkType"
+	FIELD_COLUMN_LIST = "fieldColumnList"
+	FIELD_NAME        = "fieldName"
+	COLUMN_NAME       = "columnName"
+)
