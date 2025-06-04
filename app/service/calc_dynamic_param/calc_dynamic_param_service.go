@@ -7,11 +7,11 @@
 package calc_dynamic_param
 
 import (
-	"github.com/bitly/go-simplejson"
 	mapset "github.com/deckarep/golang-set/v2"
 	"strings"
 	"wagner/app/global/container"
 	"wagner/app/global/my_const"
+	"wagner/app/utils/json_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
 )
@@ -112,7 +112,7 @@ func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode strin
 }
 
 func (service CalcDynamicParamService) buildDimensionStorageField(param entity.CalcDynamicParamEntity) *[]DimensionStorageField {
-	array, err := simplejson.NewJson([]byte(param.Content))
+	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
 		// todo 所有panic检查是否可以做处理
 		panic(err)
@@ -145,7 +145,7 @@ func (service CalcDynamicParamService) buildDimensionStorageField(param entity.C
 }
 
 func (service CalcDynamicParamService) buildOriginalField(param entity.CalcDynamicParamEntity) *OriginalField {
-	array, err := simplejson.NewJson([]byte(param.Content))
+	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
 		panic(err)
 	}
@@ -168,7 +168,7 @@ func (service CalcDynamicParamService) buildOriginalField(param entity.CalcDynam
 }
 
 func (service CalcDynamicParamService) buildAggregateField(param entity.CalcDynamicParamEntity) *AggregateField {
-	array, err := simplejson.NewJson([]byte(param.Content))
+	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
 		panic(err)
 	}
@@ -184,7 +184,7 @@ func (service CalcDynamicParamService) buildAggregateField(param entity.CalcDyna
 }
 
 func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynamicParamEntity) *CalcNodeList {
-	json, err := simplejson.NewJson([]byte(param.Content))
+	json, err := json_util.Parse2Json(param.Content)
 	if err != nil {
 		panic(err)
 	}
@@ -216,7 +216,7 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 }
 
 func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) *CalcOtherParam {
-	paramMap, err := simplejson.NewJson([]byte(param.Content))
+	paramMap, err := json_util.Parse2Json(param.Content)
 	if err != nil {
 		panic(err)
 	}

@@ -12,11 +12,14 @@ import (
 	"github.com/d5/tengo/v2/stdlib"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
+	"reflect"
+	"strconv"
 	"wagner/app/global/my_error"
 	"wagner/infrastructure/persistence/entity"
+	"wagner/script/golang"
 )
 
-func Run[P any, V any](script string, scriptType entity.ScriptType, input P, inputName string) (V, error) {
+func Run[P any, V any](scriptName, script string, scriptType entity.ScriptType, input P, inputName string) (V, error) {
 	var zero V
 	switch scriptType {
 	// lua脚本不支持原生的自定义类型
@@ -26,11 +29,22 @@ func Run[P any, V any](script string, scriptType entity.ScriptType, input P, inp
 	case entity.GOLANG:
 		return runGolang[P, V](script, input, inputName)
 	case entity.REFLECT:
-		return zero, nil
+		return runReflect[P, V](scriptName, input)
 	case entity.EL:
 		return zero, nil
 	}
 	return zero, fmt.Errorf("脚本解析失败: %v, %v", my_error.ScriptWrongTypeCode, my_error.ScriptWrongTypeMsg)
+}
+
+func runReflect[P any, V any](scriptName string, input P) (V, error) {
+	function, ok := golang.GetFunction(scriptName)
+	if !ok {
+		var zero V
+		return zero, fmt.Errorf(strconv.Itoa(my_error.ScriptNotExistCode), my_error.ScriptNotExistMsg, scriptName)
+	}
+
+	results := function.Call([]reflect.Value{reflect.ValueOf(input)})
+	return results[0].Interface().(V), nil
 }
 
 func runGolang[P any, V any](script string, input P, inputName string) (V, error) {

@@ -12,7 +12,9 @@ import (
 
 // 加工节点上下文
 type ComputeContext struct {
-	Employee        EmployeeSnapshot
-	TodayActionList []Action
-	OperateDay      time.Time
+	Employee            EmployeeSnapshot
+	YesterdayActionList []Action
+	TodayActionList     []Action
+	TomorrowActionList  []Action
+	OperateDay          time.Time
 }

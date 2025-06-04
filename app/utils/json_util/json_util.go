@@ -7,28 +7,22 @@
 package json_util
 
 import (
-	"encoding/json"
-	"fmt"
+	"github.com/bitly/go-simplejson"
 )
 
-// 泛型方法：将JSON解析为Map对象
-func parse2Map[T any](data string) (map[string]T, error) {
-	// 创建目标map的指针
-	var result map[string]T
-	err := json.Unmarshal([]byte(data), &result)
+func Parse2JsonArray(data string) (*simplejson.Json, error) {
+	array, err := simplejson.NewJson([]byte(data))
 	if err != nil {
-		return nil, fmt.Errorf("JSON解析失败: %w", err)
+		return nil, err
 	}
-	return result, nil
+	return array, nil
 }
 
-// 泛型方法：将JSON解析为Map对象数组
-func parse2MapSlice[T any](data string) ([]map[string]T, error) {
-	// 创建目标slice的指针
-	var result []map[string]T
-	err := json.Unmarshal([]byte(data), &result)
+func Parse2Json(data string) (*simplejson.Json, error) {
+	json, err := simplejson.NewJson([]byte(data))
+
 	if err != nil {
-		return nil, fmt.Errorf("JSON解析失败: %w", err)
+		return nil, err
 	}
-	return result, nil
+	return json, nil
 }

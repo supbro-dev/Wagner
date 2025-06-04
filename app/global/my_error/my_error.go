@@ -14,4 +14,10 @@ const (
 
 	ScriptWrongTypeCode int    = 9003
 	ScriptWrongTypeMsg  string = "脚本类型错误"
+
+	ScriptNotExistCode int    = 9004
+	ScriptNotExistMsg  string = "脚本不存在："
+
+	JsonFormatWrongCode int    = 9005
+	JsonFormatWrongMsg  string = "JSON格式有误:"
 )
