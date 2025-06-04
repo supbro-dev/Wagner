@@ -29,8 +29,10 @@ const (
 // json格式解析
 var (
 	// DYNAMIC_DIMENSION_STORAGE_FIELDS
-	SINK_TYPE         = "SinkType"
+	SINK_TYPE         = "sinkType"
+	TABLE_NAME        = "tableName"
 	FIELD_COLUMN_LIST = "fieldColumnList"
 	FIELD_NAME        = "fieldName"
 	COLUMN_NAME       = "columnName"
+	NODE_NAMES        = "nodeNames"
 )

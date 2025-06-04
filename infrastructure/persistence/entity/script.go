@@ -22,6 +22,8 @@ func (u *ScriptEntity) TableName() string {
 type ScriptType string
 
 var (
+	LUA ScriptType = "LUA"
+	// 可以使用tengo，暂时未实现
 	GOLANG  ScriptType = "GOLANG"
 	REFLECT ScriptType = "REFLECT"
 	EL      ScriptType = "EL"

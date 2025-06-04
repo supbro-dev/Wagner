@@ -15,12 +15,15 @@ type ScriptDao struct {
 	db *gorm.DB
 }
 
-func (d ScriptDao) FindByNameWithMaxVersion(names []string) *[]entity.ScriptEntity {
+func (d ScriptDao) FindByNameWithMaxVersion(names []string) []entity.ScriptEntity {
+	if len(names) == 0 {
+		return make([]entity.ScriptEntity, 0)
+	}
 	scripts := make([]entity.ScriptEntity, 0)
-	d.db.Exec("SELECT name, type, desc, content FROM"+
-		" (SELECT  name, type, desc, content ,ROW_NUMBER() OVER (PARTITION BY name ORDER BY version DESC) AS rn  FROM script  WHERE name IN ? ) ranked WHERE rn = 1", names).Find(&scripts)
+	d.db.Raw("SELECT name, type, `desc`, content FROM"+
+		" (SELECT  name, type, `desc`, content ,ROW_NUMBER() OVER (PARTITION BY name ORDER BY version DESC) AS rn  FROM script  WHERE name IN ? ) ranked WHERE rn = 1", names).Scan(&scripts)
 
-	return &scripts
+	return scripts
 }
 
 func CreateScriptDao(client *gorm.DB) *ScriptDao {

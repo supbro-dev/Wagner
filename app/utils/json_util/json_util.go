@@ -12,7 +12,7 @@ import (
 )
 
 // 泛型方法：将JSON解析为Map对象
-func Parse2Map[T any](data string) (map[string]T, error) {
+func parse2Map[T any](data string) (map[string]T, error) {
 	// 创建目标map的指针
 	var result map[string]T
 	err := json.Unmarshal([]byte(data), &result)
@@ -23,7 +23,7 @@ func Parse2Map[T any](data string) (map[string]T, error) {
 }
 
 // 泛型方法：将JSON解析为Map对象数组
-func Parse2MapSlice[T any](data string) ([]map[string]T, error) {
+func parse2MapSlice[T any](data string) ([]map[string]T, error) {
 	// 创建目标slice的指针
 	var result []map[string]T
 	err := json.Unmarshal([]byte(data), &result)

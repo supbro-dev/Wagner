@@ -7,13 +7,11 @@
 package calc_dynamic_param
 
 import (
+	"github.com/bitly/go-simplejson"
 	mapset "github.com/deckarep/golang-set/v2"
 	"strings"
-	"wagner/app/domain"
 	"wagner/app/global/container"
 	"wagner/app/global/my_const"
-	"wagner/app/utils/json_util"
-	"wagner/app/utils/script_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
 )
@@ -59,13 +57,13 @@ type CalcNodeList struct {
 type CalcNode struct {
 	NodeName string
 	NodeType entity.ScriptType
-	// 计算加工节点标准输入输出
-	invoker *func(domain.ComputeContext) domain.ComputeContext
+	// 计算脚本
+	Script string
 }
 
 // 其他各类参数
 type CalcOtherParam struct {
-	params map[string]interface{}
+	params interface{}
 }
 
 type CalcDynamicParamService struct {
@@ -96,7 +94,7 @@ func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode strin
 
 	calcParam := CalcParam{}
 
-	for _, param := range *paramList {
+	for _, param := range paramList {
 		switch param.Type {
 		case entity.DYNAMIC_DIMENSION_STORAGE_FIELDS:
 			calcParam.DimensionStorageFields = service.buildDimensionStorageField(param)
@@ -114,32 +112,30 @@ func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode strin
 }
 
 func (service CalcDynamicParamService) buildDimensionStorageField(param entity.CalcDynamicParamEntity) *[]DimensionStorageField {
-	var array, err = json_util.Parse2MapSlice[string](param.Content)
-
+	array, err := simplejson.NewJson([]byte(param.Content))
 	if err != nil {
 		// todo 所有panic检查是否可以做处理
 		panic(err)
 	}
 
 	fields := make([]DimensionStorageField, 0)
-	for _, data := range array {
+	for i := 0; i < len(array.MustArray()); i++ {
+		data := array.GetIndex(i)
 		dimensionStorageField := DimensionStorageField{
-			SinkType:  my_const.SinkType(data[entity.SINK_TYPE]),
-			tableName: data["tableName"],
+			SinkType:  my_const.SinkType(data.Get(entity.SINK_TYPE).MustString()),
+			tableName: data.Get(entity.TABLE_NAME).MustString(),
 		}
 
+		fieldColumnArray, hasValue := data.CheckGet(entity.FIELD_COLUMN_LIST)
 		// 解析字段映射
-		if data["fieldColumnList"] != "" {
+		if hasValue {
 			fieldName2ColumnName := make(map[string]string)
 
-			var fieldColumnArray, err = json_util.Parse2MapSlice[string](data[entity.FIELD_COLUMN_LIST])
-			if err != nil {
-				return nil
+			for j := 0; j < len(fieldColumnArray.MustArray()); j++ {
+				fieldMapping := fieldColumnArray.GetIndex(j)
+				fieldName2ColumnName[fieldMapping.Get(entity.FIELD_NAME).MustString()] = fieldMapping.Get(entity.COLUMN_NAME).MustString()
 			}
-
-			for _, fieldMapping := range fieldColumnArray {
-				fieldName2ColumnName[fieldMapping[entity.FIELD_NAME]] = fieldMapping[entity.COLUMN_NAME]
-			}
+			dimensionStorageField.FieldName2ColumnName = fieldName2ColumnName
 		}
 
 		fields = append(fields, dimensionStorageField)
@@ -149,7 +145,7 @@ func (service CalcDynamicParamService) buildDimensionStorageField(param entity.C
 }
 
 func (service CalcDynamicParamService) buildOriginalField(param entity.CalcDynamicParamEntity) *OriginalField {
-	array, err := json_util.Parse2MapSlice[string](param.Content)
+	array, err := simplejson.NewJson([]byte(param.Content))
 	if err != nil {
 		panic(err)
 	}
@@ -159,10 +155,12 @@ func (service CalcDynamicParamService) buildOriginalField(param entity.CalcDynam
 		OriginalFieldName2FieldName: make(map[string]string),
 	}
 
-	for _, field := range array {
-		originalField.FieldSet.Add(field[entity.FIELD_NAME])
-		if field[entity.COLUMN_NAME] != "" {
-			originalField.OriginalFieldName2FieldName[field[entity.COLUMN_NAME]] = field[entity.FIELD_NAME]
+	for i := 0; i < len(array.MustArray()); i++ {
+		field := array.GetIndex(i)
+		originalField.FieldSet.Add(field.Get(entity.FIELD_NAME).MustString())
+		columnNameField, hasValue := field.CheckGet(entity.COLUMN_NAME)
+		if hasValue {
+			originalField.OriginalFieldName2FieldName[columnNameField.MustString()] = field.Get(entity.FIELD_NAME).MustString()
 		}
 	}
 
@@ -170,7 +168,7 @@ func (service CalcDynamicParamService) buildOriginalField(param entity.CalcDynam
 }
 
 func (service CalcDynamicParamService) buildAggregateField(param entity.CalcDynamicParamEntity) *AggregateField {
-	array, err := json_util.Parse2MapSlice[string](param.Content)
+	array, err := simplejson.NewJson([]byte(param.Content))
 	if err != nil {
 		panic(err)
 	}
@@ -178,19 +176,25 @@ func (service CalcDynamicParamService) buildAggregateField(param entity.CalcDyna
 	aggregateField := AggregateField{
 		FieldSet: mapset.NewSet[string](),
 	}
-	for _, field := range array {
-		aggregateField.FieldSet.Add(field[entity.FIELD_NAME])
+	for i := 0; i < len(array.MustArray()); i++ {
+		field := array.GetIndex(i)
+		aggregateField.FieldSet.Add(field.Get(entity.FIELD_NAME).MustString())
 	}
 	return &aggregateField
 }
 
 func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynamicParamEntity) *CalcNodeList {
-	nodeNames := strings.Split(param.Content, ",")
+	json, err := simplejson.NewJson([]byte(param.Content))
+	if err != nil {
+		panic(err)
+	}
+
+	nodeNames := strings.Split(json.Get(entity.NODE_NAMES).MustString(), ",")
 
 	scripts := service.scriptDao.FindByNameWithMaxVersion(nodeNames)
 
 	scriptName2Entity := make(map[string]entity.ScriptEntity)
-	for _, scriptEntity := range *scripts {
+	for _, scriptEntity := range scripts {
 		scriptName2Entity[scriptEntity.Name] = scriptEntity
 	}
 
@@ -199,15 +203,11 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 		scriptEntity := scriptName2Entity[nodeName]
 
 		scriptType := entity.ScriptType(scriptEntity.Type)
-		f, err := script_util.Parse[domain.ComputeContext, domain.ComputeContext](nodeName, scriptEntity.Content, scriptType)
-		if err != nil {
-			panic(err)
-		}
 
 		node := CalcNode{
 			NodeName: nodeName,
 			NodeType: scriptType,
-			invoker:  f,
+			Script:   scriptEntity.Content,
 		}
 		calcNodes = append(calcNodes, node)
 	}
@@ -216,7 +216,7 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 }
 
 func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) *CalcOtherParam {
-	paramMap, err := json_util.Parse2Map[interface{}](param.Content)
+	paramMap, err := simplejson.NewJson([]byte(param.Content))
 	if err != nil {
 		panic(err)
 	}

@@ -7,62 +7,40 @@
 package script_util
 
 import (
-	"github.com/traefik/yaegi/interp"
-	"wagner/app/domain"
+	"fmt"
+	lua "github.com/yuin/gopher-lua"
+	luar "layeh.com/gopher-luar"
 	"wagner/app/global/my_error"
 	"wagner/infrastructure/persistence/entity"
 )
 
-func Parse[P any, V any](scriptName, script string, scriptType entity.ScriptType) (*func(P) V, error) {
+func Run[P any, V any](script string, input P, scriptType entity.ScriptType) (V, error) {
+	var zero V
 	switch scriptType {
+	case entity.LUA:
+		return runLua[P, V](script, input)
 	case entity.GOLANG:
-		return parseGolang[P, V](scriptName, script)
+		return zero, nil
 	case entity.REFLECT:
-		return nil, nil
+		return zero, nil
 	case entity.EL:
-		return nil, nil
+		return zero, nil
 	}
-	return nil, my_error.NewError(my_error.ScriptWrongTypeCode, my_error.ScriptWrongTypeMsg)
+	return zero, fmt.Errorf("脚本解析失败: %v, %v", my_error.ScriptWrongTypeCode, my_error.ScriptWrongTypeMsg)
 }
 
-func parseGolang[P any, V any](scriptName string, script string) (*func(P) V, error) {
-	i := interp.New(interp.Options{})
+func runLua[P any, V any](script string, input P) (V, error) {
+	L := lua.NewState()
+	defer L.Close()
 
-	_, err := i.Eval(script)
-	if err != nil {
-		return nil, err
-	}
+	L.SetGlobal("u", luar.New(L, input))
 
-	// 然后调用函数
-	v, err := i.Eval(scriptName + "." + scriptName)
-	if err != nil {
-		return nil, err
+	if err := L.DoString(script); err != nil {
+		var zero V
+		return zero, err
 	}
 
-	f := v.Interface().(func(p P) V)
-	return &f, nil
-}
+	ret := L.Get(-1)
 
-func Run(scriptName, script string, scriptType entity.ScriptType, ctx domain.ComputeContext) (interface{}, error) {
-	switch scriptType {
-	case entity.GOLANG:
-		return runGolang(scriptName, script, ctx)
-	case entity.REFLECT:
-		return runReflect(script, ctx)
-	case entity.EL:
-		return runEl(script, ctx)
-	}
-	return nil, my_error.NewError(my_error.ScriptWrongTypeCode, my_error.ScriptWrongTypeMsg)
-}
-
-func runGolang(name string, script string, ctx domain.ComputeContext) (interface{}, error) {
-	return nil, nil
-}
-
-func runEl(script string, ctx domain.ComputeContext) (interface{}, error) {
-	return nil, nil
-}
-
-func runReflect(script string, ctx domain.ComputeContext) (interface{}, error) {
-	return nil, nil
+	return ret.(V), nil
 }

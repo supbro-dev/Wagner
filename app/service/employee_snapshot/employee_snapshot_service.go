@@ -25,7 +25,7 @@ func (service *EmployeeSnapshotService) FindEmployeeSnapshot(employeeNumber stri
 
 func convertEmployee(employee entity.EmployeeEntity) domain.EmployeeSnapshot {
 	employeeSnapshot := domain.EmployeeSnapshot{}
-	copier.Copy(employeeSnapshot, employee)
+	copier.Copy(&employeeSnapshot, &employee)
 
 	return employeeSnapshot
 }
