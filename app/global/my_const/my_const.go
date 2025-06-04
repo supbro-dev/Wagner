@@ -1,8 +1,9 @@
 package my_const
 
 var (
-	DateLayout     = "2006-01-02"
-	DateTimeLayout = "2006-01-02 15:04:05"
+	DateLayout       = "2006-01-02"
+	DateTimeLayout   = "2006-01-02 15:04:05"
+	DateTimeMsLayout = "2006-01-02 15:04:05.000"
 )
 
 // SinkType标识数据加工完之后如何进行存储

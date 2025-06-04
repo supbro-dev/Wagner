@@ -3,15 +3,14 @@ package service
 import (
 	"fmt"
 	"time"
+	"wagner/app/domain"
 	"wagner/app/utils/lock"
+	"wagner/app/utils/script_util"
+	"wagner/infrastructure/persistence/entity"
 )
 
 // 人效计算服务
 type EfficiencyComputeService struct {
-}
-
-// 人效计算上下文
-type ComputeContext struct {
 }
 
 // 人效计算参数
@@ -32,6 +31,27 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	// 2.初始化计算参数
 	// 包括动态维度，计算聚合结果，工序加工节点列表，工序映射服务
 	calcParam := calcDynamicParamService.FindParamsByWorkplace(employee.WorkplaceCode)
+
+	actions := actionService.FindEmployeeActions(employeeNumber, []time.Time{operateDay})
+
+	script := ` fmt := import("fmt")
+    fmt.println("myCtx:", ctx)
+ctx.Name = "123"
+ctxResult := ctx
+`
+	ctx := domain.ComputeContext{
+		Employee:        employee,
+		TodayActionList: actions,
+		OperateDay:      operateDay,
+	}
+	ret, err2 := script_util.Run[*domain.ComputeContext, *domain.ComputeContext](script, entity.GOLANG, &ctx, "ctx")
+
+	if err2 != nil {
+		panic(err2)
+	}
+
+	fmt.Println(ret)
+
 	fmt.Println(actionService, calcParam)
 
 	// 3.根据工作点查找工序实施编码
@@ -57,8 +77,8 @@ func (service *EfficiencyComputeService) initComputeParams(workplaceCode string)
 	return computeParams
 }
 
-func (service *EfficiencyComputeService) initComputeContext() ComputeContext {
-	ctx := ComputeContext{}
+func (service *EfficiencyComputeService) initComputeContext() domain.ComputeContext {
+	ctx := domain.ComputeContext{}
 
 	return ctx
 }

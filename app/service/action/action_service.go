@@ -25,7 +25,7 @@ func CreateActionService(actionDao *dao.ActionDao) *ActionService {
 	return &ActionService{actionDao: actionDao}
 }
 
-func (service *ActionService) FindEmployeeActions(employeeNumber, operateDayList []string) []domain.Action {
+func (service *ActionService) FindEmployeeActions(employeeNumber string, operateDayList []time.Time) []domain.Action {
 	actionList := service.actionDao.FindBy(employeeNumber, operateDayList)
 	return convertAction(actionList)
 }
@@ -39,14 +39,23 @@ func convertAction(actionEntities []entity.ActionEntity) []domain.Action {
 
 	for _, e := range actionEntities {
 		action := domain.Action{}
-		copier.Copy(action, e)
-		startTime, err := time.Parse(my_const.DateTimeLayout, e.StartTime)
+		copyErr := copier.Copy(&action, &e)
+		if copyErr != nil {
+			log.SystemLogger.Error(my_error.ServerOccurredErrorMsg)
+		}
+		operateDay, err := time.Parse(my_const.DateLayout, e.OperateDay)
+		if err == nil {
+			action.OperateDay = operateDay
+		} else {
+			log.SystemLogger.Error(my_error.ServerOccurredErrorMsg)
+		}
+		startTime, err := time.Parse(my_const.DateTimeMsLayout, e.StartTime)
 		if err == nil {
 			action.StartTime = startTime
 		} else {
 			log.SystemLogger.Error(my_error.ServerOccurredErrorMsg)
 		}
-		endTime, err := time.Parse(my_const.DateTimeLayout, e.EndTime)
+		endTime, err := time.Parse(my_const.DateTimeMsLayout, e.EndTime)
 		if err == nil {
 			action.EndTime = endTime
 		} else {
