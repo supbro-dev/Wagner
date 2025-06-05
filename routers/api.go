@@ -41,9 +41,9 @@ func InitApiRouter() *gin.Engine {
 	vApi := router.Group("/api/v1/")
 	{
 		// 模拟一个首页路由
-		ppr := vApi.Group("ppr/")
+		eff := vApi.Group("efficiency/")
 		{
-			ppr.GET("compute", container.GetHandler("pprCompute"))
+			eff.GET("compute", container.GetHandler("efficiencyCompute"))
 		}
 	}
 	return router

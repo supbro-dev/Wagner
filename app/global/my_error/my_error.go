@@ -11,4 +11,16 @@ const (
 
 	ParamErrorCode int    = 9002
 	ParamErrorMsg  string = "参数格式有误"
+
+	ScriptWrongTypeCode int    = 9003
+	ScriptWrongTypeMsg  string = "脚本类型错误"
+
+	ScriptNotExistCode int    = 9004
+	ScriptNotExistMsg  string = "脚本不存在："
+
+	JsonFormatWrongCode int    = 9005
+	JsonFormatWrongMsg  string = "JSON格式有误:"
+
+	ActionTypeError int    = 9006
+	ActionTypeMsg   string = "动作类型错误"
 )

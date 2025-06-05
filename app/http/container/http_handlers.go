@@ -21,7 +21,7 @@ func init() {
 	}
 
 	apiCache = cache
-	apiCache.Set("pprCompute", controller.PprComputeHandler{})
+	apiCache.Set("efficiencyCompute", controller.EfficiencyComputeHandler{})
 }
 
 func GetHandler(key string) func(context *gin.Context) {

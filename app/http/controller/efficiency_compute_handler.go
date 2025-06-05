@@ -9,11 +9,10 @@ import (
 	"wagner/app/utils/response"
 )
 
-// todo 不要有ppr关键字
-type PprComputeHandler struct {
+type EfficiencyComputeHandler struct {
 }
 
-func (p PprComputeHandler) Invoke(c *gin.Context) {
+func (p EfficiencyComputeHandler) Invoke(c *gin.Context) {
 	employeeNumber := c.Query("employeeNumber")
 	operateDayStr := c.Query("operateDay")
 
@@ -28,7 +27,7 @@ func (p PprComputeHandler) Invoke(c *gin.Context) {
 		return
 	}
 
-	service.Holder.PprComputeService.ComputeEmployee(employeeNumber, operateDay)
+	service.Holder.EfficiencyComputeService.ComputeEmployee(employeeNumber, operateDay)
 
 	response.ReturnSuccessEmptyJson(c)
 }

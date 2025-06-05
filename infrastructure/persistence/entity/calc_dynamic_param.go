@@ -17,3 +17,22 @@ type CalcDynamicParamEntity struct {
 func (u *CalcDynamicParamEntity) TableName() string {
 	return "calc_dynamic_param" // 自定义表名
 }
+
+const (
+	DYNAMIC_DIMENSION_STORAGE_FIELDS   = "DYNAMIC_DIMENSION_STORAGE_FIELDS"
+	DYNAMIC_DIMENSION_ORIGINAL_FIELDS  = "DYNAMIC_DIMENSION_ORIGINAL_FIELDS"
+	DYNAMIC_DIMENSION_AGGREGATE_FIELDS = "DYNAMIC_DIMENSION_AGGREGATE_FIELDS"
+	DYNAMIC_CALC_NODES                 = "DYNAMIC_CALC_NODES"
+	DYNAMIC_CALC_PARAMS                = "DYNAMIC_CALC_PARAMS"
+)
+
+// json格式解析
+var (
+	// DYNAMIC_DIMENSION_STORAGE_FIELDS
+	SINK_TYPE         = "sinkType"
+	TABLE_NAME        = "tableName"
+	FIELD_COLUMN_LIST = "fieldColumnList"
+	FIELD_NAME        = "fieldName"
+	COLUMN_NAME       = "columnName"
+	NODE_NAMES        = "nodeNames"
+)

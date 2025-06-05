@@ -1,7 +1,7 @@
 package service
 
 type ServiceHolder struct {
-	PprComputeService *EfficiencyComputeService
+	EfficiencyComputeService *EfficiencyComputeService
 }
 
 var (

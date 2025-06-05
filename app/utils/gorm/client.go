@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"time"
 	"wagner/app/global/variable"
 )
@@ -22,7 +23,7 @@ func getSqlDriver() (*gorm.DB, error) {
 	gormDb, err := gorm.Open(dbDialector, &gorm.Config{
 		SkipDefaultTransaction: true,
 		PrepareStmt:            true,
-		//Logger:                 redefineLog(sqlType), //拦截、接管 gorm v2 自带日志
+		Logger:                 logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
 		//gorm 数据库驱动初始化失败
