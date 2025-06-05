@@ -15,10 +15,10 @@ type WorkplaceDao struct {
 	db *gorm.DB
 }
 
-func (dao *WorkplaceDao) FindByCode(code string) entity.WorkplaceEntity {
+func (dao *WorkplaceDao) FindByCode(code string) *entity.WorkplaceEntity {
 	workplace := entity.WorkplaceEntity{}
 	dao.db.Where("code = ?", code).Find(&workplace)
-	return workplace
+	return &workplace
 }
 
 func CreateWorkplaceDao(client *gorm.DB) *WorkplaceDao {

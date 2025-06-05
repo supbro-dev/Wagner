@@ -23,6 +23,7 @@ func CreateEfficiencyComputeService() *EfficiencyComputeService {
 func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, operateDay time.Time) {
 	employeeSnapshotService := DomainHolder.EmployeeSnapshotService
 	calcDynamicParamService := DomainHolder.CalcDynamicParamService
+	standardPositionService := DomainHolder.StandardPositionService
 	// 1.获取员工当天快照
 	employee := employeeSnapshotService.FindEmployeeSnapshot(employeeNumber, operateDay)
 
@@ -35,11 +36,12 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 		OperateDay: operateDay,
 	}
 
-	// 4
-	injectActions(&ctx, calcParam)
+	// 3. 查询工序映射关系
+	standardPositionList := standardPositionService.FindStandardPositionByWorkplace(employee.WorkplaceCode)
+	fmt.Println(standardPositionList)
 
-	// 3.根据工作点查找工序实施编码
-	//holder.ServiceHolder.StandardPositionService
+	// 4. 注入原始数据
+	injectActions(&ctx, calcParam)
 
 	// 3.根据计算粒度分布式加锁
 
