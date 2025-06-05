@@ -19,35 +19,30 @@ import (
 
 // 人效计算参数
 type CalcParam struct {
-	DimensionStorageFields *[]DimensionStorageField
-	OriginalField          *OriginalField
-	AggregateField         *AggregateField
-	CalcNodeList           *CalcNodeList
-	CalcOtherParam         *CalcOtherParam
+	InjectSource   *InjectSource
+	SinkStorages   *[]SinkStorage
+	CalcNodeList   *CalcNodeList
+	CalcOtherParam *CalcOtherParam
 }
 
 // 不同维度的存储属性
-type DimensionStorageField struct {
+type SinkStorage struct {
 	// 存储类型
 	SinkType my_const.SinkType
 	// 表名
 	tableName string
+	// 如果是聚合场景，聚合字段
+	AggregateFields []string
 	// 属性名转化成字段名
 	FieldName2ColumnName map[string]string
 }
 
 // action动态字段配置,以及原始字段名转化
-type OriginalField struct {
+type InjectSource struct {
 	// 需要关注的原始属性名，其他的直接丢弃
 	FieldSet mapset.Set[string]
 	// 把原始字段名转化成Action的属性名（如需要）
 	OriginalFieldName2FieldName map[string]string
-}
-
-// 聚合存储时的聚合维度（除employeeNumber + operateDay之外）
-type AggregateField struct {
-	// 需要聚合的属性名
-	FieldSet mapset.Set[string]
 }
 
 type CalcNodeList struct {
@@ -64,7 +59,9 @@ type CalcNode struct {
 
 // 其他各类参数
 type CalcOtherParam struct {
-	AttendanceParam AttendanceParam
+	Attendance  AttendanceParam
+	HourSummary HourSummaryParam
+	Work        WorkParam
 }
 
 type AttendanceParam struct {
@@ -72,11 +69,25 @@ type AttendanceParam struct {
 	AttendanceAbsencePenaltyHour int
 }
 
+type WorkLoadAggregateType string
+
+var (
+	AggregateEndHour    WorkLoadAggregateType = "end"        // 物品数量记录到结束小时
+	AggregateProportion WorkLoadAggregateType = "proportion" // 物品数量按比例分摊
+)
+
+type HourSummaryParam struct {
+	WorkLoadAggregate WorkLoadAggregateType
+}
 type CalcDynamicParamService struct {
 	calcDynamicParamDao *dao.CalcDynamicParamDao
 	workplaceDao        *dao.WorkplaceDao
 	scriptDao           *dao.ScriptDao
 	cache               *container.GenericCache[string, CalcParam]
+}
+
+type WorkParam struct {
+	WorkLoadUnits mapset.Set[string]
 }
 
 func CreateCalcDynamicParamService(calcDynamicParamDao *dao.CalcDynamicParamDao, workplaceDao *dao.WorkplaceDao, scriptDao *dao.ScriptDao) *CalcDynamicParamService {
@@ -102,32 +113,30 @@ func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode strin
 
 	for _, param := range paramList {
 		switch param.Type {
-		case entity.DYNAMIC_DIMENSION_STORAGE_FIELDS:
-			calcParam.DimensionStorageFields = service.buildDimensionStorageField(param)
-		case entity.DYNAMIC_DIMENSION_ORIGINAL_FIELDS:
-			calcParam.OriginalField = service.buildOriginalField(param)
-		case entity.DYNAMIC_DIMENSION_AGGREGATE_FIELDS:
-			calcParam.AggregateField = service.buildAggregateField(param)
-		case entity.DYNAMIC_CALC_NODES:
+		case entity.INJECT_SOURCE:
+			calcParam.InjectSource = service.buildInjectSources(param)
+		case entity.SINK_STORAGE:
+			calcParam.SinkStorages = service.buildSinkStorages(param)
+		case entity.DYNAMIC_CALC_NODE:
 			calcParam.CalcNodeList = service.buildCalcNodeList(param)
-		case entity.DYNAMIC_CALC_PARAMS:
+		case entity.CALC_PARAM:
 			calcParam.CalcOtherParam = service.buildCalcOtherParam(param)
 		}
 	}
 	return &calcParam
 }
 
-func (service CalcDynamicParamService) buildDimensionStorageField(param entity.CalcDynamicParamEntity) *[]DimensionStorageField {
+func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynamicParamEntity) *[]SinkStorage {
 	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
 		// todo 所有panic检查是否可以做处理
 		panic(err)
 	}
 
-	fields := make([]DimensionStorageField, 0)
+	fields := make([]SinkStorage, 0)
 	for i := 0; i < len(array.MustArray()); i++ {
 		data := array.GetIndex(i)
-		dimensionStorageField := DimensionStorageField{
+		sinkStorage := SinkStorage{
 			SinkType:  my_const.SinkType(data.Get(entity.SINK_TYPE).MustString()),
 			tableName: data.Get(entity.TABLE_NAME).MustString(),
 		}
@@ -141,22 +150,32 @@ func (service CalcDynamicParamService) buildDimensionStorageField(param entity.C
 				fieldMapping := fieldColumnArray.GetIndex(j)
 				fieldName2ColumnName[fieldMapping.Get(entity.FIELD_NAME).MustString()] = fieldMapping.Get(entity.COLUMN_NAME).MustString()
 			}
-			dimensionStorageField.FieldName2ColumnName = fieldName2ColumnName
+			sinkStorage.FieldName2ColumnName = fieldName2ColumnName
 		}
 
-		fields = append(fields, dimensionStorageField)
+		// 如果是SUMMARY类型，添加聚合字段
+		aggregateFieldArray, hasValue := data.CheckGet(entity.AGGREGATE_FILEDS)
+		if hasValue {
+			aggregateFields := make([]string, 0)
+			for i := 0; i < len(aggregateFieldArray.MustArray()); i++ {
+				aggregateFields = append(aggregateFields, aggregateFieldArray.GetIndex(i).MustString())
+			}
+			sinkStorage.AggregateFields = aggregateFields
+		}
+
+		fields = append(fields, sinkStorage)
 	}
 
 	return &fields
 }
 
-func (service CalcDynamicParamService) buildOriginalField(param entity.CalcDynamicParamEntity) *OriginalField {
+func (service CalcDynamicParamService) buildInjectSources(param entity.CalcDynamicParamEntity) *InjectSource {
 	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
 		panic(err)
 	}
 
-	originalField := OriginalField{
+	originalField := InjectSource{
 		FieldSet:                    mapset.NewSet[string](),
 		OriginalFieldName2FieldName: make(map[string]string),
 	}
@@ -171,22 +190,6 @@ func (service CalcDynamicParamService) buildOriginalField(param entity.CalcDynam
 	}
 
 	return &originalField
-}
-
-func (service CalcDynamicParamService) buildAggregateField(param entity.CalcDynamicParamEntity) *AggregateField {
-	array, err := json_util.Parse2JsonArray(param.Content)
-	if err != nil {
-		panic(err)
-	}
-
-	aggregateField := AggregateField{
-		FieldSet: mapset.NewSet[string](),
-	}
-	for i := 0; i < len(array.MustArray()); i++ {
-		field := array.GetIndex(i)
-		aggregateField.FieldSet.Add(field.Get(entity.FIELD_NAME).MustString())
-	}
-	return &aggregateField
 }
 
 func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynamicParamEntity) *CalcNodeList {
@@ -221,16 +224,26 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 	return &CalcNodeList{&calcNodes}
 }
 
-var DEFAULT_CALC_OTHER_PARAM = CalcOtherParam{
-	AttendanceParam: AttendanceParam{
+var defaultCalcOtherParam = CalcOtherParam{
+	Attendance: AttendanceParam{
 		// 默认惩罚8小时
 		AttendanceAbsencePenaltyHour: 8,
+	},
+	HourSummary: HourSummaryParam{
+		// 默认聚合到结束的那个小时里
+		WorkLoadAggregate: AggregateEndHour,
+	},
+	Work: WorkParam{
+		WorkLoadUnits: mapset.NewSet[string]("itemNum", "skuNum", "packageNum"),
 	},
 }
 
 func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) *CalcOtherParam {
 	otherParam := CalcOtherParam{}
-	copier.Copy(&otherParam, &DEFAULT_CALC_OTHER_PARAM)
+	copyError := copier.Copy(&otherParam, &defaultCalcOtherParam)
+	if copyError != nil {
+		panic(copyError)
+	}
 	err := json_util.Parse2Object[CalcOtherParam](param.Content, &otherParam)
 	if err != nil {
 		panic(err)

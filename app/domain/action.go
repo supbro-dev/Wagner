@@ -31,7 +31,7 @@ type Action struct {
 type DirectWork struct {
 	Action
 	// 工作量
-	WorkLoad map[string]interface{}
+	WorkLoad map[string]float32
 	// 任务的发起人
 	Starter string
 }
@@ -44,14 +44,41 @@ type IndirectWork struct {
 // 作业（直接&间接）
 type Work interface {
 	GetWorkType() ActionType
+	GetComputedStartTime() time.Time
+	GetComputedEndTime() time.Time
+	GetWorkLoad() map[string]float64
 }
 
 func (a DirectWork) GetWorkType() ActionType {
 	return DIRECT_WORK
 }
 
+func (a DirectWork) GetComputedStartTime() time.Time {
+	return a.ComputedStartTime
+}
+
+func (a DirectWork) GetComputedEndTime() time.Time {
+	return a.ComputedEndTime
+}
+
+func (a DirectWork) GetWorkLoad() map[string]float64 {
+	return a.WorkLoad
+}
+
 func (a IndirectWork) GetWorkType() ActionType {
 	return INDIRECT_WORK
+}
+
+func (a IndirectWork) GetComputedStartTime() time.Time {
+	return a.ComputedStartTime
+}
+
+func (a IndirectWork) GetComputedEndTime() time.Time {
+	return a.ComputedEndTime
+}
+
+func (a IndirectWork) GetWorkLoad() map[string]float64 {
+	return make(map[string]float32)
 }
 
 // 考勤

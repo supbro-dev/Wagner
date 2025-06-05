@@ -27,5 +27,9 @@ func convertEmployee(employee entity.EmployeeEntity) domain.EmployeeSnapshot {
 	employeeSnapshot := domain.EmployeeSnapshot{}
 	copier.Copy(&employeeSnapshot, &employee)
 
+	properties := make(map[string]string)
+	properties["employeeName"] = employee.Name
+	employeeSnapshot.Properties = properties
+
 	return employeeSnapshot
 }

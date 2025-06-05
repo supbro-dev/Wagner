@@ -26,7 +26,7 @@ func CreateActionService(actionDao *dao.ActionDao) *ActionService {
 // 根据工号和日期列表查找动作，并转换成动作对应子类型
 // Parameters: employeeNumber，operateDayList 最近3天列表，originalFieldParam 属性映射关系
 // Returns: 天2动作列表
-func (service *ActionService) FindEmployeeActions(employeeNumber string, operateDayList []time.Time, originalFieldParam *calc_dynamic_param.OriginalField) (day2WorkList map[time.Time][]domain.Work,
+func (service *ActionService) FindEmployeeActions(employeeNumber string, operateDayList []time.Time, originalFieldParam *calc_dynamic_param.InjectSource) (day2WorkList map[time.Time][]domain.Work,
 	day2Attendance map[time.Time]domain.Attendance,
 	day2Scheduling map[time.Time]domain.Scheduling) {
 	actionList := service.actionDao.FindBy(employeeNumber, operateDayList)
@@ -38,7 +38,7 @@ func (service *ActionService) FindWorkplaceActions(workplaceCode, operateDay str
 	return nil
 }
 
-func convertAction(actionEntities *[]entity.ActionEntity, param *calc_dynamic_param.OriginalField) (
+func convertAction(actionEntities *[]entity.ActionEntity, param *calc_dynamic_param.InjectSource) (
 	day2WorkList map[time.Time][]domain.Work,
 	day2Attendance map[time.Time]domain.Attendance,
 	day2Scheduling map[time.Time]domain.Scheduling) {
@@ -89,7 +89,7 @@ func convertAction(actionEntities *[]entity.ActionEntity, param *calc_dynamic_pa
 // 如果配置了数据来源有额外属性，在这个方法设置
 // Parameters: properties原始属性, param配置参数
 // return: 过滤后的属性
-func handleExtraProperty(properties map[string]interface{}, param *calc_dynamic_param.OriginalField) *map[string]interface{} {
+func handleExtraProperty(properties map[string]interface{}, param *calc_dynamic_param.InjectSource) *map[string]interface{} {
 	if param.FieldSet.IsEmpty() {
 		return nil
 	}

@@ -6,4 +6,5 @@ type EmployeeSnapshot struct {
 	WorkplaceCode string
 	PositionCode  string
 	WorkGroupCode string
+	Properties    map[string]string
 }
