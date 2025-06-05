@@ -44,7 +44,6 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	injectActions(&ctx, calcParam)
 
 	// 3.根据计算粒度分布式加锁
-
 	b, err := lock.Lock(employeeNumber)
 	fmt.Println(b, err)
 

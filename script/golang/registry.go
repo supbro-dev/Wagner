@@ -22,5 +22,9 @@ func GetFunction(name string) (reflect.Value, bool) {
 
 // 注册 Run 函数
 func init() {
+	// 测试用
 	register("RunTest", RunTest)
+	// 正式节点
+	register("SetCrossDayAttendance", SetCrossDayAttendance)
+	register("ComputeDefaultEndTime", ComputeDefaultEndTime)
 }

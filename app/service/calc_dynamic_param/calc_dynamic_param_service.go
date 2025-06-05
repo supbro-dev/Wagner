@@ -8,6 +8,7 @@ package calc_dynamic_param
 
 import (
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/jinzhu/copier"
 	"strings"
 	"wagner/app/global/container"
 	"wagner/app/global/my_const"
@@ -63,7 +64,12 @@ type CalcNode struct {
 
 // 其他各类参数
 type CalcOtherParam struct {
-	params interface{}
+	AttendanceParam AttendanceParam
+}
+
+type AttendanceParam struct {
+	// 考勤缺卡惩罚时长（H）
+	AttendanceAbsencePenaltyHour int
 }
 
 type CalcDynamicParamService struct {
@@ -215,12 +221,19 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 	return &CalcNodeList{&calcNodes}
 }
 
+var DEFAULT_CALC_OTHER_PARAM = CalcOtherParam{
+	AttendanceParam: AttendanceParam{
+		// 默认惩罚8小时
+		AttendanceAbsencePenaltyHour: 8,
+	},
+}
+
 func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) *CalcOtherParam {
-	paramMap, err := json_util.Parse2Json(param.Content)
+	otherParam := CalcOtherParam{}
+	copier.Copy(&otherParam, &DEFAULT_CALC_OTHER_PARAM)
+	err := json_util.Parse2Object[CalcOtherParam](param.Content, &otherParam)
 	if err != nil {
 		panic(err)
 	}
-	return &CalcOtherParam{
-		params: paramMap,
-	}
+	return &otherParam
 }
