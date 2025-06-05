@@ -36,6 +36,9 @@ func Run[P any, V any](scriptName, script string, scriptType entity.ScriptType, 
 	return zero, fmt.Errorf("脚本解析失败: %v, %v", my_error.ScriptWrongTypeCode, my_error.ScriptWrongTypeMsg)
 }
 
+// 这里使用反射的原因是函数注册的时候无法使用泛型
+// Parameters: scriptName
+// Returns: 函数调用返回值
 func runReflect[P any, V any](scriptName string, input P) (V, error) {
 	function, ok := golang.GetFunction(scriptName)
 	if !ok {

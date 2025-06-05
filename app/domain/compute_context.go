@@ -6,15 +6,24 @@
  */
 package domain
 
-import (
-	"time"
-)
+import "time"
 
 // 加工节点上下文
 type ComputeContext struct {
-	Employee            EmployeeSnapshot
-	YesterdayActionList []Action
-	TodayActionList     []Action
-	TomorrowActionList  []Action
-	OperateDay          time.Time
+	// 员工快照
+	Employee EmployeeSnapshot
+	// 日期
+	OperateDay time.Time
+
+	// 最近三天工作列表
+	YesterdayWorkList []Work
+	TodayWorkList     []Work
+	TomorrowWorkList  []Work
+
+	// 最近三天考勤列表
+	YesterdayAttendance Attendance
+	TodayAttendance     Attendance
+	TomorrowAttendance  Attendance
+	// 当天排班信息
+	TodayScheduling Scheduling
 }

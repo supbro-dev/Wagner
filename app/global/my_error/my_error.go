@@ -20,4 +20,7 @@ const (
 
 	JsonFormatWrongCode int    = 9005
 	JsonFormatWrongMsg  string = "JSON格式有误:"
+
+	ActionTypeError int    = 9006
+	ActionTypeMsg   string = "动作类型错误"
 )

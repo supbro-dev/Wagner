@@ -50,29 +50,22 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 
 func injectActions(ctx *domain.ComputeContext, param *calc_dynamic_param.CalcParam) {
 	actionService := DomainHolder.ActionService
+
 	yesterday := ctx.OperateDay.AddDate(0, 0, -1)
 	tomorrow := ctx.OperateDay.AddDate(0, 0, 1)
 	operateDayRange := []time.Time{yesterday, ctx.OperateDay, tomorrow}
-	actions := actionService.FindEmployeeActions(ctx.Employee.Number, operateDayRange, param.OriginalField)
 
-	yesterdayData := make([]domain.Action, 0)
-	todayData := make([]domain.Action, 0)
-	tomorrowData := make([]domain.Action, 0)
-	for _, a := range actions {
+	day2WorkList, day2Attendance, day2Scheduling := actionService.FindEmployeeActions(ctx.Employee.Number, operateDayRange, param.OriginalField)
 
-	}
-	switch a.OperateDay {
-	case yesterday:
-		yesterdayData = append(todayData, a)
-	case ctx.OperateDay:
-		todayData = append(todayData, a)
-	case tomorrow:
-		tomorrowData = append(tomorrowData, a)
-	}
+	ctx.YesterdayWorkList = day2WorkList[yesterday]
+	ctx.TodayWorkList = day2WorkList[ctx.OperateDay]
+	ctx.TodayWorkList = day2WorkList[tomorrow]
 
-	ctx.YesterdayActionList = yesterdayData
-	ctx.TodayActionList = todayData
-	ctx.TomorrowActionList = tomorrowData
+	ctx.YesterdayAttendance = day2Attendance[yesterday]
+	ctx.TodayAttendance = day2Attendance[ctx.OperateDay]
+	ctx.TomorrowAttendance = day2Attendance[tomorrow]
+
+	ctx.TodayScheduling = day2Scheduling[ctx.OperateDay]
 }
 
 // 根据工作点获取人效计算参数
