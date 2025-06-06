@@ -9,6 +9,7 @@ import (
 	"wagner/app/service/employee_snapshot"
 	"wagner/app/service/sink"
 	"wagner/app/service/standard_position"
+	"wagner/app/service/workplace"
 	"wagner/app/utils/gorm"
 	"wagner/app/utils/script_util"
 	yml_config "wagner/app/utils/yml_config/impl"
@@ -45,17 +46,20 @@ func init() {
 
 	employeeSnapshotService := employee_snapshot.CreateEmployeeSnapshotService(dao.CreateEmployeeDao(client))
 
-	standardPositionService := standard_position.CreateStandardPositionService(dao.CreateStandardPositionDao(client), workplaceDao, scriptDao)
+	standardPositionService := standard_position.CreateStandardPositionService(dao.CreateStandardPositionDao(client), workplaceDao)
 
 	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao, scriptDao)
 
 	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapClient))
+
+	workplaceService := workplace.CreateWorkplaceService(workplaceDao)
 
 	domainServiceHolder := service.DomainServiceHolder{
 		EmployeeSnapshotService: employeeSnapshotService,
 		ActionService:           actionService,
 		StandardPositionService: standardPositionService,
 		CalcDynamicParamService: calcDynamicParamService,
+		WorkplaceService:        workplaceService,
 	}
 
 	service.DomainHolder = domainServiceHolder

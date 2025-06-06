@@ -9,11 +9,10 @@ import (
 type StandardPositionService struct {
 	StandardPositionDao *dao.StandardPositionDao
 	WorkplaceDao        *dao.WorkplaceDao
-	ScriptDao           *dao.ScriptDao
 }
 
-func CreateStandardPositionService(standardPositionDao *dao.StandardPositionDao, workplaceDao *dao.WorkplaceDao, scriptDao *dao.ScriptDao) *StandardPositionService {
-	return &StandardPositionService{standardPositionDao, workplaceDao, scriptDao}
+func CreateStandardPositionService(standardPositionDao *dao.StandardPositionDao, workplaceDao *dao.WorkplaceDao) *StandardPositionService {
+	return &StandardPositionService{standardPositionDao, workplaceDao}
 }
 
 //	根据工作点编码获取标准岗位模型
@@ -32,24 +31,10 @@ func (service *StandardPositionService) FindStandardPositionByWorkplace(workplac
 	maxVersion := service.StandardPositionDao.FindMaxVersionByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
 	positionList := service.StandardPositionDao.FindByIndustry(workplace.IndustryCode, workplace.SubIndustryCode, maxVersion)
 
-	scriptNameList := make([]string, 0)
-	for _, position := range *positionList {
-		if position.ScriptName != "" {
-			scriptNameList = append(scriptNameList, position.ScriptName)
-		}
-	}
-
-	scriptList := service.ScriptDao.FindByNameWithMaxVersion(scriptNameList)
-
-	scriptName2Script := make(map[string]string)
-	for _, scriptEntity := range scriptList {
-		scriptName2Script[scriptEntity.Name] = scriptEntity.Content
-	}
-
-	return service.buildLeafNodePaths(*positionList, scriptName2Script)
+	return service.buildLeafNodePaths(*positionList)
 }
 
-func (service *StandardPositionService) buildLeafNodePaths(positionEntities []entity.StandardPositionEntity, scriptName2Script map[string]string) *[]domain.StandardPosition {
+func (service *StandardPositionService) buildLeafNodePaths(positionEntities []entity.StandardPositionEntity) *[]domain.StandardPosition {
 	// 创建三个核心映射
 	entityMap := make(map[string]*entity.StandardPositionEntity)     // code -> 实体指针
 	childrenMap := make(map[string][]*entity.StandardPositionEntity) // parentCode -> 子节点列表
@@ -95,7 +80,7 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []en
 	result := make([]domain.StandardPosition, 0, len(leafNodes))
 	for _, leaf := range leafNodes {
 		path := service.buildParentPath(leaf, parentMap)
-		d := service.convertEntity2Domain(leaf, scriptName2Script)
+		d := service.convertEntity2Domain(leaf)
 		d.Path = path
 		// 记录最大部门层级
 		d.MaxDeptLevel = maxDeptLevel
@@ -108,13 +93,12 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []en
 	return &result
 }
 
-func (service *StandardPositionService) convertEntity2Domain(e *entity.StandardPositionEntity, scriptName2Script map[string]string) domain.StandardPosition {
+func (service *StandardPositionService) convertEntity2Domain(e *entity.StandardPositionEntity) domain.StandardPosition {
 	return domain.StandardPosition{
-		Name:       e.Name,
-		Code:       e.Code,
-		Level:      e.Level,
-		ScriptName: e.ScriptName,
-		Script:     scriptName2Script[e.ScriptName],
+		Name:   e.Name,
+		Code:   e.Code,
+		Level:  e.Level,
+		Script: e.Script,
 	}
 }
 
@@ -127,7 +111,7 @@ func (service *StandardPositionService) buildParentPath(node *entity.StandardPos
 
 	// 递归向上遍历父节点
 	for current != nil {
-		path = append(path, service.convertEntity2Domain(current, nil))
+		path = append(path, service.convertEntity2Domain(current))
 
 		// 移动到上一级父节点
 		current = parentMap[current.Code]

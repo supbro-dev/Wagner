@@ -210,16 +210,16 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 
 	calcNodes := make([]CalcNode, 0)
 	for _, nodeName := range nodeNames {
-		scriptEntity := scriptName2Entity[nodeName]
+		if scriptEntity, exists := scriptName2Entity[nodeName]; exists {
+			scriptType := script_util.ScriptType(scriptEntity.Type)
 
-		scriptType := script_util.ScriptType(scriptEntity.Type)
-
-		node := CalcNode{
-			NodeName: nodeName,
-			NodeType: scriptType,
-			Script:   scriptEntity.Content,
+			node := CalcNode{
+				NodeName: nodeName,
+				NodeType: scriptType,
+				Script:   scriptEntity.Content,
+			}
+			calcNodes = append(calcNodes, node)
 		}
-		calcNodes = append(calcNodes, node)
 	}
 
 	return CalcNodeList{&calcNodes}
