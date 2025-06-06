@@ -40,9 +40,15 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []en
 	childrenMap := make(map[string][]*entity.StandardPositionEntity) // parentCode -> 子节点列表
 	parentMap := make(map[string]*entity.StandardPositionEntity)     // code -> 父节点指针
 
+	// 最大部门层级
+	maxDeptLevel := 0
+
 	// 构建映射关系
 	for i := range positionEntities {
 		e := &positionEntities[i]
+
+		maxDeptLevel = max(maxDeptLevel, e.Level)
+
 		code := e.Code
 		parentCode := e.ParentCode
 
@@ -57,6 +63,9 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []en
 		// 添加到子节点映射
 		childrenMap[parentCode] = append(childrenMap[parentCode], e)
 	}
+
+	// 部门层级排除最后两级的环节和岗位
+	maxDeptLevel = maxDeptLevel - 2
 
 	// 收集所有叶子节点（没有子节点的节点）
 	var leafNodes []*entity.StandardPositionEntity
@@ -73,6 +82,8 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []en
 		path := service.buildParentPath(leaf, parentMap)
 		d := service.convertEntity2Domain(leaf)
 		d.Path = path
+		// 记录最大部门层级
+		d.MaxDeptLevel = maxDeptLevel
 		// 只收集直接/间接环节
 		if leaf.Type == entity.DIRECT_PROCESS || leaf.Type == entity.INDIRECT_PROCESS {
 			result = append(result, d)
@@ -84,8 +95,9 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []en
 
 func (service *StandardPositionService) convertEntity2Domain(e *entity.StandardPositionEntity) domain.StandardPosition {
 	return domain.StandardPosition{
-		Name: e.Name,
-		Code: e.Code,
+		Name:  e.Name,
+		Code:  e.Code,
+		Level: e.Level,
 	}
 }
 

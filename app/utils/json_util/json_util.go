@@ -49,3 +49,17 @@ func Parse2Object[T any](data string, obj *T) error {
 	}
 	return nil
 }
+
+// 创建一个空json串
+func NewJson() *simplejson.Json {
+	return simplejson.New()
+}
+
+// 对象转化成json字符串
+func ToJsonString(obj interface{}) string {
+	if jsonBytes, err := json.Marshal(obj); err != nil {
+		panic(err)
+	} else {
+		return string(jsonBytes)
+	}
+}
