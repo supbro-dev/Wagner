@@ -14,7 +14,9 @@ import (
 // 加工节点上下文
 type ComputeContext struct {
 	// 员工快照
-	Employee EmployeeSnapshot
+	Employee *EmployeeSnapshot
+	// 工作点
+	Workplace *Workplace
 	// 日期
 	OperateDay time.Time
 	// 计算参数

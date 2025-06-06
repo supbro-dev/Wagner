@@ -27,6 +27,8 @@ type Action struct {
 	ProcessList []string
 	// 环节编码
 	ProcessCode string
+	// 环节实例
+	process StandardPosition
 }
 
 // 直接作业
@@ -52,6 +54,7 @@ type Work interface {
 	GetComputedEndTime() time.Time
 	GetWorkLoad() map[string]float64
 	GetProcessCode() string
+	GetProcess() StandardPosition
 	GetPropertyValue(propertyName string) interface{}
 }
 
@@ -87,6 +90,10 @@ func (a DirectWork) GetPropertyValue(propertyName string) interface{} {
 	return a.Properties[propertyName]
 }
 
+func (a DirectWork) GetProcess() StandardPosition {
+	return a.process
+}
+
 func (a IndirectWork) GetWorkType() ActionType {
 	return INDIRECT_WORK
 }
@@ -117,6 +124,10 @@ func (a IndirectWork) GetProcessCode() string {
 
 func (a IndirectWork) GetPropertyValue(propertyName string) interface{} {
 	return a.Properties[propertyName]
+}
+
+func (a IndirectWork) GetProcess() StandardPosition {
+	return a.process
 }
 
 // 考勤

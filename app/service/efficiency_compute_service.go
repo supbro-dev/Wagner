@@ -27,8 +27,11 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	employeeSnapshotService := DomainHolder.EmployeeSnapshotService
 	calcDynamicParamService := DomainHolder.CalcDynamicParamService
 	standardPositionService := DomainHolder.StandardPositionService
-	// 1.获取员工当天快照
+	workplaceService := DomainHolder.WorkplaceService
+
+	// 1.获取员工当天快照和工作点信息
 	employee := employeeSnapshotService.FindEmployeeSnapshot(employeeNumber, operateDay)
+	workplace := workplaceService.FindByCode(employee.WorkplaceCode)
 
 	// 2.初始化计算参数
 	// 包括动态维度，计算聚合结果，工序加工节点列表，工序映射服务
@@ -36,6 +39,7 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 
 	ctx := domain.ComputeContext{
 		Employee:   employee,
+		Workplace:  workplace,
 		OperateDay: operateDay,
 	}
 
@@ -44,7 +48,7 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	fmt.Println(standardPositionList)
 
 	// 4. 注入原始数据
-	injectActions(&ctx, calcParam)
+	injectActions(&ctx, *calcParam)
 
 	// 3.根据计算粒度分布式加锁
 	lockSuccess, err := lock.Lock(employeeNumber)
@@ -69,7 +73,7 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	for _, storage := range calcParam.SinkStorages {
 		switch storage.SinkType {
 		case my_const.SUMMARY:
-			service.handleSummary(ctx, storage, calcParam.CalcOtherParam)
+			service.handleSummary(ctx, storage, calcParam.CalcOtherParam, standardPositionList)
 		}
 	}
 
@@ -80,17 +84,17 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 }
 
 // 处理聚合存储逻辑
-func (service *EfficiencyComputeService) handleSummary(ctx domain.ComputeContext, storageParam calc_dynamic_param.SinkStorage, otherParam calc_dynamic_param.CalcOtherParam) {
+func (service *EfficiencyComputeService) handleSummary(ctx domain.ComputeContext, storageParam calc_dynamic_param.SinkStorage, otherParam calc_dynamic_param.CalcOtherParam, processList *[]domain.StandardPosition) {
+	summarySinkService := Holder.SummarySinkService
 	hourSummaryResultList := service.efficientAggregateActions(ctx.TodayWorkList, storageParam, otherParam.HourSummary, otherParam.Work)
-
-	fmt.Println(hourSummaryResultList)
+	summarySinkService.BatchInsertSummaryResult(hourSummaryResultList, ctx.Employee, ctx.Workplace, ctx.OperateDay)
 }
 
 // 高效聚合算法
 func (service *EfficiencyComputeService) efficientAggregateActions(works []domain.Work,
 	storageParam calc_dynamic_param.SinkStorage,
 	summaryParam calc_dynamic_param.HourSummaryParam,
-	workParam calc_dynamic_param.WorkParam) []domain.HourSummaryResult {
+	workParam calc_dynamic_param.WorkParam) *[]domain.HourSummaryResult {
 	// 1. 对Action按开始时间排序
 	sort.Slice(works, func(i, j int) bool {
 		return works[i].GetComputedStartTime().Before(works[j].GetComputedStartTime())
@@ -138,7 +142,7 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 				segmentEnd = end
 			}
 			duration := segmentEnd.Sub(start).Seconds()
-			bucket := service.getOrCreateBucket(buckets, startHour, work, storageParam.AggregateFields, nil)
+			bucket := service.getOrCreateBucket(buckets, startHour, work, storageParam.AggregateFields, storageParam.FieldName2ColumnName)
 			bucket.MergeTime(work, duration)
 
 			// 根据策略处理物品数量
@@ -162,7 +166,7 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 			currentHour := startHour.Add(time.Hour)
 			for currentHour.Before(endHour) {
 				duration := 3600.0
-				bucket := service.getOrCreateBucket(buckets, currentHour, work, storageParam.AggregateFields, nil)
+				bucket := service.getOrCreateBucket(buckets, currentHour, work, storageParam.AggregateFields, storageParam.FieldName2ColumnName)
 				bucket.MergeTime(work, duration)
 
 				// 根据策略处理物品数量
@@ -184,7 +188,7 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 		// 处理结束小时（可能不是完整小时）
 		if end.After(endHour) {
 			duration := end.Sub(endHour).Seconds()
-			bucket := service.getOrCreateBucket(buckets, endHour, work, storageParam.AggregateFields, nil)
+			bucket := service.getOrCreateBucket(buckets, endHour, work, storageParam.AggregateFields, storageParam.FieldName2ColumnName)
 			bucket.MergeTime(work, duration)
 
 			// 根据策略处理物品数量
@@ -213,7 +217,7 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 		return result[i].AggregateKey.OperateTime.Before(result[j].AggregateKey.OperateTime)
 	})
 
-	return result
+	return &result
 }
 
 // 辅助函数：获取或创建桶
@@ -250,7 +254,7 @@ func (service *EfficiencyComputeService) buildAggregateKey(operateTime time.Time
 	return key
 }
 
-func injectActions(ctx *domain.ComputeContext, param *calc_dynamic_param.CalcParam) {
+func injectActions(ctx *domain.ComputeContext, param calc_dynamic_param.CalcParam) {
 	actionService := DomainHolder.ActionService
 
 	yesterday := ctx.OperateDay.AddDate(0, 0, -1)

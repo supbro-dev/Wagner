@@ -17,19 +17,19 @@ func CreateEmployeeSnapshotService(employeeDao *dao.EmployeeDao) *EmployeeSnapsh
 	return &EmployeeSnapshotService{employeeDao: employeeDao}
 }
 
-func (service *EmployeeSnapshotService) FindEmployeeSnapshot(employeeNumber string, operateDay time.Time) domain.EmployeeSnapshot {
+func (service *EmployeeSnapshotService) FindEmployeeSnapshot(employeeNumber string, operateDay time.Time) *domain.EmployeeSnapshot {
 	// 生产环境需要根据员工一段时间的履历，获取在某个工作点某天的人员快照，这里简单使用人员信息代替
 	employee := service.employeeDao.FindByNumber(employeeNumber)
-	return convertEmployee(employee)
+	return convertEmployee(*employee)
 }
 
-func convertEmployee(employee entity.EmployeeEntity) domain.EmployeeSnapshot {
+func convertEmployee(employee entity.EmployeeEntity) *domain.EmployeeSnapshot {
 	employeeSnapshot := domain.EmployeeSnapshot{}
-	copier.Copy(&employeeSnapshot, &employee)
+	copier.Copy(&employeeSnapshot, employee)
 
 	properties := make(map[string]string)
 	properties["employeeName"] = employee.Name
 	employeeSnapshot.Properties = properties
 
-	return employeeSnapshot
+	return &employeeSnapshot
 }

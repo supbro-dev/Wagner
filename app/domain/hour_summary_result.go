@@ -23,6 +23,9 @@ type HourSummaryResult struct {
 	AttendanceTime   int
 	// 额外属性
 	Properties map[string]interface{}
+
+	// 环节信息
+	Process StandardPosition
 }
 
 // 聚合key
@@ -41,6 +44,7 @@ func MakeHourSummaryResult(aggregateKey HourSummaryAggregateKey, work Work, fiel
 		AggregateKey: aggregateKey,
 		WorkLoad:     make(map[string]float64),
 		Properties:   make(map[string]interface{}),
+		Process:      work.GetProcess(),
 	}
 
 	for fieldName, columnName := range field2Column {
