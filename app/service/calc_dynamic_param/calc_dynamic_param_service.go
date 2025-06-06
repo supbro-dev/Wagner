@@ -77,7 +77,7 @@ var (
 )
 
 type HourSummaryParam struct {
-	WorkLoadAggregate WorkLoadAggregateType
+	WorkLoadAggregateType WorkLoadAggregateType
 }
 type CalcDynamicParamService struct {
 	calcDynamicParamDao *dao.CalcDynamicParamDao
@@ -231,7 +231,7 @@ var defaultCalcOtherParam = CalcOtherParam{
 	},
 	HourSummary: HourSummaryParam{
 		// 默认聚合到结束的那个小时里
-		WorkLoadAggregate: AggregateEndHour,
+		WorkLoadAggregateType: AggregateEndHour,
 	},
 	Work: WorkParam{
 		WorkLoadUnits: mapset.NewSet[string]("itemNum", "skuNum", "packageNum"),

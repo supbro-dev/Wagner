@@ -25,13 +25,15 @@ type Action struct {
 	Properties map[string]interface{} `copier:"-"` // 字段排除
 	// 加工处理过程
 	ProcessList []string
+	// 环节编码
+	ProcessCode string
 }
 
 // 直接作业
 type DirectWork struct {
 	Action
 	// 工作量
-	WorkLoad map[string]float32
+	WorkLoad map[string]float64
 	// 任务的发起人
 	Starter string
 }
@@ -43,10 +45,14 @@ type IndirectWork struct {
 
 // 作业（直接&间接）
 type Work interface {
+	GetEmployeeNumber() string
+	GetWorkplaceCode() string
 	GetWorkType() ActionType
 	GetComputedStartTime() time.Time
 	GetComputedEndTime() time.Time
 	GetWorkLoad() map[string]float64
+	GetProcessCode() string
+	GetPropertyValue(propertyName string) interface{}
 }
 
 func (a DirectWork) GetWorkType() ActionType {
@@ -65,6 +71,22 @@ func (a DirectWork) GetWorkLoad() map[string]float64 {
 	return a.WorkLoad
 }
 
+func (a DirectWork) GetEmployeeNumber() string {
+	return a.EmployeeNumber
+}
+
+func (a DirectWork) GetWorkplaceCode() string {
+	return a.WorkplaceCode
+}
+
+func (a DirectWork) GetProcessCode() string {
+	return a.ProcessCode
+}
+
+func (a DirectWork) GetPropertyValue(propertyName string) interface{} {
+	return a.Properties[propertyName]
+}
+
 func (a IndirectWork) GetWorkType() ActionType {
 	return INDIRECT_WORK
 }
@@ -78,7 +100,23 @@ func (a IndirectWork) GetComputedEndTime() time.Time {
 }
 
 func (a IndirectWork) GetWorkLoad() map[string]float64 {
-	return make(map[string]float32)
+	return make(map[string]float64)
+}
+
+func (a IndirectWork) GetEmployeeNumber() string {
+	return a.EmployeeNumber
+}
+
+func (a IndirectWork) GetWorkplaceCode() string {
+	return a.WorkplaceCode
+}
+
+func (a IndirectWork) GetProcessCode() string {
+	return a.ProcessCode
+}
+
+func (a IndirectWork) GetPropertyValue(propertyName string) interface{} {
+	return a.Properties[propertyName]
 }
 
 // 考勤
@@ -106,6 +144,8 @@ var (
 	SHORT_BREAK ActionType = "ShortBreak"
 	// 外出就餐
 	MEAL_TIME ActionType = "MealTime"
+	// 闲置工时
+	IDLE ActionType = "Idle"
 )
 
 // 任务的开始人放在扩展属性里

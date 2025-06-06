@@ -9,59 +9,61 @@ package domain
 import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"time"
-	"wagner/app/utils/reflect_util"
 )
 
 type HourSummaryResult struct {
-	OperateTime   time.Time          // 作业时间（小时）
-	TotalWorkLoad map[string]float64 // 小时内工作量
+	AggregateKey HourSummaryAggregateKey
 
+	WorkLoad map[string]float64 // 小时内工作量
+
+	// 工时
+	DirectWorkTime   int
+	IndirectWorkTime int
+	IdleTime         int
+	AttendanceTime   int
 	// 额外属性
 	Properties map[string]interface{}
 }
 
+// 聚合key
+type HourSummaryAggregateKey struct {
+	EmployeeNumber string
+	OperateTime    time.Time
+
+	ProcessCode    string
+	WorkplaceCode  string
+	PropertyValues string
+}
+
 // 根据聚合属性构建一个用来聚合的汇总结果
-func MakeHourSummaryResult(aggregateValueObj interface{}, aggregateFields []string) HourSummaryResult {
-	result := HourSummaryResult{}
-
-	for _, field := range aggregateFields {
-		value, err := reflect_util.GetField(aggregateValueObj, field)
-		if err != nil {
-			panic(err)
-		}
-
-		err = reflect_util.SetField(result, field, value)
-		if err != nil {
-			hasField, err := reflect_util.HasField(result, field)
-			if !hasField && err != nil {
-				if result.Properties != nil {
-					result.Properties = make(map[string]interface{})
-				} else {
-					result.Properties[field] = value
-				}
-			}
-		}
+func MakeHourSummaryResult(aggregateKey HourSummaryAggregateKey) HourSummaryResult {
+	result := HourSummaryResult{
+		AggregateKey: aggregateKey,
 	}
-
 	return result
 }
 
-func (r HourSummaryResult) MergeTimeAndWorkLoad(that HourSummaryResult, workLoadUnits mapset.Set[string], proportion float64) *HourSummaryResult {
-
+func (r *HourSummaryResult) MergeTime(work Work, duration float64) {
+	durationTime := int(duration)
+	switch work.GetWorkType() {
+	case DIRECT_WORK:
+		r.DirectWorkTime += durationTime
+		r.AttendanceTime += durationTime
+	case INDIRECT_WORK:
+		r.IndirectWorkTime += durationTime
+		r.AttendanceTime += durationTime
+	case IDLE:
+		r.IdleTime += durationTime
+		r.AttendanceTime += durationTime
+	}
 }
 
-func (r HourSummaryResult) MergeOtherProperties(that HourSummaryResult) *HourSummaryResult {
-
-}
-
-func (r HourSummaryResult) MergeWorkLoad(workLoad map[string]float64, workLoadUnits mapset.Set[string], proportion float64) map[string]float64 {
-	total := make(map[string]float64)
-
+func (r *HourSummaryResult) MergeWorkLoad(workLoad map[string]float64, workLoadUnits mapset.Set[string], proportion float64) {
 	// 遍历所有工作负载单位
 	for unit := range workLoadUnits.Iter() {
 		// 获取当前对象的负载值（如果不存在则为0）
 		thisValue := float64(0)
-		if val, exists := r.TotalWorkLoad[unit]; exists {
+		if val, exists := r.WorkLoad[unit]; exists {
 			thisValue = val
 		}
 
@@ -72,8 +74,7 @@ func (r HourSummaryResult) MergeWorkLoad(workLoad map[string]float64, workLoadUn
 		}
 
 		// 合并值
-		total[unit] = thisValue + thatValue
+		r.WorkLoad[unit] = thisValue + thatValue
 	}
 
-	return total
 }

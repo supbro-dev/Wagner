@@ -2,9 +2,7 @@ package service
 
 import (
 	"fmt"
-	"reflect"
 	"sort"
-	"strings"
 	"time"
 	"wagner/app/domain"
 	"wagner/app/global/my_const"
@@ -88,14 +86,14 @@ func handleSummary(ctx domain.ComputeContext, storage calc_dynamic_param.SinkSto
 }
 
 // 高效聚合算法
-func efficientAggregateActions(works []domain.Work, summaryParam *calc_dynamic_param.HourSummaryParam, aggregateFields []string, workParam *calc_dynamic_param.WorkParam) []domain.HourSummaryResult {
+func (service *EfficiencyComputeService) efficientAggregateActions(works []domain.Work, summaryParam *calc_dynamic_param.HourSummaryParam, aggregateFields []string, workParam *calc_dynamic_param.WorkParam) []domain.HourSummaryResult {
 	// 1. 对Action按开始时间排序
 	sort.Slice(works, func(i, j int) bool {
 		return works[i].GetComputedStartTime().Before(works[j].GetComputedStartTime())
 	})
 
 	// 2. 创建桶收集聚合结果
-	buckets := make(map[time.Time]*domain.HourSummaryResult)
+	buckets := make(map[domain.HourSummaryAggregateKey]*domain.HourSummaryResult)
 
 	// 3. 处理每个Action
 	for _, work := range works {
@@ -105,8 +103,9 @@ func efficientAggregateActions(works []domain.Work, summaryParam *calc_dynamic_p
 		// 处理开始和结束时间相等的情况
 		if start.Equal(end) {
 			hourStart := start.Truncate(time.Hour)
-			bucket := getOrCreateBucket(buckets, hourStart)
-			bucket.TotalWorkLoad = bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+			bucket := service.getOrCreateBucket(buckets, hourStart, work, aggregateFields)
+			bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+			// 这里不处理工时
 			continue
 		}
 
@@ -129,21 +128,21 @@ func efficientAggregateActions(works []domain.Work, summaryParam *calc_dynamic_p
 				segmentEnd = end
 			}
 			duration := segmentEnd.Sub(start).Seconds()
-			bucket := getOrCreateBucket(buckets, startHour)
-			bucket.TotalDuration += duration
+			bucket := service.getOrCreateBucket(buckets, startHour, work, aggregateFields)
+			bucket.MergeTime(work, duration)
 
 			// 根据策略处理物品数量
-			switch summaryParam.WorkLoadAggregate {
+			switch summaryParam.WorkLoadAggregateType {
 			case calc_dynamic_param.AggregateEndHour:
 				if segmentEnd.Equal(end) {
-					bucket.TotalWorkLoad = bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
 				}
 			case calc_dynamic_param.AggregateProportion:
 				if totalDuration > 0 {
 					proportion := duration / totalDuration
-					bucket.TotalWorkLoad = bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
+					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
 				} else {
-					bucket.TotalWorkLoad = bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
 				}
 			}
 		}
@@ -153,17 +152,17 @@ func efficientAggregateActions(works []domain.Work, summaryParam *calc_dynamic_p
 			currentHour := startHour.Add(time.Hour)
 			for currentHour.Before(endHour) {
 				duration := 3600.0
-				bucket := getOrCreateBucket(buckets, currentHour)
-				bucket.TotalDuration += duration
+				bucket := service.getOrCreateBucket(buckets, currentHour, work, aggregateFields)
+				bucket.MergeTime(work, duration)
 
 				// 根据策略处理物品数量
-				switch summaryParam.WorkLoadAggregate {
+				switch summaryParam.WorkLoadAggregateType {
 				case calc_dynamic_param.AggregateEndHour:
 					// 完整小时不累加物品数量（只累加到结束小时）
 				case calc_dynamic_param.AggregateProportion:
 					if totalDuration > 0 {
 						proportion := duration / totalDuration
-						bucket.TotalWorkLoad = bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
+						bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
 					}
 				}
 
@@ -174,19 +173,19 @@ func efficientAggregateActions(works []domain.Work, summaryParam *calc_dynamic_p
 		// 处理结束小时（可能不是完整小时）
 		if end.After(endHour) {
 			duration := end.Sub(endHour).Seconds()
-			bucket := getOrCreateBucket(buckets, endHour)
-			bucket.TotalDuration += duration
+			bucket := service.getOrCreateBucket(buckets, endHour, work, aggregateFields)
+			bucket.MergeTime(work, duration)
 
 			// 根据策略处理物品数量
-			switch summaryParam.WorkLoadAggregate {
+			switch summaryParam.WorkLoadAggregateType {
 			case calc_dynamic_param.AggregateEndHour:
-				bucket.TotalWorkLoad = bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+				bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
 			case calc_dynamic_param.AggregateProportion:
 				if totalDuration > 0 {
 					proportion := duration / totalDuration
-					bucket.TotalWorkLoad = bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
+					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
 				} else {
-					bucket.TotalWorkLoad = bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
 				}
 			}
 		}
@@ -200,58 +199,41 @@ func efficientAggregateActions(works []domain.Work, summaryParam *calc_dynamic_p
 
 	// 5. 按小时排序结果
 	sort.Slice(result, func(i, j int) bool {
-		return result[i].OperateTime.Before(result[j].OperateTime)
+		return result[i].AggregateKey.OperateTime.Before(result[j].AggregateKey.OperateTime)
 	})
 
 	return result
 }
 
 // 辅助函数：获取或创建桶
-func (service *EfficiencyComputeService) getOrCreateBucket(buckets map[interface{}]*domain.HourSummaryResult, work *domain.Work, aggregateFields []string) *domain.HourSummaryResult {
-	key := service.keyFromStruct(work, aggregateFields)
+func (service *EfficiencyComputeService) getOrCreateBucket(buckets map[domain.HourSummaryAggregateKey]*domain.HourSummaryResult, operateTime time.Time, work domain.Work, aggregateFields []string) *domain.HourSummaryResult {
+	keyStruct := service.buildAggregateKey(operateTime, work, aggregateFields)
 
-	if bucket, exists := buckets[key]; exists {
+	if bucket, exists := buckets[keyStruct]; exists {
 		return bucket
 	}
-	bucket := domain.MakeHourSummaryResult(key, aggregateFields)
-	buckets[key] = &bucket
+	bucket := domain.MakeHourSummaryResult(keyStruct)
+	buckets[keyStruct] = &bucket
 	return &bucket
 }
 
-func (service *EfficiencyComputeService) keyFromStruct(s interface{}, aggregateFields []string) interface{} {
-	v := reflect.ValueOf(s)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
+func (service *EfficiencyComputeService) buildAggregateKey(operateTime time.Time, work domain.Work, aggregateFields []string) domain.HourSummaryAggregateKey {
+	key := domain.HourSummaryAggregateKey{
+		EmployeeNumber: work.GetEmployeeNumber(),
+		WorkplaceCode:  work.GetWorkplaceCode(),
+		ProcessCode:    work.GetProcessCode(),
+		OperateTime:    operateTime,
 	}
 
-	// 创建动态结构体类型
-	fieldTypes := make([]reflect.StructField, len(aggregateFields))
-	fieldValues := make([]reflect.Value, len(aggregateFields))
-
-	for i, field := range aggregateFields {
-		f := v.FieldByName(field)
-		if !f.IsValid() {
-			continue
-		}
-
-		fieldTypes[i] = reflect.StructField{
-			Name: strings.Title(field),
-			Type: f.Type(),
-		}
-		fieldValues[i] = f
+	var str = ""
+	for _, field := range aggregateFields {
+		value := work.GetPropertyValue(field)
+		str += fmt.Sprint(value)
 	}
 
-	// 创建动态结构体实例
-	keyType := reflect.StructOf(fieldTypes)
-	keyValue := reflect.New(keyType).Elem()
+	key.PropertyValues = str
 
-	for i, val := range fieldValues {
-		if val.IsValid() {
-			keyValue.Field(i).Set(val)
-		}
-	}
-
-	return keyValue.Interface()
+	return key
 }
 
 func injectActions(ctx *domain.ComputeContext, param *calc_dynamic_param.CalcParam) {

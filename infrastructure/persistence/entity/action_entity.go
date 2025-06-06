@@ -11,7 +11,7 @@ type ActionEntity struct {
 	EndTime        time.Time              `gorm:"column:end_time" json:"end_time"`
 	ActionCode     string                 `gorm:"column:action_code" json:"action_code"`
 	ActionType     string                 `gorm:"column:action_type" json:"action_type"`
-	WorkLoad       map[string]interface{} `gorm:"column:work_load:type:json" json:"work_load"`
+	WorkLoad       map[string]float64     `gorm:"column:work_load:type:json" json:"work_load"`
 	Properties     map[string]interface{} `gorm:"column:properties;type:json" json:"properties"`
 }
 
