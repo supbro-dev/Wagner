@@ -13,6 +13,7 @@ import (
 	"wagner/app/global/container"
 	"wagner/app/global/my_const"
 	"wagner/app/utils/json_util"
+	"wagner/app/utils/script_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
 )
@@ -52,7 +53,7 @@ type CalcNodeList struct {
 // 计算节点
 type CalcNode struct {
 	NodeName string
-	NodeType entity.ScriptType
+	NodeType script_util.ScriptType
 	// 计算脚本
 	Script string
 }
@@ -211,7 +212,7 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 	for _, nodeName := range nodeNames {
 		scriptEntity := scriptName2Entity[nodeName]
 
-		scriptType := entity.ScriptType(scriptEntity.Type)
+		scriptType := script_util.ScriptType(scriptEntity.Type)
 
 		node := CalcNode{
 			NodeName: nodeName,

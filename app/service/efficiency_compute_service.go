@@ -37,15 +37,15 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	// 包括动态维度，计算聚合结果，工序加工节点列表，工序映射服务
 	calcParam := calcDynamicParamService.FindParamsByWorkplace(employee.WorkplaceCode)
 
-	ctx := domain.ComputeContext{
-		Employee:   employee,
-		Workplace:  workplace,
-		OperateDay: operateDay,
-	}
-
 	// 3. 查询工序映射关系
 	standardPositionList := standardPositionService.FindStandardPositionByWorkplace(employee.WorkplaceCode)
-	fmt.Println(standardPositionList)
+
+	ctx := domain.ComputeContext{
+		Employee:    employee,
+		Workplace:   workplace,
+		OperateDay:  operateDay,
+		ProcessList: standardPositionList,
+	}
 
 	// 4. 注入原始数据
 	injectActions(&ctx, *calcParam)
@@ -60,14 +60,16 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	}
 
 	// 4.循环执行所有节点
+	ctx.CalcStartTime = time.Now()
 	ctxPointer := &ctx
 	for _, node := range *calcParam.CalcNodeList.List {
-		ctxRes, err := script_util.Run[*domain.ComputeContext, *domain.ComputeContext](node.NodeName, node.Script, node.NodeType, ctxPointer, "ctx")
+		ctxRes, err := script_util.Run[*domain.ComputeContext, *domain.ComputeContext](node.NodeName, node.Script, node.NodeType, ctxPointer)
 		ctxPointer = ctxRes
 		if err != nil {
 			panic(err)
 		}
 	}
+	ctx.CalcEndTime = time.Now()
 
 	// 5.处理聚合
 	for _, storage := range calcParam.SinkStorages {

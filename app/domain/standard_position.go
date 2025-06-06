@@ -16,4 +16,8 @@ type StandardPosition struct {
 
 	// 路径
 	Path []StandardPosition
+	// 环节匹配脚本名
+	ScriptName string
+	// 环节匹配执行脚本
+	Script string
 }

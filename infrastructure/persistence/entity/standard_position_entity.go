@@ -11,6 +11,7 @@ type StandardPositionEntity struct {
 	Version         string               `gorm:"column:version" json:"version"`
 	IndustryCode    string               `gorm:"column:industry_code" json:"industry_code"`
 	SubIndustryCode string               `gorm:"column:sub_industry_code" json:"sub_industry_code"`
+	ScriptName      string               `gorm:"column:script_name" json:"script_name"`
 }
 
 func (u *StandardPositionEntity) TableName() string {

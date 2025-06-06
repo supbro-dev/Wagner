@@ -23,4 +23,7 @@ const (
 
 	ActionTypeError int    = 9006
 	ActionTypeMsg   string = "动作类型错误"
+
+	ElScriptMustUseMapCode int    = 9007
+	ElScriptMustUseMapMsg  string = "El表达式传参必须使用map类型"
 )

@@ -55,7 +55,9 @@ type Work interface {
 	GetWorkLoad() map[string]float64
 	GetProcessCode() string
 	GetProcess() StandardPosition
+	SetProcess(StandardPosition)
 	GetPropertyValue(propertyName string) interface{}
+	GetProperties() map[string]interface{}
 }
 
 func (a DirectWork) GetWorkType() ActionType {
@@ -94,6 +96,14 @@ func (a DirectWork) GetProcess() StandardPosition {
 	return a.process
 }
 
+func (a DirectWork) SetProcess(s StandardPosition) {
+	a.process = s
+}
+
+func (a DirectWork) GetProperties() map[string]interface{} {
+	return a.Properties
+}
+
 func (a IndirectWork) GetWorkType() ActionType {
 	return INDIRECT_WORK
 }
@@ -128,6 +138,14 @@ func (a IndirectWork) GetPropertyValue(propertyName string) interface{} {
 
 func (a IndirectWork) GetProcess() StandardPosition {
 	return a.process
+}
+
+func (a IndirectWork) SetProcess(s StandardPosition) {
+	a.process = s
+}
+
+func (a IndirectWork) GetProperties() map[string]interface{} {
+	return a.Properties
 }
 
 // 考勤

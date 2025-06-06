@@ -25,6 +25,8 @@ type ComputeContext struct {
 	CalcStartTime time.Time
 	// 计算结束时间
 	CalcEndTime time.Time
+	// 环节列表
+	ProcessList *[]StandardPosition
 
 	// 最近三天工作列表
 	YesterdayWorkList []Work

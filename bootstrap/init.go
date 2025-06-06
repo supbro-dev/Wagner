@@ -10,9 +10,11 @@ import (
 	"wagner/app/service/sink"
 	"wagner/app/service/standard_position"
 	"wagner/app/utils/gorm"
+	"wagner/app/utils/script_util"
 	yml_config "wagner/app/utils/yml_config/impl"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/olap_dao"
+	"wagner/script/golang"
 )
 
 func init() {
@@ -43,7 +45,7 @@ func init() {
 
 	employeeSnapshotService := employee_snapshot.CreateEmployeeSnapshotService(dao.CreateEmployeeDao(client))
 
-	standardPositionService := standard_position.CreateStandardPositionService(dao.CreateStandardPositionDao(client), workplaceDao)
+	standardPositionService := standard_position.CreateStandardPositionService(dao.CreateStandardPositionDao(client), workplaceDao, scriptDao)
 
 	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao, scriptDao)
 
@@ -65,4 +67,9 @@ func init() {
 	}
 
 	service.Holder = serviceHolder
+
+	// 注册计算节点脚本
+	script_util.Register("SetCrossDayAttendance", golang.SetCrossDayAttendance)
+	script_util.Register("ComputeDefaultEndTime", golang.ComputeDefaultEndTime)
+	script_util.Register("MarchProcess", golang.MarchProcess)
 }

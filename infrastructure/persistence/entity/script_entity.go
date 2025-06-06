@@ -18,13 +18,3 @@ type ScriptEntity struct {
 func (u *ScriptEntity) TableName() string {
 	return "script" // 自定义表名
 }
-
-type ScriptType string
-
-var (
-	LUA ScriptType = "LUA"
-	// 可以使用tengo，暂时未实现
-	GOLANG  ScriptType = "GOLANG"
-	REFLECT ScriptType = "REFLECT"
-	EL      ScriptType = "EL"
-)
