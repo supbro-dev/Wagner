@@ -19,10 +19,10 @@ import (
 
 // 人效计算参数
 type CalcParam struct {
-	InjectSource   *InjectSource
-	SinkStorages   *[]SinkStorage
-	CalcNodeList   *CalcNodeList
-	CalcOtherParam *CalcOtherParam
+	InjectSource   InjectSource
+	SinkStorages   []SinkStorage
+	CalcNodeList   CalcNodeList
+	CalcOtherParam CalcOtherParam
 }
 
 // 不同维度的存储属性
@@ -126,7 +126,7 @@ func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode strin
 	return &calcParam
 }
 
-func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynamicParamEntity) *[]SinkStorage {
+func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynamicParamEntity) []SinkStorage {
 	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
 		// todo 所有panic检查是否可以做处理
@@ -166,10 +166,10 @@ func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynami
 		fields = append(fields, sinkStorage)
 	}
 
-	return &fields
+	return fields
 }
 
-func (service CalcDynamicParamService) buildInjectSources(param entity.CalcDynamicParamEntity) *InjectSource {
+func (service CalcDynamicParamService) buildInjectSources(param entity.CalcDynamicParamEntity) InjectSource {
 	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
 		panic(err)
@@ -189,10 +189,10 @@ func (service CalcDynamicParamService) buildInjectSources(param entity.CalcDynam
 		}
 	}
 
-	return &originalField
+	return originalField
 }
 
-func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynamicParamEntity) *CalcNodeList {
+func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynamicParamEntity) CalcNodeList {
 	json, err := json_util.Parse2Json(param.Content)
 	if err != nil {
 		panic(err)
@@ -221,7 +221,7 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 		calcNodes = append(calcNodes, node)
 	}
 
-	return &CalcNodeList{&calcNodes}
+	return CalcNodeList{&calcNodes}
 }
 
 var defaultCalcOtherParam = CalcOtherParam{
@@ -238,7 +238,7 @@ var defaultCalcOtherParam = CalcOtherParam{
 	},
 }
 
-func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) *CalcOtherParam {
+func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) CalcOtherParam {
 	otherParam := CalcOtherParam{}
 	copyError := copier.Copy(&otherParam, &defaultCalcOtherParam)
 	if copyError != nil {
@@ -248,5 +248,5 @@ func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDyna
 	if err != nil {
 		panic(err)
 	}
-	return &otherParam
+	return otherParam
 }

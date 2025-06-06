@@ -36,9 +36,15 @@ type HourSummaryAggregateKey struct {
 }
 
 // 根据聚合属性构建一个用来聚合的汇总结果
-func MakeHourSummaryResult(aggregateKey HourSummaryAggregateKey) HourSummaryResult {
+func MakeHourSummaryResult(aggregateKey HourSummaryAggregateKey, work Work, field2Column map[string]string) HourSummaryResult {
 	result := HourSummaryResult{
 		AggregateKey: aggregateKey,
+		WorkLoad:     make(map[string]float64),
+		Properties:   make(map[string]interface{}),
+	}
+
+	for fieldName, columnName := range field2Column {
+		result.Properties[columnName] = work.GetPropertyValue(fieldName)
 	}
 	return result
 }

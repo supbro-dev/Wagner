@@ -2,10 +2,9 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"time"
-	"wagner/app/global/my_const"
 	"wagner/app/global/my_error"
 	"wagner/app/service"
+	"wagner/app/utils/datetime_util"
 	"wagner/app/utils/response"
 )
 
@@ -21,7 +20,7 @@ func (p EfficiencyComputeHandler) Invoke(c *gin.Context) {
 		return
 	}
 
-	operateDay, err := time.Parse(my_const.DateLayout, operateDayStr)
+	operateDay, err := datetime_util.ParseDate(operateDayStr)
 	if err != nil {
 		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, operateDayStr)
 		return

@@ -72,5 +72,5 @@ func getDsn() string {
 	Pass := variable.OrmConfig.GetString("Gorm.mysql.Pass")
 	Charset := variable.OrmConfig.GetString("Gorm.mysql.Charset")
 
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=false&loc=Local", User, Pass, Host, Port, DataBase, Charset)
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=%s&parseTime=true&loc=Local", User, Pass, Host, Port, DataBase, Charset)
 }
