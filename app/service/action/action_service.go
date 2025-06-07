@@ -28,11 +28,13 @@ func CreateActionService(actionDao *dao.ActionDao) *ActionService {
 // Parameters: employeeNumber，operateDayList 最近3天列表，originalFieldParam 属性映射关系
 // Returns: 天2动作列表
 func (service *ActionService) FindEmployeeActions(employeeNumber string, operateDayList []time.Time, originalFieldParam calc_dynamic_param.InjectSource) (day2WorkList map[time.Time][]domain.Work,
-	day2Attendance map[time.Time]domain.Attendance,
-	day2Scheduling map[time.Time]domain.Scheduling) {
+	day2Attendance map[time.Time]*domain.Attendance,
+	day2Scheduling map[time.Time]*domain.Scheduling) {
 	actionList := service.actionDao.FindBy(employeeNumber, operateDayList)
 
-	return convertAction(actionList, originalFieldParam)
+	list, attendance, scheduling := convertAction(actionList, originalFieldParam)
+
+	return list, attendance, scheduling
 }
 
 func (service *ActionService) FindWorkplaceActions(workplaceCode, operateDay string) []domain.Action {
@@ -41,12 +43,12 @@ func (service *ActionService) FindWorkplaceActions(workplaceCode, operateDay str
 
 func convertAction(actionEntities []*entity.ActionEntity, param calc_dynamic_param.InjectSource) (
 	day2WorkList map[time.Time][]domain.Work,
-	day2Attendance map[time.Time]domain.Attendance,
-	day2Scheduling map[time.Time]domain.Scheduling) {
+	day2Attendance map[time.Time]*domain.Attendance,
+	day2Scheduling map[time.Time]*domain.Scheduling) {
 
 	day2WorkList = make(map[time.Time][]domain.Work)
-	day2Attendance = make(map[time.Time]domain.Attendance)
-	day2Scheduling = make(map[time.Time]domain.Scheduling)
+	day2Attendance = make(map[time.Time]*domain.Attendance)
+	day2Scheduling = make(map[time.Time]*domain.Scheduling)
 
 	for _, e := range actionEntities {
 		actionType := e.ActionType
@@ -92,12 +94,12 @@ func convertAction(actionEntities []*entity.ActionEntity, param calc_dynamic_par
 			scheduling := domain.Scheduling{Action: domain.Action{Properties: properties}}
 
 			copier.Copy(&scheduling, &e)
-			day2Scheduling[operateDay] = scheduling
+			day2Scheduling[operateDay] = &scheduling
 		case domain.ATTENDANCE:
 			attendance := domain.Attendance{Action: domain.Action{Properties: properties}}
 
 			copier.Copy(&attendance, &e)
-			day2Attendance[operateDay] = attendance
+			day2Attendance[operateDay] = &attendance
 		default:
 
 		}

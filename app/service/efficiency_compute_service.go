@@ -99,7 +99,7 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 	workParam calc_dynamic_param.WorkParam) []*domain.HourSummaryResult {
 	// 1. 对Action按开始时间排序
 	sort.Slice(works, func(i, j int) bool {
-		return works[i].GetAction().ComputedStartTime.Before(works[j].GetAction().ComputedStartTime)
+		return works[i].GetAction().ComputedStartTime.Before(*(works[j].GetAction().ComputedStartTime))
 	})
 
 	// 2. 创建桶收集聚合结果
@@ -107,8 +107,8 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 
 	// 3. 处理每个Action
 	for _, work := range works {
-		start := work.GetAction().ComputedStartTime
-		end := work.GetAction().ComputedEndTime
+		start := *(work.GetAction().ComputedStartTime)
+		end := *(work.GetAction().ComputedEndTime)
 
 		// 处理开始和结束时间相等的情况
 		if start.Equal(end) {

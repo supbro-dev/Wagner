@@ -18,12 +18,12 @@ func SetCrossDayAttendance(ctx *domain.ComputeContext) *domain.ComputeContext {
 		ctx.TodayAttendanceEndTime = ctx.TodayAttendance.EndTime
 	}
 	// 未设置过前一天考勤下班时间
-	if &ctx.YesterdayAttendance != nil && &ctx.YesterdayAttendanceEndTime == nil {
+	if &ctx.YesterdayAttendance != nil && ctx.YesterdayAttendanceEndTime == nil {
 		ctx.YesterdayAttendanceStartTime = ctx.YesterdayAttendance.StartTime
 		ctx.YesterdayAttendanceEndTime = ctx.YesterdayAttendance.EndTime
 	}
 	// 未设置过第二天考勤上班时间
-	if &ctx.TomorrowAttendance != nil && &ctx.TomorrowAttendanceStartTime == nil {
+	if &ctx.TomorrowAttendance != nil && ctx.TomorrowAttendanceStartTime == nil {
 		ctx.TomorrowAttendanceStartTime = ctx.TomorrowAttendance.StartTime
 	}
 

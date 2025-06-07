@@ -14,13 +14,13 @@ type Action struct {
 	// 动作类型
 	ActionType ActionType
 	// 原始开始时间
-	StartTime time.Time
+	StartTime *time.Time
 	// 原始结束时间
-	EndTime time.Time
+	EndTime *time.Time
 	// 计算后开始时间
-	ComputedStartTime time.Time
+	ComputedStartTime *time.Time
 	// 计算后技术时间
-	ComputedEndTime time.Time
+	ComputedEndTime *time.Time
 	// 额外属性
 	Properties map[string]interface{} `copier:"-"` // 字段排除
 	// 加工处理过程
@@ -45,6 +45,7 @@ type IndirectWork struct {
 	Action
 }
 
+// 使用Work声明对象或切片时不需要使用&Work,因为是DirectWork/IndirectWork的指针实现的Work接口
 // 作业（直接&间接）
 type Work interface {
 	GetAction() Action
