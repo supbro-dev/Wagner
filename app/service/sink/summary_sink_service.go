@@ -8,6 +8,7 @@ package sink
 
 import (
 	"fmt"
+	"strings"
 	"time"
 	"wagner/app/domain"
 	"wagner/app/utils/json_util"
@@ -27,7 +28,7 @@ func CreateSummarySinkService(hourSummaryResultDao *olap_dao.HourSummaryResultDa
 func (service *SummarySinkService) BatchInsertSummaryResult(resultList []*domain.HourSummaryResult, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time) {
 	entityList := service.convertDomain2Entity(resultList, employee, workplace, operateDay)
 
-	service.hourSummaryResultDao.BatchInsert(entityList)
+	service.hourSummaryResultDao.BatchInsertOrUpdateByUnqKey(entityList)
 }
 
 func (service *SummarySinkService) convertDomain2Entity(resultList []*domain.HourSummaryResult, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time) []*entity.HourSummaryResultEntity {
@@ -53,6 +54,7 @@ func (service *SummarySinkService) convertDomain2Entity(resultList []*domain.Hou
 			IdleTime:             d.IdleTime,
 			AttendanceTime:       d.AttendanceTime,
 			Properties:           json_util.ToJsonString(d.Properties),
+			UniqueKey:            service.generateUniqueKey(&d.AggregateKey),
 		}
 
 		list = append(list, &e)
@@ -86,4 +88,8 @@ func (service *SummarySinkService) convert2ProcessProperty(process *domain.Stand
 	}
 
 	return string(s)
+}
+
+func (service *SummarySinkService) generateUniqueKey(key *domain.HourSummaryAggregateKey) string {
+	return strings.Join([]string{key.EmployeeNumber, key.OperateTime.String(), key.ProcessCode, key.WorkplaceCode, key.PropertyValues}, "")
 }
