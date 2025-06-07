@@ -16,8 +16,8 @@ func CreateActionRepository(client *gorm.DB) *ActionDao {
 	return &ActionDao{db: client}
 }
 
-func (dao *ActionDao) FindBy(employeeNumber string, operateDayList []time.Time) []entity.ActionEntity {
-	var actions []entity.ActionEntity
+func (dao *ActionDao) FindBy(employeeNumber string, operateDayList []time.Time) []*entity.ActionEntity {
+	var actions []*entity.ActionEntity
 	dao.db.Where("employee_number = ? and operate_day in ?", employeeNumber, dao.TimeList2DateList(operateDayList)).Order("operate_day asc").Find(&actions)
 	return actions
 }

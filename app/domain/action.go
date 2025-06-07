@@ -25,13 +25,17 @@ type Action struct {
 	Properties map[string]interface{} `copier:"-"` // 字段排除
 	// 加工处理过程
 	ProcessList []string
+	// 环节编码
+	ProcessCode string
+	// 环节实例
+	Process StandardPosition
 }
 
 // 直接作业
 type DirectWork struct {
 	Action
 	// 工作量
-	WorkLoad map[string]interface{}
+	WorkLoad map[string]float64
 	// 任务的发起人
 	Starter string
 }
@@ -43,15 +47,33 @@ type IndirectWork struct {
 
 // 作业（直接&间接）
 type Work interface {
-	GetWorkType() ActionType
+	GetAction() Action
+	SetProcess(position StandardPosition)
+	GetWorkLoad() map[string]float64
 }
 
-func (a DirectWork) GetWorkType() ActionType {
-	return DIRECT_WORK
+func (d *DirectWork) GetAction() Action {
+	return d.Action
 }
 
-func (a IndirectWork) GetWorkType() ActionType {
-	return INDIRECT_WORK
+func (d *DirectWork) SetProcess(position StandardPosition) {
+	d.Action.Process = position
+}
+
+func (d *DirectWork) GetWorkLoad() map[string]float64 {
+	return d.WorkLoad
+}
+
+func (in *IndirectWork) GetAction() Action {
+	return in.Action
+}
+
+func (in *IndirectWork) SetProcess(position StandardPosition) {
+	in.Action.Process = position
+}
+
+func (in *IndirectWork) GetWorkLoad() map[string]float64 {
+	return nil
 }
 
 // 考勤
@@ -79,6 +101,8 @@ var (
 	SHORT_BREAK ActionType = "ShortBreak"
 	// 外出就餐
 	MEAL_TIME ActionType = "MealTime"
+	// 闲置工时
+	IDLE ActionType = "Idle"
 )
 
 // 任务的开始人放在扩展属性里

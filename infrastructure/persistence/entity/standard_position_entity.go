@@ -7,10 +7,11 @@ type StandardPositionEntity struct {
 	Name            string               `gorm:"column:name" json:"name"`
 	ParentCode      string               `gorm:"column:parent_code" json:"parent_code"`
 	Type            StandardPositionType `gorm:"column:type" json:"type"`
-	Level           string               `gorm:"column:level" json:"level"`
+	Level           int                  `gorm:"column:level" json:"level"`
 	Version         string               `gorm:"column:version" json:"version"`
 	IndustryCode    string               `gorm:"column:industry_code" json:"industry_code"`
 	SubIndustryCode string               `gorm:"column:sub_industry_code" json:"sub_industry_code"`
+	Script          string               `gorm:"column:script" json:"script"`
 }
 
 func (u *StandardPositionEntity) TableName() string {

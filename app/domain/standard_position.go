@@ -9,6 +9,13 @@ package domain
 type StandardPosition struct {
 	Name string
 	Code string
+	// 层级（1代表一级部门、2代表2级部门，最后一级为环节，倒数第二级为岗位）
+	Level int
+	// 最大部门层级
+	MaxDeptLevel int
+
 	// 路径
-	Path []StandardPosition
+	Path []*StandardPosition
+	// 环节匹配执行脚本
+	Script string
 }

@@ -7,10 +7,15 @@ import (
 	"wagner/app/service/action"
 	"wagner/app/service/calc_dynamic_param"
 	"wagner/app/service/employee_snapshot"
+	"wagner/app/service/sink"
 	"wagner/app/service/standard_position"
+	"wagner/app/service/workplace"
 	"wagner/app/utils/gorm"
+	"wagner/app/utils/script_util"
 	yml_config "wagner/app/utils/yml_config/impl"
 	"wagner/infrastructure/persistence/dao"
+	"wagner/infrastructure/persistence/olap_dao"
+	"wagner/script/golang"
 )
 
 func init() {
@@ -28,6 +33,12 @@ func init() {
 		panic(err)
 	}
 
+	olapClient, err := gorm.GetOneOlapClient()
+
+	if err != nil {
+		panic(err)
+	}
+
 	workplaceDao := dao.CreateWorkplaceDao(client)
 	scriptDao := dao.CreateScriptDao(client)
 
@@ -39,11 +50,16 @@ func init() {
 
 	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao, scriptDao)
 
+	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapClient))
+
+	workplaceService := workplace.CreateWorkplaceService(workplaceDao)
+
 	domainServiceHolder := service.DomainServiceHolder{
 		EmployeeSnapshotService: employeeSnapshotService,
 		ActionService:           actionService,
 		StandardPositionService: standardPositionService,
 		CalcDynamicParamService: calcDynamicParamService,
+		WorkplaceService:        workplaceService,
 	}
 
 	service.DomainHolder = domainServiceHolder
@@ -51,7 +67,13 @@ func init() {
 	efficiencyComputeService := service.EfficiencyComputeService{}
 	serviceHolder := service.ServiceHolder{
 		EfficiencyComputeService: &efficiencyComputeService,
+		SummarySinkService:       summarySinkService,
 	}
 
 	service.Holder = serviceHolder
+
+	// 注册计算节点脚本
+	script_util.Register("SetCrossDayAttendance", golang.SetCrossDayAttendance)
+	script_util.Register("ComputeDefaultEndTime", golang.ComputeDefaultEndTime)
+	script_util.Register("MarchProcess", golang.MarchProcess)
 }

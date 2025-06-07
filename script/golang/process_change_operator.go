@@ -9,13 +9,5 @@ package golang
 import "wagner/app/domain"
 
 func ProcessChangeOperator(ctx *domain.ComputeContext) *domain.ComputeContext {
-
-}
-
-func handleChangeOperatorTime(actionList *[]domain.Action) {
-	for _, action := range actionList {
-		if action.IsChangeOperator() {
-
-		}
-	}
+	return ctx
 }

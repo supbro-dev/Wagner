@@ -7,6 +7,7 @@
 package json_util
 
 import (
+	"encoding/json"
 	"github.com/bitly/go-simplejson"
 )
 
@@ -25,4 +26,40 @@ func Parse2Json(data string) (*simplejson.Json, error) {
 		return nil, err
 	}
 	return json, nil
+}
+
+func Parse2Map(data string) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	err := json.Unmarshal([]byte(data), &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func Parse2Object[T any](data string, obj *T) error {
+	// 将字符串转为字节切片
+	jsonBytes := []byte(data)
+
+	// 反序列化
+	err := json.Unmarshal(jsonBytes, obj)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// 创建一个空json串
+func NewJson() *simplejson.Json {
+	return simplejson.New()
+}
+
+// 对象转化成json字符串
+func ToJsonString(obj interface{}) string {
+	if jsonBytes, err := json.Marshal(obj); err != nil {
+		panic(err)
+	} else {
+		return string(jsonBytes)
+	}
 }
