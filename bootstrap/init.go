@@ -76,4 +76,5 @@ func init() {
 	script_util.Register("SetCrossDayAttendance", golang.SetCrossDayAttendance)
 	script_util.Register("ComputeDefaultEndTime", golang.ComputeDefaultEndTime)
 	script_util.Register("MarchProcess", golang.MarchProcess)
+	script_util.Register("CutOffAttendanceTime", golang.CutOffAttendanceTime)
 }

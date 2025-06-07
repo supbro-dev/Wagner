@@ -17,16 +17,16 @@ func ComputeDefaultEndTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 	// 今天下班卡缺卡
 	if &ctx.TodayAttendanceEndTime == nil && &ctx.TodayAttendanceStartTime != nil {
-		defaultEndTime := computeAttendanceEndTime(now, ctx.TodayAttendanceStartTime, ctx.TomorrowAttendanceStartTime, ctx.TodayScheduling, ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour)
-		ctx.TodayAttendanceEndTime = defaultEndTime
+		defaultEndTime := computeAttendanceEndTime(&now, ctx.TodayAttendanceStartTime, ctx.TomorrowAttendanceStartTime, ctx.TodayScheduling, ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour)
+		ctx.TodayAttendanceEndTime = &defaultEndTime
 	} else {
 		ctx.TodayAttendanceNoMissing = true
 	}
 
 	// 前一天下班卡缺卡
 	if &ctx.YesterdayAttendanceEndTime == nil && &ctx.YesterdayAttendanceStartTime != nil {
-		defaultEndTime := computeAttendanceEndTime(now, ctx.YesterdayAttendanceStartTime, ctx.TodayAttendanceStartTime, ctx.YesterdayScheduling, ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour)
-		ctx.YesterdayAttendanceEndTime = defaultEndTime
+		defaultEndTime := computeAttendanceEndTime(&now, ctx.YesterdayAttendanceStartTime, ctx.TodayAttendanceStartTime, ctx.YesterdayScheduling, ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour)
+		ctx.YesterdayAttendanceEndTime = &defaultEndTime
 	}
 
 	return ctx
@@ -35,7 +35,7 @@ func ComputeDefaultEndTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 // 计算缺卡情况下的考勤下班时间
 // Parameters: now 当前时间, todayAttendanceStartTime 当天考勤上班还见, tomorrowAttendanceStartTime 第二天考勤上班时间，todayScheduling 排班信息， attendanceAbsencePenaltyHour 考勤缺卡惩罚时间(H)
 // Returns:
-func computeAttendanceEndTime(now, todayAttendanceStartTime, tomorrowAttendanceStartTime time.Time, todayScheduling domain.Scheduling, attendanceAbsencePenaltyHour int) time.Time {
+func computeAttendanceEndTime(now, todayAttendanceStartTime, tomorrowAttendanceStartTime *time.Time, todayScheduling domain.Scheduling, attendanceAbsencePenaltyHour int) time.Time {
 	// 计算下班缺卡惩罚时间
 	penaltyDefaultAttendanceEndTime := todayAttendanceStartTime.Add(time.Duration(attendanceAbsencePenaltyHour) * time.Hour)
 
@@ -72,8 +72,8 @@ func computeAttendanceEndTime(now, todayAttendanceStartTime, tomorrowAttendanceS
 	}
 
 	// 如果是当天，且当前时间处于惩罚结束时间和系统判定的结束时间之间，使用当前时间作为默认结束时间，为了处理当天员工未下班且已经工作到惩罚结束时间之后的场景
-	if penaltyDefaultAttendanceEndTime.Before(now) && now.Before(defaultAttendanceEndTime) {
-		defaultAttendanceEndTime = now
+	if penaltyDefaultAttendanceEndTime.Before(*now) && now.Before(defaultAttendanceEndTime) {
+		defaultAttendanceEndTime = *now
 	} else {
 		defaultAttendanceEndTime = penaltyDefaultAttendanceEndTime
 	}
@@ -81,14 +81,14 @@ func computeAttendanceEndTime(now, todayAttendanceStartTime, tomorrowAttendanceS
 	// 考虑第二天上班时间的情况
 	if &tomorrowAttendanceStartTime != nil {
 		// 如果默认下班时间超过第二天的上班时间，自动给下班时间设置为第二天上班时间减一秒，防止两天的考勤交叉
-		if defaultAttendanceEndTime.Equal(tomorrowAttendanceStartTime) || defaultAttendanceEndTime.After(tomorrowAttendanceStartTime) {
+		if defaultAttendanceEndTime.Equal(*tomorrowAttendanceStartTime) || defaultAttendanceEndTime.After(*tomorrowAttendanceStartTime) {
 			defaultAttendanceEndTime = tomorrowAttendanceStartTime.Add(-time.Second)
 		}
 	}
 
 	// 默认下班时间不超过当前时间
-	if defaultAttendanceEndTime.After(now) {
-		defaultAttendanceEndTime = now
+	if defaultAttendanceEndTime.After(*now) {
+		defaultAttendanceEndTime = *now
 	}
 
 	return defaultAttendanceEndTime

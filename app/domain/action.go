@@ -24,7 +24,7 @@ type Action struct {
 	// 额外属性
 	Properties map[string]interface{} `copier:"-"` // 字段排除
 	// 加工处理过程
-	ProcessList []string
+	OperationMsgList []string
 	// 环节编码
 	ProcessCode string
 	// 环节实例
@@ -84,6 +84,14 @@ type Attendance struct {
 // 排班
 type Scheduling struct {
 	Action
+}
+
+// 追加Action操作日志
+func (a *Action) AppendOperationMsg(msg string) {
+	if &a.OperationMsgList == nil {
+		a.OperationMsgList = make([]string, 0)
+	}
+	a.OperationMsgList = append(a.OperationMsgList, msg)
 }
 
 type ActionType string
