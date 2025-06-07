@@ -32,14 +32,14 @@ func (service *ActionService) FindEmployeeActions(employeeNumber string, operate
 	day2Scheduling map[time.Time]domain.Scheduling) {
 	actionList := service.actionDao.FindBy(employeeNumber, operateDayList)
 
-	return convertAction(&actionList, originalFieldParam)
+	return convertAction(actionList, originalFieldParam)
 }
 
 func (service *ActionService) FindWorkplaceActions(workplaceCode, operateDay string) []domain.Action {
 	return nil
 }
 
-func convertAction(actionEntities *[]entity.ActionEntity, param calc_dynamic_param.InjectSource) (
+func convertAction(actionEntities []*entity.ActionEntity, param calc_dynamic_param.InjectSource) (
 	day2WorkList map[time.Time][]domain.Work,
 	day2Attendance map[time.Time]domain.Attendance,
 	day2Scheduling map[time.Time]domain.Scheduling) {
@@ -48,7 +48,7 @@ func convertAction(actionEntities *[]entity.ActionEntity, param calc_dynamic_par
 	day2Attendance = make(map[time.Time]domain.Attendance)
 	day2Scheduling = make(map[time.Time]domain.Scheduling)
 
-	for _, e := range *actionEntities {
+	for _, e := range actionEntities {
 		actionType := e.ActionType
 		properties := handleExtraProperty(e.Properties, param)
 		operateDay := e.OperateDay
@@ -75,7 +75,7 @@ func convertAction(actionEntities *[]entity.ActionEntity, param calc_dynamic_par
 			if day2WorkList[work.OperateDay] == nil {
 				day2WorkList[work.OperateDay] = make([]domain.Work, 0)
 			}
-			day2WorkList[work.OperateDay] = append(day2WorkList[work.OperateDay], work)
+			day2WorkList[work.OperateDay] = append(day2WorkList[work.OperateDay], &work)
 		case domain.INDIRECT_WORK:
 			work := domain.IndirectWork{Action: domain.Action{Properties: properties}}
 
@@ -87,7 +87,7 @@ func convertAction(actionEntities *[]entity.ActionEntity, param calc_dynamic_par
 			if day2WorkList[work.OperateDay] == nil {
 				day2WorkList[work.OperateDay] = make([]domain.Work, 0)
 			}
-			day2WorkList[work.OperateDay] = append(day2WorkList[work.OperateDay], work)
+			day2WorkList[work.OperateDay] = append(day2WorkList[work.OperateDay], &work)
 		case domain.SCHEDULING:
 			scheduling := domain.Scheduling{Action: domain.Action{Properties: properties}}
 

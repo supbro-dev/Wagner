@@ -47,7 +47,7 @@ type InjectSource struct {
 }
 
 type CalcNodeList struct {
-	List *[]CalcNode
+	List []*CalcNode
 }
 
 // 计算节点
@@ -208,7 +208,7 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 		scriptName2Entity[scriptEntity.Name] = scriptEntity
 	}
 
-	calcNodes := make([]CalcNode, 0)
+	calcNodes := make([]*CalcNode, 0)
 	for _, nodeName := range nodeNames {
 		if scriptEntity, exists := scriptName2Entity[nodeName]; exists {
 			scriptType := script_util.ScriptType(scriptEntity.Type)
@@ -218,11 +218,11 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 				NodeType: scriptType,
 				Script:   scriptEntity.Content,
 			}
-			calcNodes = append(calcNodes, node)
+			calcNodes = append(calcNodes, &node)
 		}
 	}
 
-	return CalcNodeList{&calcNodes}
+	return CalcNodeList{calcNodes}
 }
 
 var defaultCalcOtherParam = CalcOtherParam{

@@ -44,18 +44,20 @@ func MakeHourSummaryResult(aggregateKey HourSummaryAggregateKey, work Work, fiel
 		AggregateKey: aggregateKey,
 		WorkLoad:     make(map[string]float64),
 		Properties:   make(map[string]interface{}),
-		Process:      work.GetProcess(),
+		Process:      work.GetAction().Process,
 	}
 
 	for fieldName, columnName := range field2Column {
-		result.Properties[columnName] = work.GetPropertyValue(fieldName)
+		if value, exist := work.GetAction().Properties[fieldName]; exist {
+			result.Properties[columnName] = value
+		}
 	}
 	return result
 }
 
 func (r *HourSummaryResult) MergeTime(work Work, duration float64) {
 	durationTime := int(duration)
-	switch work.GetWorkType() {
+	switch work.GetAction().ActionType {
 	case DIRECT_WORK:
 		r.DirectWorkTime += durationTime
 		r.AttendanceTime += durationTime

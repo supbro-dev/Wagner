@@ -21,6 +21,6 @@ func CreateHourSummaryResultDao(olapClient *gorm.DB) *HourSummaryResultDao {
 
 const batchSize = 500
 
-func (dao *HourSummaryResultDao) BatchInsert(resultList *[]entity.HourSummaryResultEntity) {
-	dao.olapDb.CreateInBatches(resultList, batchSize)
+func (dao *HourSummaryResultDao) BatchInsert(resultList []*entity.HourSummaryResultEntity) {
+	dao.olapDb.Omit("gmt_create", "gmt_modified").CreateInBatches(resultList, batchSize)
 }

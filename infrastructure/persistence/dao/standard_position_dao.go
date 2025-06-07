@@ -19,18 +19,18 @@ func (dao *StandardPositionDao) FindByCode(code string) entity.StandardPositionE
 	return standardPosition
 }
 
-func (dao *StandardPositionDao) FindByIndustry(industryCode string, subIndustryCode string, version int) *[]entity.StandardPositionEntity {
-	array := make([]entity.StandardPositionEntity, 0)
+func (dao *StandardPositionDao) FindByIndustry(industryCode string, subIndustryCode string, version int) []*entity.StandardPositionEntity {
+	array := make([]*entity.StandardPositionEntity, 0)
 	if subIndustryCode != "" {
 		dao.db.Where("industry_code = ? and sub_industry_code = ? and version = ?", industryCode, subIndustryCode, version).Find(&array)
 		if len(array) > 0 {
-			return &array
+			return array
 		}
 		dao.db.Where("industry_code = ? and version = ?", industryCode, version).Find(&array)
-		return &array
+		return array
 	} else {
 		dao.db.Where("industry_code = ? and version = ?", industryCode, version).Find(&array)
-		return &array
+		return array
 	}
 }
 

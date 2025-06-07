@@ -24,15 +24,15 @@ func CreateSummarySinkService(hourSummaryResultDao *olap_dao.HourSummaryResultDa
 	return &SummarySinkService{hourSummaryResultDao: hourSummaryResultDao}
 }
 
-func (service *SummarySinkService) BatchInsertSummaryResult(resultList *[]domain.HourSummaryResult, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time) {
+func (service *SummarySinkService) BatchInsertSummaryResult(resultList []*domain.HourSummaryResult, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time) {
 	entityList := service.convertDomain2Entity(resultList, employee, workplace, operateDay)
 
 	service.hourSummaryResultDao.BatchInsert(entityList)
 }
 
-func (service *SummarySinkService) convertDomain2Entity(resultList *[]domain.HourSummaryResult, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time) *[]entity.HourSummaryResultEntity {
-	list := make([]entity.HourSummaryResultEntity, 0)
-	for _, d := range *resultList {
+func (service *SummarySinkService) convertDomain2Entity(resultList []*domain.HourSummaryResult, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time) []*entity.HourSummaryResultEntity {
+	list := make([]*entity.HourSummaryResultEntity, 0)
+	for _, d := range resultList {
 		e := entity.HourSummaryResultEntity{
 			OperateTime:          d.AggregateKey.OperateTime,
 			OperateDay:           operateDay,
@@ -55,10 +55,10 @@ func (service *SummarySinkService) convertDomain2Entity(resultList *[]domain.Hou
 			Properties:           json_util.ToJsonString(d.Properties),
 		}
 
-		list = append(list, e)
+		list = append(list, &e)
 	}
 
-	return &list
+	return list
 }
 
 func (service *SummarySinkService) getPositionCode(process *domain.StandardPosition) string {
@@ -80,10 +80,10 @@ func (service *SummarySinkService) convert2ProcessProperty(process *domain.Stand
 		}
 	}
 
-	s, err := json.String()
+	s, err := json.MarshalJSON()
 	if err != nil {
 		panic(err)
 	}
 
-	return s
+	return string(s)
 }

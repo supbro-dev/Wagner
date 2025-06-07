@@ -20,19 +20,20 @@ func MarchProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 			work.SetProcess(*process)
 		}
 	}
+
 	return ctx
 }
 
 // 遍历所有环节节点，根据表达式匹配到第一个环节
-func findFirstProcess(work *domain.Work, processList *[]domain.StandardPosition) *domain.StandardPosition {
-	for _, process := range *processList {
+func findFirstProcess(work *domain.Work, processList []*domain.StandardPosition) *domain.StandardPosition {
+	for _, process := range processList {
 		if process.Script == "" {
 			continue
 		}
-		isThisProcess, err := script_util.Run[map[string]interface{}, bool]("", process.Script, script_util.EL, (*work).GetProperties())
+		isThisProcess, err := script_util.Run[map[string]interface{}, bool]("", process.Script, script_util.EL, (*work).GetAction().Properties)
 
 		if isThisProcess && err == nil {
-			return &process
+			return process
 		}
 	}
 

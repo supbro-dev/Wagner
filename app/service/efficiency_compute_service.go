@@ -62,7 +62,7 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	// 4.循环执行所有节点
 	ctx.CalcStartTime = time.Now()
 	ctxPointer := &ctx
-	for _, node := range *calcParam.CalcNodeList.List {
+	for _, node := range calcParam.CalcNodeList.List {
 		ctxRes, err := script_util.Run[*domain.ComputeContext, *domain.ComputeContext](node.NodeName, node.Script, node.NodeType, ctxPointer)
 		ctxPointer = ctxRes
 		if err != nil {
@@ -75,7 +75,7 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	for _, storage := range calcParam.SinkStorages {
 		switch storage.SinkType {
 		case my_const.SUMMARY:
-			service.handleSummary(ctx, storage, calcParam.CalcOtherParam, standardPositionList)
+			service.handleSummary(ctx, storage, calcParam.CalcOtherParam)
 		}
 	}
 
@@ -86,7 +86,7 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 }
 
 // 处理聚合存储逻辑
-func (service *EfficiencyComputeService) handleSummary(ctx domain.ComputeContext, storageParam calc_dynamic_param.SinkStorage, otherParam calc_dynamic_param.CalcOtherParam, processList *[]domain.StandardPosition) {
+func (service *EfficiencyComputeService) handleSummary(ctx domain.ComputeContext, storageParam calc_dynamic_param.SinkStorage, otherParam calc_dynamic_param.CalcOtherParam) {
 	summarySinkService := Holder.SummarySinkService
 	hourSummaryResultList := service.efficientAggregateActions(ctx.TodayWorkList, storageParam, otherParam.HourSummary, otherParam.Work)
 	summarySinkService.BatchInsertSummaryResult(hourSummaryResultList, ctx.Employee, ctx.Workplace, ctx.OperateDay)
@@ -96,10 +96,10 @@ func (service *EfficiencyComputeService) handleSummary(ctx domain.ComputeContext
 func (service *EfficiencyComputeService) efficientAggregateActions(works []domain.Work,
 	storageParam calc_dynamic_param.SinkStorage,
 	summaryParam calc_dynamic_param.HourSummaryParam,
-	workParam calc_dynamic_param.WorkParam) *[]domain.HourSummaryResult {
+	workParam calc_dynamic_param.WorkParam) []*domain.HourSummaryResult {
 	// 1. 对Action按开始时间排序
 	sort.Slice(works, func(i, j int) bool {
-		return works[i].GetComputedStartTime().Before(works[j].GetComputedStartTime())
+		return works[i].GetAction().ComputedStartTime.Before(works[j].GetAction().ComputedStartTime)
 	})
 
 	// 2. 创建桶收集聚合结果
@@ -107,8 +107,8 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 
 	// 3. 处理每个Action
 	for _, work := range works {
-		start := work.GetComputedStartTime()
-		end := work.GetComputedEndTime()
+		start := work.GetAction().ComputedStartTime
+		end := work.GetAction().ComputedEndTime
 
 		// 处理开始和结束时间相等的情况
 		if start.Equal(end) {
@@ -209,9 +209,9 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 	}
 
 	// 4. 将桶转换为有序切片
-	result := make([]domain.HourSummaryResult, 0, len(buckets))
+	result := make([]*domain.HourSummaryResult, 0, len(buckets))
 	for _, bucket := range buckets {
-		result = append(result, *bucket)
+		result = append(result, bucket)
 	}
 
 	// 5. 按小时排序结果
@@ -219,7 +219,7 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 		return result[i].AggregateKey.OperateTime.Before(result[j].AggregateKey.OperateTime)
 	})
 
-	return &result
+	return result
 }
 
 // 辅助函数：获取或创建桶
@@ -239,15 +239,15 @@ func (service *EfficiencyComputeService) getOrCreateBucket(buckets map[domain.Ho
 
 func (service *EfficiencyComputeService) buildAggregateKey(operateTime time.Time, work domain.Work, aggregateFields []string) domain.HourSummaryAggregateKey {
 	key := domain.HourSummaryAggregateKey{
-		EmployeeNumber: work.GetEmployeeNumber(),
-		WorkplaceCode:  work.GetWorkplaceCode(),
-		ProcessCode:    work.GetProcessCode(),
+		EmployeeNumber: work.GetAction().EmployeeNumber,
+		WorkplaceCode:  work.GetAction().WorkplaceCode,
+		ProcessCode:    work.GetAction().ProcessCode,
 		OperateTime:    operateTime,
 	}
 
 	var str = ""
 	for _, field := range aggregateFields {
-		value := work.GetPropertyValue(field)
+		value := work.GetAction().Properties[field]
 		str += fmt.Sprint(value) + "|"
 	}
 

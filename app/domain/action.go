@@ -28,7 +28,7 @@ type Action struct {
 	// 环节编码
 	ProcessCode string
 	// 环节实例
-	process StandardPosition
+	Process StandardPosition
 }
 
 // 直接作业
@@ -47,105 +47,33 @@ type IndirectWork struct {
 
 // 作业（直接&间接）
 type Work interface {
-	GetEmployeeNumber() string
-	GetWorkplaceCode() string
-	GetWorkType() ActionType
-	GetComputedStartTime() time.Time
-	GetComputedEndTime() time.Time
+	GetAction() Action
+	SetProcess(position StandardPosition)
 	GetWorkLoad() map[string]float64
-	GetProcessCode() string
-	GetProcess() StandardPosition
-	SetProcess(StandardPosition)
-	GetPropertyValue(propertyName string) interface{}
-	GetProperties() map[string]interface{}
 }
 
-func (a DirectWork) GetWorkType() ActionType {
-	return DIRECT_WORK
+func (d *DirectWork) GetAction() Action {
+	return d.Action
 }
 
-func (a DirectWork) GetComputedStartTime() time.Time {
-	return a.ComputedStartTime
+func (d *DirectWork) SetProcess(position StandardPosition) {
+	d.Action.Process = position
 }
 
-func (a DirectWork) GetComputedEndTime() time.Time {
-	return a.ComputedEndTime
+func (d *DirectWork) GetWorkLoad() map[string]float64 {
+	return d.WorkLoad
 }
 
-func (a DirectWork) GetWorkLoad() map[string]float64 {
-	return a.WorkLoad
+func (in *IndirectWork) GetAction() Action {
+	return in.Action
 }
 
-func (a DirectWork) GetEmployeeNumber() string {
-	return a.EmployeeNumber
+func (in *IndirectWork) SetProcess(position StandardPosition) {
+	in.Action.Process = position
 }
 
-func (a DirectWork) GetWorkplaceCode() string {
-	return a.WorkplaceCode
-}
-
-func (a DirectWork) GetProcessCode() string {
-	return a.ProcessCode
-}
-
-func (a DirectWork) GetPropertyValue(propertyName string) interface{} {
-	return a.Properties[propertyName]
-}
-
-func (a DirectWork) GetProcess() StandardPosition {
-	return a.process
-}
-
-func (a DirectWork) SetProcess(s StandardPosition) {
-	a.process = s
-}
-
-func (a DirectWork) GetProperties() map[string]interface{} {
-	return a.Properties
-}
-
-func (a IndirectWork) GetWorkType() ActionType {
-	return INDIRECT_WORK
-}
-
-func (a IndirectWork) GetComputedStartTime() time.Time {
-	return a.ComputedStartTime
-}
-
-func (a IndirectWork) GetComputedEndTime() time.Time {
-	return a.ComputedEndTime
-}
-
-func (a IndirectWork) GetWorkLoad() map[string]float64 {
-	return make(map[string]float64)
-}
-
-func (a IndirectWork) GetEmployeeNumber() string {
-	return a.EmployeeNumber
-}
-
-func (a IndirectWork) GetWorkplaceCode() string {
-	return a.WorkplaceCode
-}
-
-func (a IndirectWork) GetProcessCode() string {
-	return a.ProcessCode
-}
-
-func (a IndirectWork) GetPropertyValue(propertyName string) interface{} {
-	return a.Properties[propertyName]
-}
-
-func (a IndirectWork) GetProcess() StandardPosition {
-	return a.process
-}
-
-func (a IndirectWork) SetProcess(s StandardPosition) {
-	a.process = s
-}
-
-func (a IndirectWork) GetProperties() map[string]interface{} {
-	return a.Properties
+func (in *IndirectWork) GetWorkLoad() map[string]float64 {
+	return nil
 }
 
 // 考勤

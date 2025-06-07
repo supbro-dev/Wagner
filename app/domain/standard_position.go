@@ -15,7 +15,7 @@ type StandardPosition struct {
 	MaxDeptLevel int
 
 	// 路径
-	Path []StandardPosition
+	Path []*StandardPosition
 	// 环节匹配执行脚本
 	Script string
 }
