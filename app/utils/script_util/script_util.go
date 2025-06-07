@@ -8,7 +8,7 @@ package script_util
 
 import (
 	"fmt"
-	"github.com/Knetic/govaluate"
+	"github.com/PaesslerAG/gval"
 	"github.com/d5/tengo/v2"
 	"github.com/d5/tengo/v2/stdlib"
 	lua "github.com/yuin/gopher-lua"
@@ -94,12 +94,9 @@ func isMapStringInterface(input interface{}) bool {
 }
 
 func runEl[P map[string]interface{}, V any](script string, input P) (V, error) {
-	expr, _ := govaluate.NewEvaluableExpression(script)
-
-	// 执行表达式
-	result, err := expr.Evaluate(input)
-
-	return result.(V), err
+	// 简单表达式
+	value, err := gval.Evaluate(script, input)
+	return value.(V), err
 }
 
 // 这里使用反射的原因是函数注册的时候无法使用泛型
