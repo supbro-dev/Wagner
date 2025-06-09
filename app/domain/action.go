@@ -48,13 +48,14 @@ type IndirectWork struct {
 // 使用Work声明对象或切片时不需要使用&Work,因为是DirectWork/IndirectWork的指针实现的Work接口
 // 作业（直接&间接）
 type Work interface {
-	GetAction() Action
+	GetAction() *Action
 	SetProcess(position StandardPosition)
+	SetComputedEndTime(time time.Time)
 	GetWorkLoad() map[string]float64
 }
 
-func (d *DirectWork) GetAction() Action {
-	return d.Action
+func (d *DirectWork) GetAction() *Action {
+	return &d.Action
 }
 
 func (d *DirectWork) SetProcess(position StandardPosition) {
@@ -65,8 +66,12 @@ func (d *DirectWork) GetWorkLoad() map[string]float64 {
 	return d.WorkLoad
 }
 
-func (in *IndirectWork) GetAction() Action {
-	return in.Action
+func (d *DirectWork) SetComputedEndTime(time time.Time) {
+	d.ComputedEndTime = &time
+}
+
+func (in *IndirectWork) GetAction() *Action {
+	return &in.Action
 }
 
 func (in *IndirectWork) SetProcess(position StandardPosition) {
@@ -75,6 +80,10 @@ func (in *IndirectWork) SetProcess(position StandardPosition) {
 
 func (in *IndirectWork) GetWorkLoad() map[string]float64 {
 	return nil
+}
+
+func (in *IndirectWork) SetComputedEndTime(time time.Time) {
+	in.ComputedEndTime = &time
 }
 
 // 考勤

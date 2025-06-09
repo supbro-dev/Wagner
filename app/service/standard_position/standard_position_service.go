@@ -2,6 +2,7 @@ package standard_position
 
 import (
 	"wagner/app/domain"
+	"wagner/app/utils/json_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
 )
@@ -94,12 +95,20 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []*e
 }
 
 func (service *StandardPositionService) convertEntity2Domain(e *entity.StandardPositionEntity) *domain.StandardPosition {
-	return &domain.StandardPosition{
+
+	d := domain.StandardPosition{
 		Name:   e.Name,
 		Code:   e.Code,
 		Level:  e.Level,
 		Script: e.Script,
 	}
+
+	if e.Properties != "" {
+		if propertyMap, err := json_util.Parse2Map(e.Properties); err != nil {
+			d.Properties = propertyMap
+		}
+	}
+	return &d
 }
 
 // 递归构建从叶子节点到根节点的路径

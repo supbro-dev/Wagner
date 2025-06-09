@@ -88,7 +88,9 @@ type CalcDynamicParamService struct {
 }
 
 type WorkParam struct {
-	WorkLoadUnits mapset.Set[string]
+	WorkLoadUnits          mapset.Set[string] // 作业的工作量单位
+	LookBackDays           int                // 每一个operateDay只计算x天之内的数据
+	DefaultMaxTimeInMinute int                // 作业的默认最长时间(分钟)
 }
 
 func CreateCalcDynamicParamService(calcDynamicParamDao *dao.CalcDynamicParamDao, workplaceDao *dao.WorkplaceDao, scriptDao *dao.ScriptDao) *CalcDynamicParamService {
@@ -235,7 +237,9 @@ var defaultCalcOtherParam = CalcOtherParam{
 		WorkLoadAggregateType: AggregateEndHour,
 	},
 	Work: WorkParam{
-		WorkLoadUnits: mapset.NewSet[string]("itemNum", "skuNum", "packageNum"),
+		WorkLoadUnits:          mapset.NewSet[string]("itemNum", "skuNum", "packageNum"),
+		LookBackDays:           2,
+		DefaultMaxTimeInMinute: 30,
 	},
 }
 
