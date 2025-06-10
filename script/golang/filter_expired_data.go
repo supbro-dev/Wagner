@@ -20,7 +20,7 @@ func FilterExpiredData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	theMinDate := ctx.OperateDay.AddDate(0, 0, -(lookBackDays))
 
 	if ctx.YesterdayWorkList != nil && len(ctx.YesterdayWorkList) > 0 {
-		afterFilterYesterdayWorkList := make([]domain.Work, 0)
+		afterFilterYesterdayWorkList := make([]domain.Actionable, 0)
 		for _, work := range ctx.YesterdayWorkList {
 			if !isWorkBeforeTheMinDate(work, theMinDate) {
 				afterFilterYesterdayWorkList = append(afterFilterYesterdayWorkList, work)
@@ -40,7 +40,7 @@ func FilterExpiredData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	}
 
 	if ctx.TomorrowWorkList != nil && len(ctx.TomorrowWorkList) > 0 {
-		afterFilterTomorrowWorkList := make([]domain.Work, 0)
+		afterFilterTomorrowWorkList := make([]domain.Actionable, 0)
 		for _, work := range ctx.TomorrowWorkList {
 			if !isWorkBeforeTheMinDate(work, theMinDate) {
 				afterFilterTomorrowWorkList = append(afterFilterTomorrowWorkList, work)

@@ -29,9 +29,9 @@ type ComputeContext struct {
 	ProcessList []*StandardPosition
 
 	// 最近三天工作列表
-	YesterdayWorkList []Work
+	YesterdayWorkList []Actionable
 	TodayWorkList     []Actionable
-	TomorrowWorkList  []Work
+	TomorrowWorkList  []Actionable
 
 	// 最近三天考勤列表
 	YesterdayAttendance *Attendance

@@ -15,7 +15,7 @@ import (
 func AddCrossDayData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	// 处理第二天的数据
 	if ctx.TodayAttendanceEndTime != nil {
-		tomorrowWorksBelongsToday := make([]domain.Work, 0)
+		tomorrowWorksBelongsToday := make([]domain.Actionable, 0)
 		for _, tomorrowWork := range ctx.TomorrowWorkList {
 			workComputedStartTime := (tomorrowWork).GetAction().ComputedStartTime
 			if workComputedStartTime.Before(*ctx.TodayAttendanceEndTime) || workComputedStartTime.Equal(*ctx.TodayAttendanceEndTime) {
@@ -34,7 +34,7 @@ func AddCrossDayData(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 	// 处理昨天的数据
 	if ctx.TomorrowAttendanceStartTime != nil {
-		yesterdayWorksBelongsToday := make([]domain.Work, 0)
+		yesterdayWorksBelongsToday := make([]domain.Actionable, 0)
 		for _, yesterdayWork := range ctx.YesterdayWorkList {
 			workComputedStartTime := yesterdayWork.GetAction().ComputedStartTime
 			if workComputedStartTime.Equal(*ctx.TodayAttendanceStartTime) || workComputedStartTime.After(*ctx.TodayAttendanceStartTime) {

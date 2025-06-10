@@ -29,10 +29,11 @@ type HourSummaryResultEntity struct {
 	DirectWorkTime       int       `gorm:"column:direct_work_time;not null;default:0" json:"directWorkTime"`           // 直接作业时长（秒）
 	IndirectWorkTime     int       `gorm:"column:indirect_work_time;not null;default:0" json:"indirectWorkTime"`       // 间接作业时长
 	IdleTime             int       `gorm:"column:idle_time;not null;default:0" json:"idleTime"`                        // 闲置时长
-	AttendanceTime       int       `gorm:"column:attendance_time;not null;default:0" json:"attendanceTime"`            // 出勤时长
-	ProcessProperty      string    `gorm:"column:process_property;type:json;not null" json:"processProperty"`          // 环节属性
-	Properties           string    `gorm:"column:properties;type:json;" json:"properties"`                             // 其他属性
-	IsDeleted            int8      `gorm:"column:is_deleted;not null;default:0" json:"isDeleted"`                      // 是否删除 (0-未删除 1-已删除)
+	RestTime             int       `gorm:"column:rest_time;not null;default:0" json:"restTime"`
+	AttendanceTime       int       `gorm:"column:attendance_time;not null;default:0" json:"attendanceTime"`   // 出勤时长
+	ProcessProperty      string    `gorm:"column:process_property;type:json;not null" json:"processProperty"` // 环节属性
+	Properties           string    `gorm:"column:properties;type:json;" json:"properties"`                    // 其他属性
+	IsDeleted            int8      `gorm:"column:is_deleted;not null;default:0" json:"isDeleted"`             // 是否删除 (0-未删除 1-已删除)
 	UniqueKey            string    `gorm:"column:unique_key;not null" json:"uniqueKey"`
 }
 

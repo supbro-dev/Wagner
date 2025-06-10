@@ -132,10 +132,8 @@ var (
 	ATTENDANCE ActionType = "Attendance"
 	// 排班
 	SCHEDULING ActionType = "Scheduling"
-	// 离岗休息
-	SHORT_BREAK ActionType = "ShortBreak"
-	// 外出就餐
-	MEAL_TIME ActionType = "MealTime"
+	// 休息（从排班中解析得来）
+	REST ActionType = "Rest"
 	// 闲置工时
 	IDLE ActionType = "Idle"
 )
