@@ -21,6 +21,12 @@ func (dao *WorkplaceDao) FindByCode(code string) *entity.WorkplaceEntity {
 	return &workplace
 }
 
+func (dao *WorkplaceDao) FindAll() []*entity.WorkplaceEntity {
+	workplaceList := make([]*entity.WorkplaceEntity, 0)
+	dao.db.Find(&workplaceList)
+	return workplaceList
+}
+
 func CreateWorkplaceDao(client *gorm.DB) *WorkplaceDao {
 	return &WorkplaceDao{client}
 }

@@ -20,6 +20,20 @@ func CreateWorkplaceService(workplaceDao *dao.WorkplaceDao) *WorkplaceService {
 	return &WorkplaceService{workplaceDao: workplaceDao}
 }
 
+func (service *WorkplaceService) FindAll() []*domain.Workplace {
+	workplaceList := service.workplaceDao.FindAll()
+
+	workplaces := make([]*domain.Workplace, 0)
+	for _, workplaceEntity := range workplaceList {
+		workplace := domain.Workplace{}
+		copier.Copy(&workplace, &workplaceEntity)
+
+		workplaces = append(workplaces, &workplace)
+	}
+
+	return workplaces
+}
+
 func (service *WorkplaceService) FindByCode(code string) *domain.Workplace {
 	workplaceEntity := service.workplaceDao.FindByCode(code)
 

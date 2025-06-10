@@ -40,10 +40,13 @@ func InitApiRouter() *gin.Engine {
 	//  创建一个门户类接口路由组
 	vApi := router.Group("/api/v1/")
 	{
-		// 模拟一个首页路由
 		eff := vApi.Group("efficiency/")
 		{
 			eff.GET("compute", container.GetHandler("efficiencyCompute"))
+		}
+		workplace := vApi.Group("workplace/")
+		{
+			workplace.GET("all", container.GetHandler("workplace"))
 		}
 	}
 	return router
