@@ -61,3 +61,10 @@ func (dao *StandardPositionDao) FindMaxVersionByIndustry(industryCode string, su
 		return maxVersion
 	}
 }
+
+// 根据版本查找所有StandardPosition
+func (dao *StandardPositionDao) FindByVersion(version int) []*entity.StandardPositionEntity {
+	array := make([]*entity.StandardPositionEntity, 0)
+	dao.db.Where("version = ?", version).Find(&array)
+	return array
+}

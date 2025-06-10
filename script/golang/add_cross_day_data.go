@@ -24,9 +24,10 @@ func AddCrossDayData(ctx *domain.ComputeContext) *domain.ComputeContext {
 		}
 		if len(tomorrowWorksBelongsToday) > 0 {
 			if len(ctx.TodayWorkList) == 0 {
-				ctx.TodayWorkList = tomorrowWorksBelongsToday
-			} else {
-				ctx.TodayWorkList = append(ctx.TodayWorkList, tomorrowWorksBelongsToday...)
+				ctx.TodayWorkList = make([]domain.Actionable, 0)
+			}
+			for _, work := range tomorrowWorksBelongsToday {
+				ctx.TodayWorkList = append(ctx.TodayWorkList, work)
 			}
 		}
 	}
@@ -43,9 +44,11 @@ func AddCrossDayData(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 		if len(yesterdayWorksBelongsToday) > 0 {
 			if len(ctx.TomorrowWorkList) == 0 {
-				ctx.TodayWorkList = yesterdayWorksBelongsToday
-			} else {
-				ctx.TodayWorkList = append(yesterdayWorksBelongsToday, ctx.TodayWorkList...)
+				ctx.TodayWorkList = make([]domain.Actionable, 0)
+			}
+
+			for _, work := range yesterdayWorksBelongsToday {
+				ctx.TodayWorkList = append(ctx.TodayWorkList, work)
 			}
 		}
 	}

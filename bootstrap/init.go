@@ -87,4 +87,6 @@ func init() {
 	script_util.Register("AddReasonableBreakTime", golang.AddReasonableBreakTime)
 	script_util.Register("CutOffWorkByRest", golang.CutOffWorkByRest)
 	script_util.Register("CalcWorkTransitionTime", golang.CalcWorkTransitionTime)
+	script_util.Register("GenerateIdleDataList", golang.GenerateIdleDataList)
+	script_util.Register("MatchRestProcess", golang.MatchRestProcess)
 }

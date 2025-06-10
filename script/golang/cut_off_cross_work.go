@@ -15,7 +15,7 @@ import (
 // 处理作业交叉截断
 func CutOffCrossWork(ctx *domain.ComputeContext) *domain.ComputeContext {
 	for i, work := range ctx.TodayWorkList {
-		var nextWork domain.Work
+		var nextWork domain.Actionable
 		if i < len(ctx.TodayWorkList)-1 {
 			nextWork = ctx.TodayWorkList[i+1]
 		} else {
@@ -29,10 +29,10 @@ func CutOffCrossWork(ctx *domain.ComputeContext) *domain.ComputeContext {
 				originalEndTime := work.GetAction().ComputedEndTime
 				computedEndTime := nextWork.GetAction().ComputedStartTime
 
-				work.SetCutOffWorkCode(nextWork.GetAction().ActionCode)
+				work.(domain.Work).SetCutOffWorkCode(nextWork.GetAction().ActionCode)
 				work.GetAction().ComputedEndTime = computedEndTime
 
-				fmt.work.GetAction().AppendOperationMsg(fmt.Sprintf("作业间交叉被截断, 与%v存在交叉, 原结束时间: %v, 调整后: %v", nextWork.GetAction().ActionCode,
+				work.GetAction().AppendOperationMsg(fmt.Sprintf("作业间交叉被截断, 与%v存在交叉, 原结束时间: %v, 调整后: %v", nextWork.GetAction().ActionCode,
 					datetime_util.FormatDatetime(*originalEndTime),
 					datetime_util.FormatDatetime(*computedEndTime)))
 			}

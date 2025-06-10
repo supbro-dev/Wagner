@@ -1,6 +1,7 @@
 package standard_position
 
 import (
+	"math"
 	"wagner/app/domain"
 	"wagner/app/utils/json_util"
 	"wagner/infrastructure/persistence/dao"
@@ -8,29 +9,56 @@ import (
 )
 
 type StandardPositionService struct {
-	StandardPositionDao *dao.StandardPositionDao
-	WorkplaceDao        *dao.WorkplaceDao
+	standardPositionDao *dao.StandardPositionDao
+	workplaceDao        *dao.WorkplaceDao
 }
 
 func CreateStandardPositionService(standardPositionDao *dao.StandardPositionDao, workplaceDao *dao.WorkplaceDao) *StandardPositionService {
 	return &StandardPositionService{standardPositionDao, workplaceDao}
 }
 
-//	根据工作点编码获取标准岗位模型
-//
-// Parameters: workplaceCode 工作点
-// Returns: 转换之后的标准岗位模型
+var OtherProcess = &domain.StandardPosition{
+	Name: "其他",
+	Code: "Others",
+}
+
+func (service *StandardPositionService) FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition {
+	maxVersion := service.standardPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
+	positionList := service.standardPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)
+
+	minOrder := math.MaxInt
+	var minProcess *entity.StandardPositionEntity
+	for _, positionEntity := range positionList {
+		if positionEntity.ParentCode == positionCode && positionEntity.Order < minOrder {
+			minOrder = positionEntity.Order
+			minProcess = positionEntity
+		}
+	}
+	if minOrder == math.MaxInt {
+		return nil
+	}
+
+	return service.convertEntity2Domain(minProcess)
+}
+
+// 根据工作点编码获取标准岗位模型
 func (service *StandardPositionService) FindStandardPositionByWorkplace(workplaceCode string) []*domain.StandardPosition {
 	// todo 这里应该查找工序实施配置，在没有实施流程时，直接根据工作点查找行业的标准模型
 	positions := make([]*domain.StandardPosition, 0)
 
-	workplace := service.WorkplaceDao.FindByCode(workplaceCode)
+	workplace := service.workplaceDao.FindByCode(workplaceCode)
 
 	if workplace == nil {
 		return positions
 	}
-	maxVersion := service.StandardPositionDao.FindMaxVersionByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
-	positionList := service.StandardPositionDao.FindByIndustry(workplace.IndustryCode, workplace.SubIndustryCode, maxVersion)
+
+	positionList := service.FindStandardPositionByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
+	return positionList
+}
+
+func (service *StandardPositionService) FindStandardPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
+	maxVersion := service.standardPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
+	positionList := service.standardPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)
 
 	return service.buildLeafNodePaths(positionList)
 }
@@ -97,10 +125,11 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []*e
 func (service *StandardPositionService) convertEntity2Domain(e *entity.StandardPositionEntity) *domain.StandardPosition {
 
 	d := domain.StandardPosition{
-		Name:   e.Name,
-		Code:   e.Code,
-		Level:  e.Level,
-		Script: e.Script,
+		Name:    e.Name,
+		Code:    e.Code,
+		Level:   e.Level,
+		Script:  e.Script,
+		Version: e.Version,
 	}
 
 	if e.Properties != "" {

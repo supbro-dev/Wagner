@@ -30,7 +30,7 @@ type ComputeContext struct {
 
 	// 最近三天工作列表
 	YesterdayWorkList []Work
-	TodayWorkList     []Work
+	TodayWorkList     []Actionable
 	TomorrowWorkList  []Work
 
 	// 最近三天考勤列表
@@ -50,6 +50,9 @@ type ComputeContext struct {
 
 	// 休息列表（一天可能包含多段休息）
 	TodayRestList []*Rest
+
+	// 闲置时长列表
+	TodayIdleList []Actionable
 
 	TodayAttendanceNoMissing bool
 }

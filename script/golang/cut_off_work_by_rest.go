@@ -19,7 +19,7 @@ func CutOffWorkByRest(ctx *domain.ComputeContext) *domain.ComputeContext {
 		return ctx
 	}
 
-	newWorkList := make([]domain.Work, 0)
+	newWorkList := make([]domain.Actionable, 0)
 	for _, work := range ctx.TodayWorkList {
 		restNum := len(ctx.TodayRestList)
 		var cutOffRestNum int
@@ -36,7 +36,7 @@ func CutOffWorkByRest(ctx *domain.ComputeContext) *domain.ComputeContext {
 }
 
 // 考虑同一个作业可能被多个休息截断多次，所以传restList
-func cutOffWork(work domain.Work, restList []*domain.Rest) domain.Work {
+func cutOffWork(work domain.Actionable, restList []*domain.Rest) domain.Work {
 	for _, rest := range restList {
 		if rest.ComputedStartTime.Equal(*rest.ComputedEndTime) {
 			continue

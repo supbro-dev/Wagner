@@ -93,7 +93,7 @@ func (service *EfficiencyComputeService) handleSummary(ctx domain.ComputeContext
 }
 
 // 高效聚合算法
-func (service *EfficiencyComputeService) efficientAggregateActions(works []domain.Work,
+func (service *EfficiencyComputeService) efficientAggregateActions(works []domain.Actionable,
 	storageParam calc_dynamic_param.SinkStorage,
 	summaryParam calc_dynamic_param.HourSummaryParam,
 	workParam calc_dynamic_param.WorkParam) []*domain.HourSummaryResult {

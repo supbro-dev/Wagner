@@ -8,6 +8,7 @@ package golang
 
 import (
 	"wagner/app/domain"
+	"wagner/app/service/standard_position"
 	"wagner/app/utils/script_util"
 )
 
@@ -25,7 +26,7 @@ func MarchProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 }
 
 // 遍历所有环节节点，根据表达式匹配到第一个环节
-func findFirstProcess(work domain.Work, processList []*domain.StandardPosition) *domain.StandardPosition {
+func findFirstProcess(work domain.Actionable, processList []*domain.StandardPosition) *domain.StandardPosition {
 	for _, process := range processList {
 		if process.Script == "" {
 			continue
@@ -37,5 +38,5 @@ func findFirstProcess(work domain.Work, processList []*domain.StandardPosition) 
 		}
 	}
 
-	return nil
+	return standard_position.OtherProcess
 }

@@ -31,6 +31,10 @@ type Action struct {
 	Process StandardPosition
 }
 
+type Actionable interface {
+	GetAction() *Action
+}
+
 // 直接作业
 type DirectWork struct {
 	Action
@@ -96,9 +100,17 @@ type Rest struct {
 	Action
 }
 
+func (rest *Rest) GetAction() *Action {
+	return &rest.Action
+}
+
 // 闲置时长
 type Idle struct {
 	Action
+}
+
+func (idle *Idle) GetAction() *Action {
+	return &idle.Action
 }
 
 // 追加Action操作日志

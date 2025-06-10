@@ -14,12 +14,9 @@ import (
 // 把今天数据中开始时间小于昨天考勤下班时间，或大于第二天考勤上班时间的数据过滤掉丢弃
 func FilterOtherDaysData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	finalTodayWorkList := ctx.TodayWorkList
-	if finalTodayWorkList == nil {
-		finalTodayWorkList = make([]domain.Work, 0)
-	}
 
 	if ctx.YesterdayAttendanceEndTime != nil {
-		afterFilterYesterdayWorks := make([]domain.Work, 0)
+		afterFilterYesterdayWorks := make([]domain.Actionable, 0)
 		for _, work := range finalTodayWorkList {
 			if work.GetAction().ComputedStartTime == nil || work.GetAction().ComputedStartTime.After(*ctx.YesterdayAttendanceEndTime) {
 				afterFilterYesterdayWorks = append(afterFilterYesterdayWorks, work)
@@ -30,7 +27,7 @@ func FilterOtherDaysData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	}
 
 	if ctx.TomorrowAttendanceStartTime != nil {
-		afterFilterTomorrowWorks := make([]domain.Work, 0)
+		afterFilterTomorrowWorks := make([]domain.Actionable, 0)
 		for _, work := range finalTodayWorkList {
 			if work.GetAction().ComputedStartTime == nil || work.GetAction().ComputedStartTime.Before(*ctx.TomorrowAttendanceStartTime) {
 				afterFilterTomorrowWorks = append(afterFilterTomorrowWorks, work)
