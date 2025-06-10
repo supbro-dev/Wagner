@@ -74,6 +74,19 @@ func init() {
 
 	// 注册计算节点脚本
 	script_util.Register("SetCrossDayAttendance", golang.SetCrossDayAttendance)
-	script_util.Register("ComputeDefaultEndTime", golang.ComputeDefaultEndTime)
+	script_util.Register("ComputeAttendanceDefaultEndTime", golang.ComputeAttendanceDefaultEndTime)
 	script_util.Register("MarchProcess", golang.MarchProcess)
+	script_util.Register("CutOffAttendanceTime", golang.CutOffAttendanceTime)
+	script_util.Register("AddCrossDayData", golang.AddCrossDayData)
+	script_util.Register("FilterOtherDaysData", golang.FilterOtherDaysData)
+	script_util.Register("FilterExpiredData", golang.FilterExpiredData)
+	script_util.Register("ComputeAttendanceDefaultStartTime", golang.ComputeAttendanceDefaultStartTime)
+	script_util.Register("PaddingUnfinishedWorkEndTime", golang.PaddingUnfinishedWorkEndTime)
+	script_util.Register("CutOffOvertimeWork", golang.CutOffOvertimeWork)
+	script_util.Register("CutOffCrossWork", golang.CutOffCrossWork)
+	script_util.Register("AddReasonableBreakTime", golang.AddReasonableBreakTime)
+	script_util.Register("CutOffWorkByRest", golang.CutOffWorkByRest)
+	script_util.Register("CalcWorkTransitionTime", golang.CalcWorkTransitionTime)
+	script_util.Register("GenerateIdleDataList", golang.GenerateIdleDataList)
+	script_util.Register("MatchRestProcess", golang.MatchRestProcess)
 }

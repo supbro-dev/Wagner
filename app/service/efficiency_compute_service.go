@@ -93,13 +93,13 @@ func (service *EfficiencyComputeService) handleSummary(ctx domain.ComputeContext
 }
 
 // 高效聚合算法
-func (service *EfficiencyComputeService) efficientAggregateActions(works []domain.Work,
+func (service *EfficiencyComputeService) efficientAggregateActions(works []domain.Actionable,
 	storageParam calc_dynamic_param.SinkStorage,
 	summaryParam calc_dynamic_param.HourSummaryParam,
 	workParam calc_dynamic_param.WorkParam) []*domain.HourSummaryResult {
 	// 1. 对Action按开始时间排序
 	sort.Slice(works, func(i, j int) bool {
-		return works[i].GetAction().ComputedStartTime.Before(works[j].GetAction().ComputedStartTime)
+		return works[i].GetAction().ComputedStartTime.Before(*(works[j].GetAction().ComputedStartTime))
 	})
 
 	// 2. 创建桶收集聚合结果
@@ -107,14 +107,16 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 
 	// 3. 处理每个Action
 	for _, work := range works {
-		start := work.GetAction().ComputedStartTime
-		end := work.GetAction().ComputedEndTime
+		start := *(work.GetAction().ComputedStartTime)
+		end := *(work.GetAction().ComputedEndTime)
 
 		// 处理开始和结束时间相等的情况
 		if start.Equal(end) {
 			hourStart := start.Truncate(time.Hour)
 			bucket := service.getOrCreateBucket(buckets, hourStart, work, storageParam.AggregateFields, storageParam.FieldName2ColumnName)
-			bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+			if directWork, ok := work.(*domain.DirectWork); ok {
+				bucket.MergeWorkLoad(directWork.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+			}
 			// 这里不处理工时
 			continue
 		}
@@ -151,14 +153,20 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 			switch summaryParam.WorkLoadAggregateType {
 			case calc_dynamic_param.AggregateEndHour:
 				if segmentEnd.Equal(end) {
-					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+					if directWork, ok := work.(*domain.DirectWork); ok {
+						bucket.MergeWorkLoad(directWork.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+					}
 				}
 			case calc_dynamic_param.AggregateProportion:
 				if totalDuration > 0 {
 					proportion := duration / totalDuration
-					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
+					if directWork, ok := work.(*domain.DirectWork); ok {
+						bucket.MergeWorkLoad(directWork.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
+					}
 				} else {
-					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+					if directWork, ok := work.(*domain.DirectWork); ok {
+						bucket.MergeWorkLoad(directWork.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+					}
 				}
 			}
 		}
@@ -178,7 +186,9 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 				case calc_dynamic_param.AggregateProportion:
 					if totalDuration > 0 {
 						proportion := duration / totalDuration
-						bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
+						if directWork, ok := work.(*domain.DirectWork); ok {
+							bucket.MergeWorkLoad(directWork.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
+						}
 					}
 				}
 
@@ -196,13 +206,20 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 			// 根据策略处理物品数量
 			switch summaryParam.WorkLoadAggregateType {
 			case calc_dynamic_param.AggregateEndHour:
-				bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+				if directWork, ok := work.(*domain.DirectWork); ok {
+					bucket.MergeWorkLoad(directWork.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+				}
+
 			case calc_dynamic_param.AggregateProportion:
 				if totalDuration > 0 {
 					proportion := duration / totalDuration
-					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
+					if directWork, ok := work.(*domain.DirectWork); ok {
+						bucket.MergeWorkLoad(directWork.GetWorkLoad(), workParam.WorkLoadUnits, proportion)
+					}
 				} else {
-					bucket.MergeWorkLoad(work.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+					if directWork, ok := work.(*domain.DirectWork); ok {
+						bucket.MergeWorkLoad(directWork.GetWorkLoad(), workParam.WorkLoadUnits, 1)
+					}
 				}
 			}
 		}
@@ -225,7 +242,7 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 // 辅助函数：获取或创建桶
 func (service *EfficiencyComputeService) getOrCreateBucket(buckets map[domain.HourSummaryAggregateKey]*domain.HourSummaryResult,
 	operateTime time.Time,
-	work domain.Work,
+	work domain.Actionable,
 	aggregateFields []string, field2Column map[string]string) *domain.HourSummaryResult {
 	key := service.buildAggregateKey(operateTime, work, aggregateFields)
 
@@ -237,7 +254,7 @@ func (service *EfficiencyComputeService) getOrCreateBucket(buckets map[domain.Ho
 	return &bucket
 }
 
-func (service *EfficiencyComputeService) buildAggregateKey(operateTime time.Time, work domain.Work, aggregateFields []string) domain.HourSummaryAggregateKey {
+func (service *EfficiencyComputeService) buildAggregateKey(operateTime time.Time, work domain.Actionable, aggregateFields []string) domain.HourSummaryAggregateKey {
 	key := domain.HourSummaryAggregateKey{
 		EmployeeNumber: work.GetAction().EmployeeNumber,
 		WorkplaceCode:  work.GetAction().WorkplaceCode,
@@ -263,7 +280,7 @@ func injectActions(ctx *domain.ComputeContext, param calc_dynamic_param.CalcPara
 	tomorrow := ctx.OperateDay.AddDate(0, 0, 1)
 	operateDayRange := []time.Time{yesterday, ctx.OperateDay, tomorrow}
 
-	day2WorkList, day2Attendance, day2Scheduling := actionService.FindEmployeeActions(ctx.Employee.Number, operateDayRange, param.InjectSource)
+	day2WorkList, day2Attendance, day2Scheduling, day2RestList := actionService.FindEmployeeActions(ctx.Employee.Number, operateDayRange, param.InjectSource)
 
 	ctx.YesterdayWorkList = day2WorkList[yesterday]
 	ctx.TodayWorkList = day2WorkList[ctx.OperateDay]
@@ -274,6 +291,7 @@ func injectActions(ctx *domain.ComputeContext, param calc_dynamic_param.CalcPara
 	ctx.TomorrowAttendance = day2Attendance[tomorrow]
 
 	ctx.TodayScheduling = day2Scheduling[ctx.OperateDay]
+	ctx.TodayRestList = day2RestList[ctx.OperateDay]
 }
 
 // 根据工作点获取人效计算参数

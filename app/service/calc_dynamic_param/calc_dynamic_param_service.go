@@ -68,6 +68,8 @@ type CalcOtherParam struct {
 type AttendanceParam struct {
 	// 考勤缺卡惩罚时长（H）
 	AttendanceAbsencePenaltyHour int
+	// 最大开班时间（即上班打卡到第一次作业开始允许的最长时间）
+	MaxRunUpTimeInMinute int
 }
 
 type WorkLoadAggregateType string
@@ -88,7 +90,10 @@ type CalcDynamicParamService struct {
 }
 
 type WorkParam struct {
-	WorkLoadUnits mapset.Set[string]
+	WorkLoadUnits              mapset.Set[string] // 作业的工作量单位
+	LookBackDays               int                // 每一个operateDay只计算x天之内的数据
+	DefaultMaxTimeInMinute     int                // 作业的默认最长时间(分钟)
+	DefaultMinIdleTimeInMinute int                // 作业的默认最小空闲时间(分钟)
 }
 
 func CreateCalcDynamicParamService(calcDynamicParamDao *dao.CalcDynamicParamDao, workplaceDao *dao.WorkplaceDao, scriptDao *dao.ScriptDao) *CalcDynamicParamService {
@@ -229,13 +234,17 @@ var defaultCalcOtherParam = CalcOtherParam{
 	Attendance: AttendanceParam{
 		// 默认惩罚8小时
 		AttendanceAbsencePenaltyHour: 8,
+		MaxRunUpTimeInMinute:         20,
 	},
 	HourSummary: HourSummaryParam{
 		// 默认聚合到结束的那个小时里
 		WorkLoadAggregateType: AggregateEndHour,
 	},
 	Work: WorkParam{
-		WorkLoadUnits: mapset.NewSet[string]("itemNum", "skuNum", "packageNum"),
+		WorkLoadUnits:              mapset.NewSet[string]("itemNum", "skuNum", "packageNum"),
+		LookBackDays:               2,
+		DefaultMaxTimeInMinute:     30,
+		DefaultMinIdleTimeInMinute: 10,
 	},
 }
 

@@ -20,6 +20,7 @@ type HourSummaryResult struct {
 	DirectWorkTime   int
 	IndirectWorkTime int
 	IdleTime         int
+	RestTime         int
 	AttendanceTime   int
 	// 额外属性
 	Properties map[string]interface{}
@@ -39,7 +40,7 @@ type HourSummaryAggregateKey struct {
 }
 
 // 根据聚合属性构建一个用来聚合的汇总结果
-func MakeHourSummaryResult(aggregateKey HourSummaryAggregateKey, work Work, field2Column map[string]string) HourSummaryResult {
+func MakeHourSummaryResult(aggregateKey HourSummaryAggregateKey, work Actionable, field2Column map[string]string) HourSummaryResult {
 	result := HourSummaryResult{
 		AggregateKey: aggregateKey,
 		WorkLoad:     make(map[string]float64),
@@ -55,7 +56,7 @@ func MakeHourSummaryResult(aggregateKey HourSummaryAggregateKey, work Work, fiel
 	return result
 }
 
-func (r *HourSummaryResult) MergeTime(work Work, duration float64) {
+func (r *HourSummaryResult) MergeTime(work Actionable, duration float64) {
 	durationTime := int(duration)
 	switch work.GetAction().ActionType {
 	case DIRECT_WORK:
@@ -67,6 +68,8 @@ func (r *HourSummaryResult) MergeTime(work Work, duration float64) {
 	case IDLE:
 		r.IdleTime += durationTime
 		r.AttendanceTime += durationTime
+	case REST:
+		r.RestTime += durationTime
 	}
 }
 

@@ -13,9 +13,12 @@ type StandardPosition struct {
 	Level int
 	// 最大部门层级
 	MaxDeptLevel int
-
+	// 环节的属性
+	Properties map[string]interface{}
 	// 路径
 	Path []*StandardPosition
 	// 环节匹配执行脚本
 	Script string
+	// 标识一套StandardPosition的唯一版本
+	Version int
 }

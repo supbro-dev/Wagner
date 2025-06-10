@@ -22,6 +22,7 @@ func init() {
 
 	apiCache = cache
 	apiCache.Set("efficiencyCompute", controller.EfficiencyComputeHandler{})
+	apiCache.Set("workplace", controller.WorkplaceHandler{})
 }
 
 func GetHandler(key string) func(context *gin.Context) {

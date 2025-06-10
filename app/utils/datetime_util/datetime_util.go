@@ -27,3 +27,7 @@ func ParseDate(date string) (time.Time, error) {
 
 	return parse, err
 }
+
+func FormatDatetime(time time.Time) string {
+	return time.Format(DateTimeLayout)
+}

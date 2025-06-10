@@ -29,24 +29,30 @@ type ComputeContext struct {
 	ProcessList []*StandardPosition
 
 	// 最近三天工作列表
-	YesterdayWorkList []Work
-	TodayWorkList     []Work
-	TomorrowWorkList  []Work
+	YesterdayWorkList []Actionable
+	TodayWorkList     []Actionable
+	TomorrowWorkList  []Actionable
 
 	// 最近三天考勤列表
-	YesterdayAttendance Attendance
-	TodayAttendance     Attendance
-	TomorrowAttendance  Attendance
+	YesterdayAttendance *Attendance
+	TodayAttendance     *Attendance
+	TomorrowAttendance  *Attendance
 	// 最近两天的排班信息
-	YesterdayScheduling Scheduling
-	TodayScheduling     Scheduling
+	YesterdayScheduling *Scheduling
+	TodayScheduling     *Scheduling
 
 	// 上下班信息
-	YesterdayAttendanceStartTime time.Time
-	YesterdayAttendanceEndTime   time.Time
-	TodayAttendanceStartTime     time.Time
-	TodayAttendanceEndTime       time.Time
-	TomorrowAttendanceStartTime  time.Time
+	YesterdayAttendanceStartTime *time.Time
+	YesterdayAttendanceEndTime   *time.Time
+	TodayAttendanceStartTime     *time.Time
+	TodayAttendanceEndTime       *time.Time
+	TomorrowAttendanceStartTime  *time.Time
+
+	// 休息列表（一天可能包含多段休息）
+	TodayRestList []*Rest
+
+	// 闲置时长列表
+	TodayIdleList []Actionable
 
 	TodayAttendanceNoMissing bool
 }
