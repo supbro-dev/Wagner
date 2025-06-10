@@ -17,8 +17,8 @@ func PaddingUnfinishedWorkEndTime(ctx *domain.ComputeContext) *domain.ComputeCon
 	now := ctx.CalcStartTime
 	for _, work := range ctx.TodayWorkList {
 		if work.GetAction().EndTime == nil {
-			work.SetComputedEndTime(now)
-			work.GetAction().AppendOperationMsg(fmt.Sprint(`工作未结束, 结束时间调整到当前时间, 调整后: %v`, datetime_util.FormatDatetime(now)))
+			work.GetAction().ComputedEndTime = &now
+			work.GetAction().AppendOperationMsg(fmt.Sprintf(`工作未结束, 结束时间调整到当前时间, 调整后: %v`, datetime_util.FormatDatetime(now)))
 		}
 	}
 	return ctx

@@ -38,52 +38,47 @@ type DirectWork struct {
 	WorkLoad map[string]float64
 	// 任务的发起人
 	Starter string
+	// 截断当前作业的作业编码
+	CutOffWorkCode string
 }
 
 // 间接作业
 type IndirectWork struct {
 	Action
+	// 截断当前作业的作业编码
+	CutOffWorkCode string
 }
 
 // 使用Work声明对象或切片时不需要使用&Work,因为是DirectWork/IndirectWork的指针实现的Work接口
 // 作业（直接&间接）
 type Work interface {
 	GetAction() *Action
-	SetProcess(position StandardPosition)
-	SetComputedEndTime(time time.Time)
 	GetWorkLoad() map[string]float64
+	SetCutOffWorkCode(actionCode string)
 }
 
 func (d *DirectWork) GetAction() *Action {
 	return &d.Action
 }
 
-func (d *DirectWork) SetProcess(position StandardPosition) {
-	d.Action.Process = position
-}
-
 func (d *DirectWork) GetWorkLoad() map[string]float64 {
 	return d.WorkLoad
 }
 
-func (d *DirectWork) SetComputedEndTime(time time.Time) {
-	d.ComputedEndTime = &time
+func (d *DirectWork) SetCutOffWorkCode(actionCode string) {
+	d.CutOffWorkCode = actionCode
 }
 
 func (in *IndirectWork) GetAction() *Action {
 	return &in.Action
 }
 
-func (in *IndirectWork) SetProcess(position StandardPosition) {
-	in.Action.Process = position
-}
-
 func (in *IndirectWork) GetWorkLoad() map[string]float64 {
 	return nil
 }
 
-func (in *IndirectWork) SetComputedEndTime(time time.Time) {
-	in.ComputedEndTime = &time
+func (in *IndirectWork) SetCutOffWorkCode(actionCode string) {
+	in.CutOffWorkCode = actionCode
 }
 
 // 考勤
@@ -93,6 +88,16 @@ type Attendance struct {
 
 // 排班
 type Scheduling struct {
+	Action
+}
+
+// 休息
+type Rest struct {
+	Action
+}
+
+// 闲置时长
+type Idle struct {
 	Action
 }
 

@@ -13,7 +13,7 @@ import (
 	"wagner/app/utils/datetime_util"
 )
 
-// 超长的Work进行截断
+// 超长的作业进行截断
 // 1.根据环节超长配置截断
 // 2.根据下班卡截断（间接工作）
 func CutOffOvertimeWork(ctx *domain.ComputeContext) *domain.ComputeContext {
@@ -25,19 +25,20 @@ func CutOffOvertimeWork(ctx *domain.ComputeContext) *domain.ComputeContext {
 		if diff.Minutes() > float64(maxDurationInMinute) {
 			originalEndTime := work.GetAction().ComputedEndTime
 			computedEndTime := work.GetAction().ComputedStartTime.Add(time.Duration(maxDurationInMinute) * time.Minute)
-			work.SetComputedEndTime(computedEndTime)
+			work.GetAction().ComputedEndTime = &computedEndTime
 			work.GetAction().AppendOperationMsg(fmt.Sprintf("持续时长过长被系统截断, 持续时长: %v分, 最长时长: %v分, 原结束时间: %v, 调整后: %v",
 				diff.Minutes(), maxDurationInMinute, datetime_util.FormatDatetime(*originalEndTime), datetime_util.FormatDatetime(computedEndTime)))
 		}
 
 		// 再进行考勤截断
 		if ctx.TodayAttendance != nil {
+			// 只处理跨下班卡的情况，如果在打下班卡之后开启一个直接/间接工作，则不会被强制截断
 			isWorkCrossAttendanceEnd := work.GetAction().ComputedStartTime.Before(*ctx.TodayAttendance.ComputedEndTime) && work.GetAction().ComputedEndTime.After(*ctx.TodayAttendance.ComputedEndTime)
 
 			if isWorkCrossAttendanceEnd {
 				originalEndTime := work.GetAction().ComputedEndTime
 				computedEndTime := ctx.TodayAttendance.ComputedEndTime
-				work.SetComputedEndTime(*computedEndTime)
+				work.GetAction().ComputedEndTime = computedEndTime
 
 				work.GetAction().AppendOperationMsg(fmt.Sprintf("持续时长过长被下班卡截断, 原结束时间: %v, 调整后: %v", datetime_util.FormatDatetime(*originalEndTime), datetime_util.FormatDatetime(*computedEndTime)))
 			}

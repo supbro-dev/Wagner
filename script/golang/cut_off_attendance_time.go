@@ -36,7 +36,7 @@ func CutOffAttendanceTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 		if todayAttendance != nil {
 			todayAttendance.ComputedEndTime = &tomorrowAttendanceStartTimeMinus1Sec
 			todayAttendance.AppendOperationMsg(
-				fmt.Sprint(`今日原结束时间: %v, 超过第二天考勤开始时间: %v, 调整后: %v`,
+				fmt.Sprintf(`今日原结束时间: %v, 超过第二天考勤开始时间: %v, 调整后: %v`,
 					datetime_util.FormatDatetime(*todayAttendance.EndTime),
 					datetime_util.FormatDatetime(*ctx.TomorrowAttendanceStartTime),
 					datetime_util.FormatDatetime(*todayAttendance.ComputedEndTime)))
@@ -50,7 +50,7 @@ func CutOffAttendanceTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 		if todayAttendance != nil {
 			todayAttendance.ComputedStartTime = ctx.TodayAttendanceEndTime
 			todayAttendance.AppendOperationMsg(
-				fmt.Sprint(`今日原开始时间: %v, 超过今天考勤结束时间: %v, 调整后: %v`,
+				fmt.Sprintf(`今日原开始时间: %v, 超过今天考勤结束时间: %v, 调整后: %v`,
 					datetime_util.FormatDatetime(*todayAttendance.StartTime),
 					datetime_util.FormatDatetime(*todayAttendance.EndTime),
 					datetime_util.FormatDatetime(*todayAttendance.ComputedStartTime)))

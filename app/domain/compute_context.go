@@ -48,5 +48,8 @@ type ComputeContext struct {
 	TodayAttendanceEndTime       *time.Time
 	TomorrowAttendanceStartTime  *time.Time
 
+	// 休息列表（一天可能包含多段休息）
+	TodayRestList []*Rest
+
 	TodayAttendanceNoMissing bool
 }

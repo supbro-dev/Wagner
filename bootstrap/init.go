@@ -83,4 +83,8 @@ func init() {
 	script_util.Register("ComputeAttendanceDefaultStartTime", golang.ComputeAttendanceDefaultStartTime)
 	script_util.Register("PaddingUnfinishedWorkEndTime", golang.PaddingUnfinishedWorkEndTime)
 	script_util.Register("CutOffOvertimeWork", golang.CutOffOvertimeWork)
+	script_util.Register("CutOffCrossWork", golang.CutOffCrossWork)
+	script_util.Register("AddReasonableBreakTime", golang.AddReasonableBreakTime)
+	script_util.Register("CutOffWorkByRest", golang.CutOffWorkByRest)
+	script_util.Register("CalcWorkTransitionTime", golang.CalcWorkTransitionTime)
 }
