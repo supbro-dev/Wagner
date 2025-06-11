@@ -42,16 +42,16 @@ type HourSummaryAggregateKey struct {
 type AggregateDimension string
 
 var (
-	AggregateDimension_Process  AggregateDimension = "process"  //员工+作业环节聚合
-	AggregateDimension_Position AggregateDimension = "position" //员工+作业岗位
+	Process  AggregateDimension = "process"  //员工+作业环节聚合
+	Position AggregateDimension = "position" //员工+作业岗位
 )
 
 type IsCrossPosition string
 
 var (
-	IsCrossPosition_Cross   IsCrossPosition = "cross"
-	IsCrossPosition_NoCross IsCrossPosition = "noCross"
-	IsCrossPosition_All     IsCrossPosition = "all"
+	Cross   IsCrossPosition = "cross"
+	NoCross IsCrossPosition = "noCross"
+	All     IsCrossPosition = "all"
 )
 
 // 根据聚合属性构建一个用来聚合的汇总结果

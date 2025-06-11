@@ -51,7 +51,7 @@ func buildDynamicWorkLoadSelect(workLoadUnit []calc_dynamic_param.WorkLoadUnit) 
 
 func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummaryResultQuery) []*entity.WorkLoadWithSummaryEntity {
 	fixedSelect := "employee_number, employee_name, operate_day, workplace_code, workplace_name, process_code, position_code, " +
-		"employee_position_code, work_group_code, region_code, industry_code, sub_industry_code," +
+		"employee_position_code, work_group_code, region_code, industry_code, sub_industry_code, process_property, " +
 		" direct_work_time, indirect_work_time, idle_time, rest_time, attendance_time"
 	workLoadSelect := buildDynamicWorkLoadSelect(query.WorkLoadUnit)
 
@@ -59,10 +59,10 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 	if query.EmployeeNumber != "" {
 		where += " and employee_number = " + query.EmployeeNumber
 	}
-	if query.IsCrossPosition == domain.IsCrossPosition_Cross {
-		where += " and position_code != employee_position_code"
-	} else if query.IsCrossPosition == domain.IsCrossPosition_NoCross {
+	if query.IsCrossPosition == domain.Cross {
 		where += " and position_code = employee_position_code"
+	} else if query.IsCrossPosition == domain.NoCross {
+		where += " and position_code != employee_position_code"
 	}
 
 	subQuery := dao.olapDb.Table("hour_summary_result").
@@ -71,23 +71,29 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 
 	mainSelect := "employee_number, employee_name, operate_day, workplace_code, workplace_name, " +
 		" max(region_code) region_code, max(industry_code) industry_code, max(sub_industry_code) sub_industry_code, " +
-		" max(employee_position_code) employee_position_code, max(work_group_code) work_group_code, " +
+		" max(employee_position_code) employee_position_code, max(work_group_code) work_group_code, max(process_property) process_property, " +
 		" sum(direct_work_time) direct_work_time, sum(indirect_work_time) indirect_work_time, sum(idle_time) idle_time, sum(rest_time) rest_time, sum(attendance_time) attendance_time"
+	groupBy := "employee_number, employee_name, operate_day, workplace_code, workplace_name"
+	orderBy := "operate_day, employee_number"
 
 	for _, workLoadUnit := range query.WorkLoadUnit {
 		mainSelect += fmt.Sprintf(", sum(%s) %s", workLoadUnit.Code, workLoadUnit.Code)
 	}
 
-	groupBy := "employee_number, employee_name, operate_day, workplace_code, workplace_name"
-	if query.AggregateDimension == domain.AggregateDimension_Process {
+	if query.AggregateDimension == domain.Process {
 		groupBy += " ,process_code, position_code"
-	} else if query.AggregateDimension == domain.AggregateDimension_Position {
+		mainSelect += ", process_code, max(position_code) position_code"
+		orderBy += ", process_code"
+	} else if query.AggregateDimension == domain.Position {
 		groupBy += " ,position_code"
+		mainSelect += ", position_code"
+		orderBy += ", position_code"
 	}
 
 	var rawResult []map[string]interface{}
 	//var result []entity.EmployeeSummaryEntity
 	dao.olapDb.Table("(?) as summary", subQuery).Select(mainSelect).
+		Order(orderBy).
 		Group(groupBy).
 		Find(&rawResult)
 
