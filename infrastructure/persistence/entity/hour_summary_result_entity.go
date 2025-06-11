@@ -13,11 +13,12 @@ import (
 // 小时人效聚合表
 type HourSummaryResultEntity struct {
 	BaseEntity
-	OperateTime          time.Time `gorm:"column:operate_time;not null" json:"operateTime"`                            // 作业时间（小时）
-	OperateDay           time.Time `gorm:"column:operate_day;not null" json:"operateDay"`                              // 作业日期
-	ProcessCode          string    `gorm:"column:process_code;type:varchar(45);not null" json:"processCode"`           // 环节编码
-	PositionCode         string    `gorm:"column:position_code;type:varchar(45)" json:"positionCode"`                  // 作业岗位编码
-	WorkplaceCode        string    `gorm:"column:workplace_code;type:varchar(45);not null" json:"workplaceCode"`       // 工作点编码
+	OperateTime          time.Time `gorm:"column:operate_time;not null" json:"operateTime"`                      // 作业时间（小时）
+	OperateDay           time.Time `gorm:"column:operate_day;not null" json:"operateDay"`                        // 作业日期
+	ProcessCode          string    `gorm:"column:process_code;type:varchar(45);not null" json:"processCode"`     // 环节编码
+	PositionCode         string    `gorm:"column:position_code;type:varchar(45)" json:"positionCode"`            // 作业岗位编码
+	WorkplaceCode        string    `gorm:"column:workplace_code;type:varchar(45);not null" json:"workplaceCode"` // 工作点编码
+	WorkplaceName        string    `gorm:"column:workplace_name" json:"workplaceName"`
 	EmployeeNumber       string    `gorm:"column:employee_number;type:varchar(45);not null" json:"employeeNumber"`     // 员工工号
 	EmployeeName         string    `gorm:"column:employee_name;type:varchar(45);not null" json:"employeeName"`         // 员工姓名
 	EmployeePositionCode string    `gorm:"column:employee_position_code;type:varchar(45)" json:"employeePositionCode"` // 员工归属岗位

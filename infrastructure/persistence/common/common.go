@@ -9,8 +9,12 @@ package common
 import (
 	"database/sql/driver"
 	"errors"
+	"sync"
 	"time"
 )
+
+// 用于保存gorm schema的全局缓存
+var SchemaCache = &sync.Map{}
 
 // Date 自定义日期类型
 type Date time.Time

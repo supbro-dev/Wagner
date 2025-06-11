@@ -48,6 +48,10 @@ func InitApiRouter() *gin.Engine {
 		{
 			workplace.GET("all", container.GetHandler("workplace"))
 		}
+		efficiency := vApi.Group("efficiency/")
+		{
+			efficiency.GET("employee", container.GetHandler("efficiency.employee"))
+		}
 	}
 	return router
 }

@@ -7,7 +7,6 @@
 package domain
 
 import (
-	mapset "github.com/deckarep/golang-set/v2"
 	"time"
 )
 
@@ -38,6 +37,21 @@ type HourSummaryAggregateKey struct {
 	WorkplaceCode  string
 	PropertyValues string
 }
+
+type AggregateDimension string
+
+var (
+	AggregateDimension_Process  AggregateDimension = "process"  //员工+作业环节聚合
+	AggregateDimension_Position AggregateDimension = "position" //员工+作业岗位
+)
+
+type IsCrossPosition string
+
+var (
+	IsCrossPosition_Cross   IsCrossPosition = "cross"
+	IsCrossPosition_NoCross IsCrossPosition = "noCross"
+	IsCrossPosition_All     IsCrossPosition = "all"
+)
 
 // 根据聚合属性构建一个用来聚合的汇总结果
 func MakeHourSummaryResult(aggregateKey HourSummaryAggregateKey, work Actionable, field2Column map[string]string) HourSummaryResult {
@@ -73,9 +87,9 @@ func (r *HourSummaryResult) MergeTime(work Actionable, duration float64) {
 	}
 }
 
-func (r *HourSummaryResult) MergeWorkLoad(workLoad map[string]float64, workLoadUnits mapset.Set[string], proportion float64) {
+func (r *HourSummaryResult) MergeWorkLoad(workLoad map[string]float64, workLoadUnits []string, proportion float64) {
 	// 遍历所有工作负载单位
-	for unit := range workLoadUnits.Iter() {
+	for _, unit := range workLoadUnits {
 		// 获取当前对象的负载值（如果不存在则为0）
 		thisValue := float64(0)
 		if val, exists := r.WorkLoad[unit]; exists {

@@ -41,6 +41,7 @@ func (service *SummarySinkService) convertDomain2Entity(resultList []*domain.Hou
 			PositionCode:         service.getPositionCode(&d.Process),
 			ProcessProperty:      service.convert2ProcessProperty(&d.Process),
 			WorkplaceCode:        workplace.Code,
+			WorkplaceName:        workplace.Name,
 			EmployeeNumber:       employee.Number,
 			EmployeeName:         employee.Name,
 			EmployeePositionCode: employee.PositionCode,
