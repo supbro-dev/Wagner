@@ -9,6 +9,7 @@ package query
 import (
 	"time"
 	"wagner/app/domain"
+	"wagner/app/service/calc_dynamic_param"
 )
 
 type HourSummaryResultQuery struct {
@@ -17,5 +18,5 @@ type HourSummaryResultQuery struct {
 	DateRange          []*time.Time
 	AggregateDimension domain.AggregateDimension
 	IsCrossPosition    domain.IsCrossPosition
-	WorkLoadUnit       []string
+	WorkLoadUnit       []calc_dynamic_param.WorkLoadUnit
 }

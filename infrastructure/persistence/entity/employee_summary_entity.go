@@ -28,3 +28,8 @@ type EmployeeSummaryEntity struct {
 	AttendanceTime       int       `gorm:"column:attendance_time" json:"attendanceTime"`   // 出勤时长
 	ProcessProperty      string    `gorm:"column:process_property" json:"processProperty"` // 环节额外属性
 }
+
+type WorkLoadWithSummaryEntity struct {
+	EmployeeSummary *EmployeeSummaryEntity
+	WorkLoad        map[string]float64
+}

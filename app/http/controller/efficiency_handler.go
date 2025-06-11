@@ -61,7 +61,8 @@ func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 
 	workLoadUnits := calcParam.CalcOtherParam.Work.WorkLoadUnits
 
-	service.Holder.EfficiencyService.EmployeeEfficiency(workplaceCode, employeeNumber, []*time.Time{&startDate, &endDate},
+	efficiencyVO := service.Holder.EfficiencyService.EmployeeEfficiency(workplaceCode, employeeNumber, []*time.Time{&startDate, &endDate},
 		domain.AggregateDimension(aggregateDimension), domain.IsCrossPosition(isCrossPosition), workLoadUnits)
 
+	response.ReturnSuccessJson(c, efficiencyVO)
 }

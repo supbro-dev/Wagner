@@ -8,6 +8,7 @@ package domain
 
 import (
 	"time"
+	"wagner/app/service/calc_dynamic_param"
 )
 
 type HourSummaryResult struct {
@@ -87,23 +88,23 @@ func (r *HourSummaryResult) MergeTime(work Actionable, duration float64) {
 	}
 }
 
-func (r *HourSummaryResult) MergeWorkLoad(workLoad map[string]float64, workLoadUnits []string, proportion float64) {
+func (r *HourSummaryResult) MergeWorkLoad(workLoad map[string]float64, workLoadUnits []calc_dynamic_param.WorkLoadUnit, proportion float64) {
 	// 遍历所有工作负载单位
 	for _, unit := range workLoadUnits {
 		// 获取当前对象的负载值（如果不存在则为0）
 		thisValue := float64(0)
-		if val, exists := r.WorkLoad[unit]; exists {
+		if val, exists := r.WorkLoad[unit.Code]; exists {
 			thisValue = val
 		}
 
 		// 获取传入的负载值（如果不存在则为0）
 		thatValue := float64(0)
-		if val, exists := workLoad[unit]; exists {
+		if val, exists := workLoad[unit.Code]; exists {
 			thatValue = val * proportion
 		}
 
 		// 合并值
-		r.WorkLoad[unit] = thisValue + thatValue
+		r.WorkLoad[unit.Code] = thisValue + thatValue
 	}
 
 }

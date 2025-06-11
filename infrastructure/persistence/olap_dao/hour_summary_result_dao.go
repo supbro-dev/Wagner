@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"wagner/app/domain"
+	"wagner/app/service/calc_dynamic_param"
 	"wagner/infrastructure/persistence/common"
 	"wagner/infrastructure/persistence/entity"
 	"wagner/infrastructure/persistence/query"
@@ -38,17 +39,17 @@ func (dao *HourSummaryResultDao) BatchInsertOrUpdateByUnqKey(resultList []*entit
 	}).CreateInBatches(resultList, batchSize)
 }
 
-func buildDynamicWorkLoadSelect(workLoadUnit []string) string {
+func buildDynamicWorkLoadSelect(workLoadUnit []calc_dynamic_param.WorkLoadUnit) string {
 	selects := make([]string, 0)
 	for _, field := range workLoadUnit {
 		selects = append(selects,
-			fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(work_load, '$.%s')) as `%s`", field, field),
+			fmt.Sprintf("JSON_UNQUOTE(JSON_EXTRACT(work_load, '$.%s')) as `%s`", field.Code, field.Code),
 		)
 	}
 	return strings.Join(selects, ", ")
 }
 
-func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummaryResultQuery) []*entity.EmployeeSummaryEntity {
+func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummaryResultQuery) []*entity.WorkLoadWithSummaryEntity {
 	fixedSelect := "employee_number, employee_name, operate_day, workplace_code, workplace_name, process_code, position_code, " +
 		"employee_position_code, work_group_code, region_code, industry_code, sub_industry_code," +
 		" direct_work_time, indirect_work_time, idle_time, rest_time, attendance_time"
@@ -74,7 +75,7 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 		" sum(direct_work_time) direct_work_time, sum(indirect_work_time) indirect_work_time, sum(idle_time) idle_time, sum(rest_time) rest_time, sum(attendance_time) attendance_time"
 
 	for _, workLoadUnit := range query.WorkLoadUnit {
-		mainSelect += fmt.Sprintf(", sum(%s) %s", workLoadUnit, workLoadUnit)
+		mainSelect += fmt.Sprintf(", sum(%s) %s", workLoadUnit.Code, workLoadUnit.Code)
 	}
 
 	groupBy := "employee_number, employee_name, operate_day, workplace_code, workplace_name"
@@ -93,7 +94,7 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 	return dao.convertRaw2Entity(rawResult)
 }
 
-func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]interface{}) []*entity.EmployeeSummaryEntity {
+func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]interface{}) []*entity.WorkLoadWithSummaryEntity {
 	// 创建命名策略（默认使用蛇形命名）
 	namer := schema.NamingStrategy{
 		SingularTable: true, // 可选：单数表名
@@ -105,7 +106,7 @@ func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]inter
 		panic(err)
 	}
 
-	result := make([]*entity.EmployeeSummaryEntity, 0)
+	result := make([]*entity.WorkLoadWithSummaryEntity, 0)
 	for _, rawResult := range resultList {
 		// 获取反射值并确保可设置
 		e := entity.EmployeeSummaryEntity{}
@@ -113,6 +114,7 @@ func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]inter
 
 		for _, field := range sch.Fields {
 			value := rawResult[field.DBName]
+			delete(rawResult, field.DBName)
 			entityName := field.Name
 
 			entityField := v.FieldByName(entityName)
@@ -122,10 +124,19 @@ func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]inter
 					panic(err)
 				}
 			}
-
 		}
 
-		result = append(result, &e)
+		var workLoad map[string]float64
+		if len(rawResult) > 0 {
+			workLoad = make(map[string]float64, len(rawResult))
+			for key, value := range rawResult {
+				workLoad[key] = value.(float64)
+			}
+		}
+
+		result = append(result, &entity.WorkLoadWithSummaryEntity{
+			EmployeeSummary: &e, WorkLoad: workLoad,
+		})
 	}
 
 	return result
@@ -158,16 +169,22 @@ func (dao *HourSummaryResultDao) setEntityValue(field *reflect.Value, value inte
 	case reflect.String:
 		field.SetString(value.(string))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		if i, err := strconv.ParseInt(value.(string), 10, 64); err != nil {
+		if i, err := strconv.ParseInt(value.(string), 10, 64); err == nil {
 			field.SetInt(i)
+		} else {
+			panic(err)
 		}
 	case reflect.Float32, reflect.Float64:
-		if f, err := strconv.ParseFloat(value.(string), 64); err != nil {
+		if f, err := strconv.ParseFloat(value.(string), 64); err == nil {
 			field.SetFloat(f)
+		} else {
+			panic(err)
 		}
 	case reflect.Bool:
-		if b, err := strconv.ParseBool(value.(string)); err != nil {
+		if b, err := strconv.ParseBool(value.(string)); err == nil {
 			field.SetBool(b)
+		} else {
+			panic(err)
 		}
 	default:
 		return fmt.Errorf("unsupported field type: %s", field.Type())
