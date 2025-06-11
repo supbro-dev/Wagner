@@ -16,7 +16,7 @@ import (
 type WorkplaceHandler struct {
 }
 
-func (p WorkplaceHandler) Invoke(c *gin.Context) {
+func (p WorkplaceHandler) FindAll(c *gin.Context) {
 	workplaces := service.DomainHolder.WorkplaceService.FindAll()
 
 	selectList := make([]vo.SelectVO, 0)

@@ -2,34 +2,25 @@ package container
 
 import (
 	"github.com/gin-gonic/gin"
-	"wagner/app/global/container"
 	"wagner/app/http/controller"
 	"wagner/app/utils/log"
 )
 
-type ApiInvoker interface {
-	Invoke(context *gin.Context)
-}
-
-var apiCache *container.GenericCache[string, ApiInvoker]
+var apiCache map[string]func(*gin.Context)
 
 func init() {
 	//创建容器
-	cache, err := container.GetOrCreateCache[string, ApiInvoker](container.API)
-	if err != nil {
-		panic(err)
-	}
+	apiCache = make(map[string]func(*gin.Context))
+	apiCache["efficiencyCompute"] = controller.EfficiencyComputeHandler{}.ComputeEmployee
+	apiCache["workplace"] = controller.WorkplaceHandler{}.FindAll
+	efficiencyHandler := controller.EfficiencyHandler{}
+	apiCache["efficiency.employee"] = efficiencyHandler.EmployeeEfficiency
 
-	apiCache = cache
-	apiCache.Set("efficiencyCompute", controller.EfficiencyComputeHandler{})
-	apiCache.Set("workplace", controller.WorkplaceHandler{})
 }
 
 func GetHandler(key string) func(context *gin.Context) {
-	if value := apiCache.Get(key); value != nil {
-		if val, isOk := value.(ApiInvoker); isOk {
-			return val.Invoke
-		}
+	if value, exists := apiCache[key]; exists {
+		return value
 	}
 	log.SystemLogger.Error("获取API handler异常")
 	return nil

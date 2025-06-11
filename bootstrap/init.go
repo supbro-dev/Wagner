@@ -33,8 +33,12 @@ func init() {
 		panic(err)
 	}
 
-	olapClient, err := gorm.GetOneOlapClient()
-
+	// olap建议读写分别创建客户端
+	olapWriteClient, err := gorm.GetOneOlapClient()
+	if err != nil {
+		panic(err)
+	}
+	olapReadClient, err := gorm.GetOneOlapClient()
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +54,7 @@ func init() {
 
 	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao, scriptDao)
 
-	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapClient))
+	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapWriteClient))
 
 	workplaceService := workplace.CreateWorkplaceService(workplaceDao)
 
@@ -64,9 +68,11 @@ func init() {
 
 	service.DomainHolder = domainServiceHolder
 
-	efficiencyComputeService := service.EfficiencyComputeService{}
+	efficiencyComputeService := service.CreateEfficiencyComputeService()
+	efficiencyService := service.CreateEfficiencyService(olap_dao.CreateHourSummaryResultDao(olapReadClient))
 	serviceHolder := service.ServiceHolder{
-		EfficiencyComputeService: &efficiencyComputeService,
+		EfficiencyComputeService: efficiencyComputeService,
+		EfficiencyService:        efficiencyService,
 		SummarySinkService:       summarySinkService,
 	}
 

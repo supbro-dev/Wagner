@@ -11,7 +11,7 @@ import (
 type EfficiencyComputeHandler struct {
 }
 
-func (p EfficiencyComputeHandler) Invoke(c *gin.Context) {
+func (p EfficiencyComputeHandler) ComputeEmployee(c *gin.Context) {
 	employeeNumber := c.Query("employeeNumber")
 	operateDayStr := c.Query("operateDay")
 
