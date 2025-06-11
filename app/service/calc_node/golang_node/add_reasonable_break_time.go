@@ -4,7 +4,7 @@
 * @Last Modified by:   supbro
 * @Last Modified time: 2025/6/9 13:38
  */
-package golang
+package golang_node
 
 import (
 	"fmt"

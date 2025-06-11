@@ -14,7 +14,6 @@ import (
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
 	"reflect"
-	"strconv"
 	"wagner/app/global/my_error"
 )
 
@@ -23,22 +22,9 @@ type ScriptType string
 var (
 	LUA ScriptType = "LUA"
 	// 可以使用tengo，暂时未实现
-	GOLANG  ScriptType = "GOLANG"
-	REFLECT ScriptType = "REFLECT"
-	EL      ScriptType = "EL"
+	GOLANG ScriptType = "GOLANG"
+	EL     ScriptType = "EL"
 )
-
-var registry = map[string]reflect.Value{}
-
-// 注册函数（自动调用）
-func Register(name string, fn any) {
-	registry[name] = reflect.ValueOf(fn)
-}
-
-func GetFunction(name string) (reflect.Value, bool) {
-	fn, ok := registry[name]
-	return fn, ok
-}
 
 func Run[P any, V any](scriptName, script string, scriptType ScriptType, input P) (V, error) {
 	var zero V
@@ -49,8 +35,6 @@ func Run[P any, V any](scriptName, script string, scriptType ScriptType, input P
 		// Yaegi不支持module，只能使用tengo，但tengo实现自定义类型非常繁琐，需要实现tengo.Object接口，赋值和取值时还要进行类型转换
 	case GOLANG:
 		return runGolang[P, V](script, input)
-	case REFLECT:
-		return runReflect[P, V](scriptName, input)
 	case EL:
 		// 检查输入类型是否为 map[string]interface{}
 		if isMapStringInterface(input) {
@@ -97,20 +81,6 @@ func runEl[P map[string]interface{}, V any](script string, input P) (V, error) {
 	// 简单表达式
 	value, err := gval.Evaluate(script, input)
 	return value.(V), err
-}
-
-// 这里使用反射的原因是函数注册的时候无法使用泛型
-// Parameters: scriptName
-// Returns: 函数调用返回值
-func runReflect[P any, V any](scriptName string, input P) (V, error) {
-	function, ok := GetFunction(scriptName)
-	if !ok {
-		var zero V
-		return zero, fmt.Errorf(strconv.Itoa(my_error.ScriptNotExistCode), my_error.ScriptNotExistMsg, scriptName)
-	}
-
-	results := function.Call([]reflect.Value{reflect.ValueOf(input)})
-	return results[0].Interface().(V), nil
 }
 
 func runGolang[P any, V any](script string, input P) (V, error) {

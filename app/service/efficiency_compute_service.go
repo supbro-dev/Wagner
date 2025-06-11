@@ -7,8 +7,8 @@ import (
 	"wagner/app/domain"
 	"wagner/app/global/my_const"
 	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc_node"
 	"wagner/app/utils/lock"
-	"wagner/app/utils/script_util"
 )
 
 // 人效计算服务
@@ -63,10 +63,11 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	ctx.CalcStartTime = time.Now()
 	ctxPointer := &ctx
 	for _, node := range calcParam.CalcNodeList.List {
-		ctxRes, err := script_util.Run[*domain.ComputeContext, *domain.ComputeContext](node.NodeName, node.Script, node.NodeType, ctxPointer)
-		ctxPointer = ctxRes
-		if err != nil {
-			panic(err)
+		if f, exists := calc_node.GetFunction(node.NodeName); exists {
+			ctxRes := f(ctxPointer)
+			ctxPointer = ctxRes
+		} else {
+			panic("没有找到对应的计算节点")
 		}
 	}
 	ctx.CalcEndTime = time.Now()

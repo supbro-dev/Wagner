@@ -4,7 +4,7 @@
 * @Last Modified by:   supbro
 * @Last Modified time: 2025/6/6 15:53
  */
-package golang
+package golang_node
 
 import (
 	"wagner/app/domain"
