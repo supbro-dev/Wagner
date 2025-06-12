@@ -51,3 +51,23 @@ func Max(t1, t2 time.Time) time.Time {
 		return t2
 	}
 }
+
+func LeftBeforeOrEqualRight(t1, t2 time.Time) bool {
+	if t1.Before(t2) {
+		return true
+	} else if t1.Equal(t2) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func LeftAfterOrEqualRight(t1, t2 time.Time) bool {
+	if t1.After(t2) {
+		return true
+	} else if t1.Equal(t2) {
+		return true
+	} else {
+		return false
+	}
+}

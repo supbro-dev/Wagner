@@ -14,7 +14,7 @@ import (
 )
 
 // 生成闲置工时
-func GenerateIdleDataList(ctx *domain.ComputeContext) *domain.ComputeContext {
+func GenerateIdleData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	// 把休息时间段放到切片中并进行排序
 	todayActionList := ctx.TodayWorkList
 	for _, rest := range ctx.TodayRestList {
@@ -52,14 +52,17 @@ func GenerateIdleDataList(ctx *domain.ComputeContext) *domain.ComputeContext {
 		}
 	}
 
+	// 全天没有任何作业
 	// 处理全天闲置
 	if ctx.TodayAttendanceStartTime != nil && ctx.TodayAttendanceEndTime != nil && (ctx.TodayRestList == nil || len(ctx.TodayRestList) == 0) {
 		// 如果前后都没有环节，使用员工所属岗位下第一个环节
 		standardPositionService := service.DomainHolder.StandardPositionService
 		firstProcess := standardPositionService.FindPositionFirstProcess(ctx.Employee.PositionCode, ctx.Workplace.IndustryCode, ctx.Workplace.SubIndustryCode)
-
-		idle := generateIdle(*ctx.TodayAttendanceStartTime, *ctx.TodayAttendanceEndTime, *firstProcess, make(map[string]interface{}))
-		idleList = append(idleList, idle)
+		// 全天只有上下班情况
+		if ctx.TodayRestList == nil || len(ctx.TodayRestList) == 0 {
+			idle := generateIdle(*ctx.TodayAttendanceStartTime, *ctx.TodayAttendanceEndTime, firstProcess, make(map[string]interface{}))
+			idleList = append(idleList, idle)
+		}
 	}
 
 	ctx.TodayIdleList = idleList
@@ -73,7 +76,7 @@ func GenerateIdleDataList(ctx *domain.ComputeContext) *domain.ComputeContext {
 	return ctx
 }
 
-func generateIdle(startTime, endTime time.Time, process domain.StandardPosition, properties map[string]interface{}) *domain.Idle {
+func generateIdle(startTime, endTime time.Time, process *domain.StandardPosition, properties map[string]interface{}) *domain.Idle {
 	idle := &domain.Idle{
 		Action: domain.Action{
 			ComputedStartTime: &startTime,

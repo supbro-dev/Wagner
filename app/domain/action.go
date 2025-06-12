@@ -28,7 +28,7 @@ type Action struct {
 	// 环节编码
 	ProcessCode string
 	// 环节实例
-	Process StandardPosition
+	Process *StandardPosition
 }
 
 type Actionable interface {

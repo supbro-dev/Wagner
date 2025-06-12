@@ -237,7 +237,7 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 	return CalcNodeList{calcNodes}
 }
 
-var defaultCalcOtherParam = CalcOtherParam{
+var DefaultCalcOtherParam = CalcOtherParam{
 	Attendance: AttendanceParam{
 		// 默认惩罚8小时
 		AttendanceAbsencePenaltyHour: 8,
@@ -261,7 +261,7 @@ var defaultCalcOtherParam = CalcOtherParam{
 
 func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) CalcOtherParam {
 	otherParam := CalcOtherParam{}
-	copyError := copier.Copy(&otherParam, &defaultCalcOtherParam)
+	copyError := copier.Copy(&otherParam, &DefaultCalcOtherParam)
 	if copyError != nil {
 		panic(copyError)
 	}

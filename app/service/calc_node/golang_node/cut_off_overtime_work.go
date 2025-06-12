@@ -18,7 +18,7 @@ import (
 // 2.根据下班卡截断（间接工作）
 func CutOffOvertimeWork(ctx *domain.ComputeContext) *domain.ComputeContext {
 	for _, work := range ctx.TodayWorkList {
-		// 先进性超长截断
+		// 先进行超长截断
 		maxDurationInMinute := getOrDefaultMaxTime(work.GetAction().Process, ctx.CalcOtherParam.Work.DefaultMaxTimeInMinute)
 
 		diff := work.GetAction().ComputedEndTime.Sub(*work.GetAction().ComputedStartTime)
@@ -48,9 +48,9 @@ func CutOffOvertimeWork(ctx *domain.ComputeContext) *domain.ComputeContext {
 	return ctx
 }
 
-const MaxTimeKey = "maxTime"
+const MaxTimeKey = "maxTimeInMinute"
 
-func getOrDefaultMaxTime(process domain.StandardPosition, defaultMaxTime int) int {
+func getOrDefaultMaxTime(process *domain.StandardPosition, defaultMaxTime int) int {
 	if process.Properties != nil {
 		if value, exists := process.Properties[MaxTimeKey]; exists {
 			return value.(int)

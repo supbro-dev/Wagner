@@ -18,7 +18,7 @@ func MarchProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 		process := findFirstProcess(work, ctx.ProcessList)
 
 		if process != nil {
-			work.GetAction().Process = *process
+			work.GetAction().Process = process
 		}
 	}
 

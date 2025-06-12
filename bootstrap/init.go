@@ -93,6 +93,6 @@ func init() {
 	calc_node.Register("AddReasonableBreakTime", golang_node.AddReasonableBreakTime)
 	calc_node.Register("CutOffWorkByRest", golang_node.CutOffWorkByRest)
 	calc_node.Register("CalcWorkTransitionTime", golang_node.CalcWorkTransitionTime)
-	calc_node.Register("GenerateIdleDataList", golang_node.GenerateIdleDataList)
+	calc_node.Register("GenerateIdleData", golang_node.GenerateIdleData)
 	calc_node.Register("MatchRestProcess", golang_node.MatchRestProcess)
 }

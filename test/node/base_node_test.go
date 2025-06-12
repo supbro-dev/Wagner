@@ -29,7 +29,7 @@ func BuildTestCtx() domain.ComputeContext {
 		SubIndustryCode: "ConvenientFood",
 	}
 	operateDay, _ := datetime_util.ParseDate("2025-06-12")
-	calcParam := calc_dynamic_param.CalcOtherParam{}
+	calcParam := calc_dynamic_param.DefaultCalcOtherParam
 	calcStartTime, _ := datetime_util.ParseDatetime("2025-06-12 18:00:00")
 
 	ctx.Employee = &employee

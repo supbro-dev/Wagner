@@ -11,7 +11,7 @@ import (
 type DomainServiceHolder struct {
 	EmployeeSnapshotService *employee_snapshot.EmployeeSnapshotService
 	ActionService           *action.ActionService
-	StandardPositionService *standard_position.StandardPositionService
+	StandardPositionService standard_position.StandardPositionItf
 	CalcDynamicParamService *calc_dynamic_param.CalcDynamicParamService
 	WorkplaceService        *workplace.WorkplaceService
 }
