@@ -23,11 +23,11 @@ func MatchRestProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 		return todayActionList[i].GetAction().ComputedStartTime.Before(*todayActionList[j].GetAction().ComputedStartTime)
 	})
 
-	for i, action := range ctx.TodayWorkList {
+	for i, action := range todayActionList {
 		if rest, ok := action.(*domain.Rest); ok {
-			process := findPreviousActionProcess(i-1, ctx.TodayWorkList)
+			process := findPreviousActionProcess(i-1, todayActionList)
 			if process == nil {
-				process = findNextActionProcess(i+1, ctx.TodayWorkList)
+				process = findNextActionProcess(i+1, todayActionList)
 			}
 			if process != nil {
 				rest.GetAction().Process = process
@@ -41,6 +41,8 @@ func MatchRestProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 			}
 		}
 	}
+
+	ctx.TodayWorkList = todayActionList
 
 	return ctx
 }

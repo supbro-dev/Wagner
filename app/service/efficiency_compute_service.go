@@ -200,7 +200,7 @@ func (service *EfficiencyComputeService) efficientAggregateActions(works []domai
 		}
 
 		// 处理结束小时（可能不是完整小时）
-		if end.After(endHour) {
+		if end.After(endHour) && !startHour.Equal(endHour) {
 			duration := end.Sub(endHour).Seconds()
 			bucket := service.getOrCreateBucket(buckets, endHour, work, storageParam.AggregateFields, storageParam.FieldName2ColumnName)
 			bucket.MergeTime(work, duration)

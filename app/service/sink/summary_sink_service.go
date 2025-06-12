@@ -78,6 +78,7 @@ func (service *SummarySinkService) convertDomain2Entity(resultList []*domain.Hou
 			DirectWorkTime:       d.DirectWorkTime,
 			IndirectWorkTime:     d.IndirectWorkTime,
 			IdleTime:             d.IdleTime,
+			RestTime:             d.RestTime,
 			AttendanceTime:       d.AttendanceTime,
 			Properties:           json_util.ToJsonString(d.Properties),
 			UniqueKey:            service.generateUniqueKey(&d.AggregateKey),

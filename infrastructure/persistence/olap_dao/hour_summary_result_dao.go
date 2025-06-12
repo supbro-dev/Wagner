@@ -55,7 +55,7 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 		" direct_work_time, indirect_work_time, idle_time, rest_time, attendance_time"
 	workLoadSelect := buildDynamicWorkLoadSelect(query.WorkLoadUnit)
 
-	where := "operate_day >= ? and operate_day <= ? and workplace_code = ?"
+	where := "operate_day >= ? and operate_day <= ? and workplace_code = ? and is_deleted = 0 "
 	if query.EmployeeNumber != "" {
 		where += " and employee_number = " + query.EmployeeNumber
 	}
@@ -136,7 +136,9 @@ func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]inter
 		if len(rawResult) > 0 {
 			workLoad = make(map[string]float64, len(rawResult))
 			for key, value := range rawResult {
-				workLoad[key] = value.(float64)
+				if value != nil {
+					workLoad[key] = value.(float64)
+				}
 			}
 		}
 
