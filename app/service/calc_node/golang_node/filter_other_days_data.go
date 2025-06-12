@@ -15,6 +15,7 @@ import (
 func FilterOtherDaysData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	finalTodayWorkList := ctx.TodayWorkList
 
+	// 排除属于昨天的数据
 	if ctx.YesterdayAttendanceEndTime != nil {
 		afterFilterYesterdayWorks := make([]domain.Actionable, 0)
 		for _, work := range finalTodayWorkList {
@@ -26,6 +27,7 @@ func FilterOtherDaysData(ctx *domain.ComputeContext) *domain.ComputeContext {
 		finalTodayWorkList = afterFilterYesterdayWorks
 	}
 
+	// 测试排除属于第二天的数据
 	if ctx.TomorrowAttendanceStartTime != nil {
 		afterFilterTomorrowWorks := make([]domain.Actionable, 0)
 		for _, work := range finalTodayWorkList {
