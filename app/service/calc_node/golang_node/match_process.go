@@ -19,6 +19,7 @@ func MarchProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 		if process != nil {
 			work.GetAction().Process = process
+			work.GetAction().ProcessCode = process.Code
 		}
 	}
 

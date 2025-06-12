@@ -41,10 +41,11 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	standardPositionList := standardPositionService.FindStandardPositionByWorkplace(employee.WorkplaceCode)
 
 	ctx := domain.ComputeContext{
-		Employee:    employee,
-		Workplace:   workplace,
-		OperateDay:  operateDay,
-		ProcessList: standardPositionList,
+		Employee:       employee,
+		Workplace:      workplace,
+		OperateDay:     operateDay,
+		ProcessList:    standardPositionList,
+		CalcOtherParam: calcParam.CalcOtherParam,
 	}
 
 	// 4. 注入原始数据

@@ -197,3 +197,11 @@ func (dao *HourSummaryResultDao) setEntityValue(field *reflect.Value, value inte
 	}
 	return nil
 }
+
+func (dao *HourSummaryResultDao) UpdateDeletedByUniqueKeyList(delete *query.HourSummaryResultDelete) {
+	dao.olapDb.Model(entity.HourSummaryResultEntity{}).
+		Where("unique_key not in (?)", delete.UniqueKeyList).
+		Where("employee_number = ? and workplace_code = ? and operate_day = ? ", delete.EmployeeNumber, delete.WorkplaceCode, delete.OperateDay).
+		Update("is_deleted", 1)
+
+}

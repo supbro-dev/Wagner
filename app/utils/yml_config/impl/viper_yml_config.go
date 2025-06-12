@@ -90,7 +90,11 @@ func (y *ymlConfig) cache(keyName string, value interface{}) bool {
 
 // 通过键获取缓存的值
 func (y *ymlConfig) getValueFromCache(keyName string) interface{} {
-	return containerFactory.Get(keyName)
+	if get, b := containerFactory.Get(keyName); b {
+		return get
+	} else {
+		return nil
+	}
 }
 
 // 清空已经缓存的配置项信息

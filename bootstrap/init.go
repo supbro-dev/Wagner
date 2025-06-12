@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"wagner/app/global/cache"
 	"wagner/app/global/variable"
 	"wagner/app/service"
 	"wagner/app/service/action"
@@ -54,7 +55,7 @@ func init() {
 
 	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao, scriptDao)
 
-	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapWriteClient))
+	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapWriteClient), cache.CreateHourSummaryCheckLocalCache())
 
 	workplaceService := workplace.CreateWorkplaceService(workplaceDao)
 

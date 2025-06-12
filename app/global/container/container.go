@@ -17,25 +17,22 @@ var sMap sync.Map
 
 // GenericCache 泛型缓存包装器
 type GenericCache[K comparable, V any] struct {
-	name  *ContainerKey
+	name  ContainerKey
 	cache *ristretto.Cache
 }
 
-type ContainerKey struct {
-	key string
-}
+type ContainerKey string
 
 var (
-	API           = &ContainerKey{"API"}
-	CONFIG        = &ContainerKey{"config"}
-	SERVICE       = &ContainerKey{"service"}
-	DYNAMIC_PARAM = &ContainerKey{"dynamic_param"}
+	CONFIG           ContainerKey = "config"
+	DYNAMIC_PARAM    ContainerKey = "dynamic_param"
+	HOUR_SUMMARY_MD5 ContainerKey = "hour_sum_md5"
 )
 
 // 根据cacheName创建或获取一个泛型缓存
 // Parameters: 缓存名称
 // Returns: 缓存对象
-func GetOrCreateCache[K comparable, V any](cacheName *ContainerKey) (*GenericCache[K, V], error) {
+func GetOrCreateCache[K comparable, V any](cacheName ContainerKey) (*GenericCache[K, V], error) {
 	// 检查是否已存在该名称的缓存
 	if val, ok := sMap.Load(cacheName); ok {
 		if cache, ok := val.(*GenericCache[K, V]); ok {
@@ -56,7 +53,7 @@ func GetOrCreateCache[K comparable, V any](cacheName *ContainerKey) (*GenericCac
 	return cache, nil
 }
 
-func newGenericCache[K comparable, V any](key *ContainerKey) (*GenericCache[K, V], error) {
+func newGenericCache[K comparable, V any](key ContainerKey) (*GenericCache[K, V], error) {
 	var maxEntries int64 = 100
 	cache, err := ristretto.NewCache(&ristretto.Config{
 		NumCounters: maxEntries * 10, // 建议为最大键数的10倍
@@ -74,15 +71,12 @@ func newGenericCache[K comparable, V any](key *ContainerKey) (*GenericCache[K, V
 }
 
 // Set  1.以键值对的形式将代码注册到容器
-func (c *GenericCache[K, V]) Set(key string, value interface{}) (res bool) {
-
+func (c *GenericCache[K, V]) Set(key K, value V) (res bool) {
 	if _, exists := c.KeyIsExists(key); exists == false {
-		c.cache.Set(key, value, 1)
-		res = true
+		return c.cache.Set(key, value, 1)
 	} else {
-
+		return c.cache.Set(key, value, 1)
 	}
-	return
 }
 
 // Delete  2.删除
@@ -91,16 +85,23 @@ func (c *GenericCache[K, V]) Delete(key string) {
 }
 
 // Get 3.传递键，从容器获取值
-func (c *GenericCache[K, V]) Get(key string) interface{} {
-	if value, exists := c.KeyIsExists(key); exists {
-		return value
-	}
-	return nil
+func (c *GenericCache[K, V]) Get(key K) (V, bool) {
+	return c.KeyIsExists(key)
 }
 
 // KeyIsExists 4. 判断键是否被注册
-func (c *GenericCache[K, V]) KeyIsExists(key string) (interface{}, bool) {
-	return c.cache.Get(key)
+func (c *GenericCache[K, V]) KeyIsExists(key K) (V, bool) {
+	if get, b := c.cache.Get(key); b {
+		if v, ok := get.(V); ok {
+			return v, ok
+		} else {
+			var zero V
+			return zero, false
+		}
+	} else {
+		var zero V
+		return zero, false
+	}
 }
 
 func (c *GenericCache[K, V]) ClearCache() {

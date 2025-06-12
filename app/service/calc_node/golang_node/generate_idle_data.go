@@ -15,15 +15,8 @@ import (
 
 // 生成闲置工时
 func GenerateIdleData(ctx *domain.ComputeContext) *domain.ComputeContext {
-	// 把休息时间段放到切片中并进行排序
 	todayActionList := ctx.TodayWorkList
-	for _, rest := range ctx.TodayRestList {
-		todayActionList = append(todayActionList, rest)
-	}
-	sort.Slice(todayActionList, func(i, j int) bool {
-		return todayActionList[i].GetAction().ComputedStartTime.Before(*todayActionList[j].GetAction().ComputedStartTime)
-	})
-
+	
 	idleList := make([]domain.Actionable, 0)
 	var nextAction domain.Actionable
 	for i, action := range todayActionList {
@@ -35,19 +28,19 @@ func GenerateIdleData(ctx *domain.ComputeContext) *domain.ComputeContext {
 		// 考虑考勤上班时间
 		if i == 0 && ctx.TodayAttendanceStartTime != nil {
 			if action.GetAction().ComputedStartTime.After(*ctx.TodayAttendanceStartTime) {
-				idle := generateIdle(*ctx.TodayAttendanceStartTime, *action.GetAction().ComputedStartTime, action.GetAction().Process, action.GetAction().Properties)
+				idle := generateIdle(*ctx.TodayAttendanceStartTime, *action.GetAction().ComputedStartTime, action.GetAction().Process, action)
 				idleList = append(idleList, idle)
 			}
 		} else if i == len(todayActionList)-1 && ctx.TodayAttendanceEndTime != nil {
 			// 考虑考勤下班时间
 			if action.GetAction().ComputedEndTime.Before(*ctx.TodayAttendanceEndTime) {
-				idle := generateIdle(*action.GetAction().ComputedEndTime, *ctx.TodayAttendanceEndTime, action.GetAction().Process, action.GetAction().Properties)
+				idle := generateIdle(*action.GetAction().ComputedEndTime, *ctx.TodayAttendanceEndTime, action.GetAction().Process, action)
 				idleList = append(idleList, idle)
 			}
 		}
 
 		if nextAction != nil && action.GetAction().ComputedEndTime.Before(*nextAction.GetAction().ComputedStartTime) {
-			idle := generateIdle(*action.GetAction().ComputedEndTime, *nextAction.GetAction().ComputedStartTime, action.GetAction().Process, action.GetAction().Properties)
+			idle := generateIdle(*action.GetAction().ComputedEndTime, *nextAction.GetAction().ComputedStartTime, action.GetAction().Process, action)
 			idleList = append(idleList, idle)
 		}
 	}
@@ -60,7 +53,7 @@ func GenerateIdleData(ctx *domain.ComputeContext) *domain.ComputeContext {
 		firstProcess := standardPositionService.FindPositionFirstProcess(ctx.Employee.PositionCode, ctx.Workplace.IndustryCode, ctx.Workplace.SubIndustryCode)
 		// 全天只有上下班情况
 		if ctx.TodayRestList == nil || len(ctx.TodayRestList) == 0 {
-			idle := generateIdle(*ctx.TodayAttendanceStartTime, *ctx.TodayAttendanceEndTime, firstProcess, make(map[string]interface{}))
+			idle := generateIdle(*ctx.TodayAttendanceStartTime, *ctx.TodayAttendanceEndTime, firstProcess, ctx.TodayAttendance)
 			idleList = append(idleList, idle)
 		}
 	}
@@ -76,13 +69,18 @@ func GenerateIdleData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	return ctx
 }
 
-func generateIdle(startTime, endTime time.Time, process *domain.StandardPosition, properties map[string]interface{}) *domain.Idle {
+func generateIdle(startTime, endTime time.Time, process *domain.StandardPosition, action domain.Actionable) *domain.Idle {
 	idle := &domain.Idle{
 		Action: domain.Action{
+			EmployeeNumber:    action.GetAction().EmployeeNumber,
+			WorkplaceCode:     action.GetAction().WorkplaceCode,
+			OperateDay:        action.GetAction().OperateDay,
+			ActionType:        domain.IDLE,
 			ComputedStartTime: &startTime,
 			ComputedEndTime:   &endTime,
+			ProcessCode:       process.Code,
 			Process:           process,
-			Properties:        properties,
+			Properties:        action.GetAction().Properties,
 		},
 	}
 	return idle

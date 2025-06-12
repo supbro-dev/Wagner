@@ -90,6 +90,10 @@ type Attendance struct {
 	Action
 }
 
+func (a *Attendance) GetAction() *Action {
+	return &a.Action
+}
+
 // 排班
 type Scheduling struct {
 	Action

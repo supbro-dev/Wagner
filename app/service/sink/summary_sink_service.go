@@ -11,24 +11,49 @@ import (
 	"strings"
 	"time"
 	"wagner/app/domain"
+	"wagner/app/global/cache"
 	"wagner/app/utils/json_util"
+	"wagner/app/utils/md5_util"
 	"wagner/infrastructure/persistence/entity"
 	"wagner/infrastructure/persistence/olap_dao"
+	"wagner/infrastructure/persistence/query"
 )
 
 type SummarySinkService struct {
 	hourSummaryResultDao *olap_dao.HourSummaryResultDao
+	cache                *cache.HourSummaryCheckCache
 }
 
 // 通过构造函数注入 DAO
-func CreateSummarySinkService(hourSummaryResultDao *olap_dao.HourSummaryResultDao) *SummarySinkService {
-	return &SummarySinkService{hourSummaryResultDao: hourSummaryResultDao}
+func CreateSummarySinkService(hourSummaryResultDao *olap_dao.HourSummaryResultDao, cache *cache.HourSummaryCheckCache) *SummarySinkService {
+	return &SummarySinkService{hourSummaryResultDao: hourSummaryResultDao, cache: cache}
 }
 
 func (service *SummarySinkService) BatchInsertSummaryResult(resultList []*domain.HourSummaryResult, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time) {
-	entityList := service.convertDomain2Entity(resultList, employee, workplace, operateDay)
+	md5 := md5_util.Md5(json_util.ToJsonString(resultList))
+	if md5Value, exists := service.cache.GutResultMd5(employee.Number, workplace.Code, operateDay); exists && md5 == md5Value {
+		// 计算结果相等，无需重复写库
+		return
+	}
+	service.updateDeleted(&query.HourSummaryResultDelete{EmployeeNumber: employee.Number, WorkplaceCode: workplace.Code, OperateDay: operateDay}, resultList)
 
+	entityList := service.convertDomain2Entity(resultList, employee, workplace, operateDay)
 	service.hourSummaryResultDao.BatchInsertOrUpdateByUnqKey(entityList)
+
+	service.cache.PutResultMd5(employee.Number, workplace.Code, operateDay, md5)
+}
+
+// 尝试把没有被更新的数据进行逻辑删除
+func (service *SummarySinkService) updateDeleted(delete *query.HourSummaryResultDelete, resultList []*domain.HourSummaryResult) {
+	uniqueKeyList := make([]string, 0)
+	for _, result := range resultList {
+		uniqueKey := service.generateUniqueKey(&result.AggregateKey)
+		uniqueKeyList = append(uniqueKeyList, uniqueKey)
+	}
+
+	delete.UniqueKeyList = uniqueKeyList
+
+	service.hourSummaryResultDao.UpdateDeletedByUniqueKeyList(delete)
 }
 
 func (service *SummarySinkService) convertDomain2Entity(resultList []*domain.HourSummaryResult, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time) []*entity.HourSummaryResultEntity {

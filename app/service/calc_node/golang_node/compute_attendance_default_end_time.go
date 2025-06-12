@@ -20,6 +20,7 @@ func ComputeAttendanceDefaultEndTime(ctx *domain.ComputeContext) *domain.Compute
 	if ctx.TodayAttendanceEndTime == nil && ctx.TodayAttendanceStartTime != nil {
 		defaultEndTime := computeAttendanceEndTime(now, *ctx.TodayAttendanceStartTime, ctx.TodayScheduling, ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour)
 		ctx.TodayAttendanceEndTime = &defaultEndTime
+		ctx.TodayAttendance.ComputedEndTime = &defaultEndTime
 	} else {
 		ctx.TodayAttendanceNoMissing = true
 	}
@@ -28,6 +29,7 @@ func ComputeAttendanceDefaultEndTime(ctx *domain.ComputeContext) *domain.Compute
 	if ctx.YesterdayAttendanceEndTime == nil && ctx.YesterdayAttendanceStartTime != nil {
 		defaultEndTime := computeAttendanceEndTime(now, *ctx.YesterdayAttendanceStartTime, ctx.YesterdayScheduling, ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour)
 		ctx.YesterdayAttendanceEndTime = &defaultEndTime
+		ctx.YesterdayAttendance.EndTime = &defaultEndTime
 	}
 
 	return ctx
