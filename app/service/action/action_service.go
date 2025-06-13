@@ -100,6 +100,10 @@ func (service *ActionService) convertAction(actionEntities []*entity.ActionEntit
 			copier.Copy(&scheduling, &e)
 			day2Scheduling[operateDay] = &scheduling
 
+			// 这里先设置计算后的时间为原始时间，看之后是否需要去掉
+			scheduling.ComputedStartTime = scheduling.StartTime
+			scheduling.ComputedEndTime = scheduling.EndTime
+
 			if restList := service.convertRestListFromScheduling(&scheduling, e.Properties); restList != nil {
 				day2RestList[operateDay] = restList
 			}
@@ -107,8 +111,8 @@ func (service *ActionService) convertAction(actionEntities []*entity.ActionEntit
 			attendance := domain.Attendance{Action: domain.Action{Properties: properties}}
 
 			copier.Copy(&attendance, &e)
-			attendance.ComputedStartTime = e.StartTime
-			attendance.ComputedEndTime = e.EndTime
+			attendance.ComputedStartTime = attendance.StartTime
+			attendance.ComputedEndTime = attendance.EndTime
 			day2Attendance[operateDay] = &attendance
 		default:
 
