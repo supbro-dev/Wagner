@@ -29,7 +29,7 @@ type EmployeeSummaryEntity struct {
 	ProcessProperty      string    `gorm:"column:process_property" json:"processProperty"` // 环节额外属性
 }
 
-type WorkLoadWithSummaryEntity struct {
+type WorkLoadWithEmployeeSummary struct {
 	EmployeeSummary *EmployeeSummaryEntity
 	WorkLoad        map[string]float64
 }

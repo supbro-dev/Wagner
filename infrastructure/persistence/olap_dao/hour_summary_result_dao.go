@@ -49,7 +49,7 @@ func buildDynamicWorkLoadSelect(workLoadUnit []calc_dynamic_param.WorkLoadUnit) 
 	return strings.Join(selects, ", ")
 }
 
-func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummaryResultQuery) []*entity.WorkLoadWithSummaryEntity {
+func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummaryResultQuery) []*entity.WorkLoadWithEmployeeSummary {
 	fixedSelect := "employee_number, employee_name, operate_day, workplace_code, workplace_name, process_code, position_code, " +
 		"employee_position_code, work_group_code, region_code, industry_code, sub_industry_code, process_property, " +
 		" direct_work_time, indirect_work_time, idle_time, rest_time, attendance_time"
@@ -100,7 +100,7 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 	return dao.convertRaw2Entity(rawResult)
 }
 
-func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]interface{}) []*entity.WorkLoadWithSummaryEntity {
+func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]interface{}) []*entity.WorkLoadWithEmployeeSummary {
 	// 创建命名策略（默认使用蛇形命名）
 	namer := schema.NamingStrategy{
 		SingularTable: true, // 可选：单数表名
@@ -112,7 +112,7 @@ func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]inter
 		panic(err)
 	}
 
-	result := make([]*entity.WorkLoadWithSummaryEntity, 0)
+	result := make([]*entity.WorkLoadWithEmployeeSummary, 0)
 	for _, rawResult := range resultList {
 		// 获取反射值并确保可设置
 		e := entity.EmployeeSummaryEntity{}
@@ -142,8 +142,59 @@ func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]inter
 			}
 		}
 
-		result = append(result, &entity.WorkLoadWithSummaryEntity{
+		result = append(result, &entity.WorkLoadWithEmployeeSummary{
 			EmployeeSummary: &e, WorkLoad: workLoad,
+		})
+	}
+
+	return result
+
+}
+
+func (dao *HourSummaryResultDao) convertRaw2ProcessEntity(resultList []map[string]interface{}) []*entity.WorkLoadWithProcessSummary {
+	// 创建命名策略（默认使用蛇形命名）
+	namer := schema.NamingStrategy{
+		SingularTable: true, // 可选：单数表名
+	}
+
+	// 解析模型 Schema（不再需要 CacheStore）
+	sch, err := schema.Parse(entity.ProcessSummaryEntity{}, common.SchemaCache, &namer)
+	if err != nil {
+		panic(err)
+	}
+
+	result := make([]*entity.WorkLoadWithProcessSummary, 0)
+	for _, rawResult := range resultList {
+		// 获取反射值并确保可设置
+		e := entity.ProcessSummaryEntity{}
+		v := reflect.ValueOf(&e).Elem()
+
+		for _, field := range sch.Fields {
+			value := rawResult[field.DBName]
+			delete(rawResult, field.DBName)
+			entityName := field.Name
+
+			entityField := v.FieldByName(entityName)
+			if entityField.CanSet() && entityField.IsValid() {
+				err := dao.setEntityValue(&entityField, value)
+				if err != nil {
+					panic(err)
+				}
+			}
+		}
+
+		var workLoad map[string]float64
+		if len(rawResult) > 0 {
+			workLoad = make(map[string]float64, len(rawResult))
+			for key, value := range rawResult {
+				if value != nil {
+					workLoad[key] = value.(float64)
+				}
+			}
+		}
+
+		result = append(result, &entity.WorkLoadWithProcessSummary{
+			ProcessSummary: &e, WorkLoad: workLoad,
 		})
 	}
 
@@ -206,4 +257,42 @@ func (dao *HourSummaryResultDao) UpdateDeletedByUniqueKeyList(delete *query.Hour
 		Where("employee_number = ? and workplace_code = ? and operate_day = ? ", delete.EmployeeNumber, delete.WorkplaceCode, delete.OperateDay).
 		Update("is_deleted", 1)
 
+}
+
+func (dao *HourSummaryResultDao) QueryWorkplaceEfficiency(query query.HourSummaryResultQuery) []*entity.WorkLoadWithProcessSummary {
+	fixedSelect := "operate_day, workplace_code, workplace_name, process_code, position_code, " +
+		"employee_position_code, work_group_code, region_code, industry_code, sub_industry_code, process_property, " +
+		" direct_work_time, indirect_work_time, idle_time, rest_time, attendance_time"
+	workLoadSelect := buildDynamicWorkLoadSelect(query.WorkLoadUnit)
+
+	where := "operate_day >= ? and operate_day <= ? and workplace_code = ? and is_deleted = 0 "
+	if query.IsCrossPosition == domain.Cross {
+		where += " and position_code = employee_position_code"
+	} else if query.IsCrossPosition == domain.NoCross {
+		where += " and position_code != employee_position_code"
+	}
+
+	subQuery := dao.olapDb.Table("hour_summary_result").
+		Select(fixedSelect+","+workLoadSelect).
+		Where(where, query.DateRange[0], query.DateRange[1], query.WorkplaceCode)
+
+	mainSelect := "operate_day, workplace_code, workplace_name, process_code, position_code, " +
+		" max(region_code) region_code, max(industry_code) industry_code, max(sub_industry_code) sub_industry_code, " +
+		" max(process_property) process_property, " +
+		" sum(direct_work_time) direct_work_time, sum(indirect_work_time) indirect_work_time, sum(idle_time) idle_time, sum(rest_time) rest_time, sum(attendance_time) attendance_time"
+	groupBy := "process_code, position_code, operate_day, workplace_code, workplace_name"
+	orderBy := "operate_day"
+
+	for _, workLoadUnit := range query.WorkLoadUnit {
+		mainSelect += fmt.Sprintf(", sum(%s) %s", workLoadUnit.Code, workLoadUnit.Code)
+	}
+
+	var rawResult []map[string]interface{}
+	//var result []entity.EmployeeSummaryEntity
+	dao.olapDb.Table("(?) as summary", subQuery).Select(mainSelect).
+		Order(orderBy).
+		Group(groupBy).
+		Find(&rawResult)
+
+	return dao.convertRaw2ProcessEntity(rawResult)
 }

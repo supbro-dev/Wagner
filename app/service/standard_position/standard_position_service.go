@@ -12,6 +12,7 @@ type StandardPositionItf interface {
 	FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition
 	FindStandardPositionByWorkplace(workplaceCode string) []*domain.StandardPosition
 	FindStandardPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition
+	FindStandardPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition
 }
 
 type StandardPositionService struct {
@@ -61,6 +62,20 @@ func (service *StandardPositionService) FindStandardPositionByWorkplace(workplac
 
 	positionList := service.FindStandardPositionByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
 	return positionList
+}
+
+// 按从根至叶子节点的顺序查出来
+func (service *StandardPositionService) FindStandardPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
+	maxVersion := service.standardPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
+	positionList := service.standardPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)
+
+	domainList := make([]*domain.StandardPosition, 0)
+	for _, positionEntity := range positionList {
+		domain := service.convertEntity2Domain(positionEntity)
+		domainList = append(domainList, domain)
+	}
+
+	return domainList
 }
 
 func (service *StandardPositionService) FindStandardPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
@@ -132,15 +147,17 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []*e
 func (service *StandardPositionService) convertEntity2Domain(e *entity.StandardPositionEntity) *domain.StandardPosition {
 
 	d := domain.StandardPosition{
-		Name:    e.Name,
-		Code:    e.Code,
-		Level:   e.Level,
-		Script:  e.Script,
-		Version: e.Version,
+		Name:       e.Name,
+		Code:       e.Code,
+		Level:      e.Level,
+		Script:     e.Script,
+		Version:    e.Version,
+		ParentCode: e.ParentCode,
+		Type:       e.Type,
 	}
 
 	if e.Properties != "" {
-		if propertyMap, err := json_util.Parse2Map(e.Properties); err != nil {
+		if propertyMap, err := json_util.Parse2Map(e.Properties); err == nil {
 			d.Properties = propertyMap
 		}
 	}
