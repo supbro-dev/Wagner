@@ -18,8 +18,8 @@ type TimeOnTaskVO struct {
 	RegionCode     string    `json:"regionCode"`
 	OperateDay     time.Time `json:"operateDay"`
 
-	Attendance          AttendanceVO         `json:"attendance"`
-	Scheduling          SchedulingVO         `json:"scheduling"`
+	Attendance          *AttendanceVO        `json:"attendance"`
+	Scheduling          *SchedulingVO        `json:"scheduling"`
 	ProcessDurationList []*ProcessDurationVO `json:"processDurationList"`
 }
 

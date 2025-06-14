@@ -70,7 +70,7 @@ func (service *EfficiencyComputeService) buildTimeOnTask(ctx *domain.ComputeCont
 	}
 
 	if ctx.TodayAttendance != nil {
-		timeOnTaskVO.Attendance = vo.AttendanceVO{
+		timeOnTaskVO.Attendance = &vo.AttendanceVO{
 			ActionType: domain.ATTENDANCE,
 			StartTime:  *ctx.TodayAttendance.ComputedStartTime,
 			EndTime:    *ctx.TodayAttendance.ComputedEndTime,
@@ -78,7 +78,7 @@ func (service *EfficiencyComputeService) buildTimeOnTask(ctx *domain.ComputeCont
 	}
 
 	if ctx.TodayScheduling != nil {
-		timeOnTaskVO.Scheduling = vo.SchedulingVO{
+		timeOnTaskVO.Scheduling = &vo.SchedulingVO{
 			ActionType: domain.SCHEDULING,
 			StartTime:  *ctx.TodayScheduling.ComputedStartTime,
 			EndTime:    *ctx.TodayScheduling.ComputedEndTime,
@@ -145,6 +145,12 @@ func (service *EfficiencyComputeService) buildProcessDurationList(todayWorkList 
 				currentDuration = service.initProcessDuration(currentWork, workplaceName)
 			}
 		}
+
+	}
+
+	if currentDuration != nil {
+		service.buildWorkLoadDesc(currentDuration, workLoadUnitCode2Name, workLoadCodeList)
+		processDurationList = append(processDurationList, currentDuration)
 	}
 
 	return processDurationList
@@ -203,7 +209,7 @@ func (service *EfficiencyComputeService) buildWorkLoadDesc(current *vo.ProcessDu
 	for _, code := range workLoadCodeList {
 		if value, exists := current.WorkLoad[code]; exists {
 			name := workLoadUnitCode2Name[code]
-			workLoadDescList = append(workLoadDescList, fmt.Sprintf("%s : %v", name, value))
+			workLoadDescList = append(workLoadDescList, fmt.Sprintf("%s:%v", name, value))
 		}
 	}
 
