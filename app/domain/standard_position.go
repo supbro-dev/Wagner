@@ -6,9 +6,13 @@
  */
 package domain
 
+import "wagner/infrastructure/persistence/entity"
+
 type StandardPosition struct {
-	Name string
-	Code string
+	Name       string
+	Code       string
+	ParentCode string
+	Type       entity.StandardPositionType
 	// 层级（1代表一级部门、2代表2级部门，最后一级为环节，倒数第二级为岗位）
 	Level int
 	// 最大部门层级

@@ -111,3 +111,47 @@ func (p EfficiencyHandler) TimeOnTask(c *gin.Context) {
 
 	response.ReturnSuccessJson(c, timeOnTaskVO)
 }
+
+func (p EfficiencyHandler) WorkplaceEfficiency(c *gin.Context) {
+	workplaceCode := c.Query("workplaceCode")
+	isCrossPosition := c.Query("isCrossPosition")
+	startDateStr := c.Query("startDate")
+	endDateStr := c.Query("endDate")
+
+	if workplaceCode == "" {
+		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "workplaceCode")
+		return
+	}
+
+	if startDateStr == "" || endDateStr == "" {
+		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "startDate or endDate")
+		return
+	}
+
+	startDate, err := datetime_util.ParseDate(startDateStr)
+	if err != nil {
+		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, startDateStr)
+		return
+	}
+
+	endDate, err := datetime_util.ParseDate(endDateStr)
+	if err != nil {
+		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, endDateStr)
+		return
+	}
+
+	calcParam := service.DomainHolder.CalcDynamicParamService.FindParamsByWorkplace(workplaceCode)
+	if calcParam == nil {
+		return
+	}
+
+	workLoadUnits := calcParam.CalcOtherParam.Work.WorkLoadUnits
+
+	workplace := service.DomainHolder.WorkplaceService.FindByCode(workplaceCode)
+
+	standardPositions := service.DomainHolder.StandardPositionService.FindStandardPositionListByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
+
+	workplaceEfficiencyVO := service.Holder.EfficiencyService.WorkplaceEfficiency(workplace, []*time.Time{&startDate, &endDate}, domain.IsCrossPosition(isCrossPosition), workLoadUnits, standardPositions)
+
+	response.ReturnSuccessJson(c, workplaceEfficiencyVO)
+}

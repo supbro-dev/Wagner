@@ -151,6 +151,10 @@ type StandardPositionMock struct {
 	mock.Mock
 }
 
+func (service *StandardPositionMock) FindStandardPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
+	panic("implement me")
+}
+
 func (service *StandardPositionMock) FindStandardPositionByWorkplace(workplaceCode string) []*domain.StandardPosition {
 	panic("implement me")
 }

@@ -38,7 +38,7 @@ func (service *EfficiencyService) EmployeeEfficiency(workplaceCode, employeeNumb
 	return employeeEfficiencyVO
 }
 
-func (service *EfficiencyService) convertEntity2Vo(entityList []*entity.WorkLoadWithSummaryEntity, workLoadUnits []calc_dynamic_param.WorkLoadUnit, aggregateDimension domain.AggregateDimension) *vo.EmployeeEfficiencyVO {
+func (service *EfficiencyService) convertEntity2Vo(entityList []*entity.WorkLoadWithEmployeeSummary, workLoadUnits []calc_dynamic_param.WorkLoadUnit, aggregateDimension domain.AggregateDimension) *vo.EmployeeEfficiencyVO {
 	tableDataList := make([]*vo.EmployeeSummaryVO, 0)
 	for _, e := range entityList {
 		employeeSummary := vo.EmployeeSummaryVO{}
@@ -63,7 +63,7 @@ func (service *EfficiencyService) convertEntity2Vo(entityList []*entity.WorkLoad
 		tableDataList = append(tableDataList, &employeeSummary)
 	}
 
-	columns := service.generateColumns(workLoadUnits, aggregateDimension)
+	columns := service.generateEmployeeColumns(workLoadUnits, aggregateDimension)
 
 	v := vo.EmployeeEfficiencyVO{
 		tableDataList, columns,
@@ -86,7 +86,7 @@ func (service *EfficiencyService) parseDeptName(json map[string]interface{}) str
 	return strings.Join(deptNameList, "-")
 }
 
-func (service *EfficiencyService) generateColumns(workLoadUnits []calc_dynamic_param.WorkLoadUnit, dimension domain.AggregateDimension) []*vo.TableColumnVO {
+func (service *EfficiencyService) generateEmployeeColumns(workLoadUnits []calc_dynamic_param.WorkLoadUnit, dimension domain.AggregateDimension) []*vo.TableColumnVO {
 	columns := []*vo.TableColumnVO{
 		{"日期", "operateDay", "operateDay"},
 		{"工号", "employeeNumber", "employeeNumber"},
@@ -102,6 +102,157 @@ func (service *EfficiencyService) generateColumns(workLoadUnits []calc_dynamic_p
 		{"作业岗位", "positionName", "positionName"},
 		{"部门", "deptName", "deptName"},
 	}...)
+
+	for _, unit := range workLoadUnits {
+		columns = append(columns, &vo.TableColumnVO{
+			unit.Name, []string{"workLoad", unit.Code}, unit.Code,
+		})
+	}
+
+	columns = append(columns, []*vo.TableColumnVO{
+		{"直接作业工时(h)", "directWorkTime", "directWorkTime"},
+		{"间接作业工时(h)", "indirectWorkTime", "indirectWorkTime"},
+		{"闲置工时(h)", "idleTime", "idleTime"},
+		{"休息时长(h)", "restTime", "restTime"},
+		{"出勤工时(h)", "attendanceTime", "attendanceTime"},
+	}...)
+
+	return columns
+}
+
+func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplace, dateRange []*time.Time, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, standardPositions []*domain.StandardPosition) *vo.WorkplaceEfficiencyVO {
+	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplace.Code, DateRange: dateRange, IsCrossPosition: isCrossPosition, WorkLoadUnit: workLoadUnits}
+	processSummaries := service.dao.QueryWorkplaceEfficiency(resultQuery)
+
+	treeRoot := service.buildWorkplaceStructureTree(workplace, standardPositions, processSummaries, workLoadUnits)
+	columns := service.generateWorkplaceColumns(workLoadUnits)
+	return &vo.WorkplaceEfficiencyVO{treeRoot, columns}
+}
+
+func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.Workplace, standardPositions []*domain.StandardPosition, summaries []*entity.WorkLoadWithProcessSummary, workLoadUnits []calc_dynamic_param.WorkLoadUnit) *vo.WorkplaceStructureVO {
+	if standardPositions == nil || len(standardPositions) == 0 {
+		return nil
+	}
+
+	processCode2Summary := make(map[string]*entity.WorkLoadWithProcessSummary, 0)
+	for _, summary := range summaries {
+		processCode2Summary[summary.ProcessSummary.ProcessCode] = summary
+	}
+
+	// 1.构建树
+	root := service.convert2Structure(&domain.StandardPosition{
+		Name: workplace.Name,
+		Code: "-1",
+	})
+	code2Node := make(map[string]*vo.WorkplaceStructureVO, 0)
+	code2Node[root.Code] = root
+
+	for _, position := range standardPositions {
+		parentCode := position.ParentCode
+		parentNode := code2Node[parentCode]
+		node := service.convert2Structure(position)
+
+		if position.Type == entity.DIRECT_PROCESS {
+			if summary, exists := processCode2Summary[node.Code]; exists {
+				service.mergeTime(node, summary)
+				service.mergeWorkLoad(node, summary, workLoadUnits)
+			}
+		} else if position.Type == entity.INDIRECT_PROCESS {
+			if summary, exists := processCode2Summary[node.Code]; exists {
+				service.mergeTime(node, summary)
+			}
+		}
+
+		parentNode.Children = append(parentNode.Children, node)
+
+		code2Node[node.Code] = node
+	}
+
+	service.iterateTreeRollUp(root, workLoadUnits)
+
+	return root
+}
+
+func (service *EfficiencyService) iterateTreeRollUp(node *vo.WorkplaceStructureVO, workLoadUnits []calc_dynamic_param.WorkLoadUnit) {
+	if node == nil {
+		return
+	}
+	if node.Children != nil {
+		for _, child := range node.Children {
+			service.iterateTreeRollUp(child, workLoadUnits)
+
+			node.DirectWorkTime += child.DirectWorkTime
+			node.IndirectWorkTime += child.IndirectWorkTime
+			node.IdleTime += child.IdleTime
+			node.RestTime += child.RestTime
+			node.AttendanceTime += child.AttendanceTime
+
+			// 工作量是否向上汇总
+			if child.WorkLoadRollUp {
+				for _, workLoadUnit := range workLoadUnits {
+					nodeValue := float64(0)
+					if n, exists := node.WorkLoad[workLoadUnit.Code]; exists {
+						nodeValue = n
+					}
+					childValue := float64(0)
+					if c, exists := child.WorkLoad[workLoadUnit.Code]; exists {
+						childValue = c
+					}
+					node.WorkLoad[workLoadUnit.Code] = nodeValue + childValue
+				}
+			}
+		}
+	}
+}
+
+var NeedRollUp = "workLoadRollUp"
+
+func (service *EfficiencyService) convert2Structure(position *domain.StandardPosition) *vo.WorkplaceStructureVO {
+	v := vo.WorkplaceStructureVO{}
+	v.Name = position.Name
+	v.Code = position.Code
+	v.Level = position.Level
+	v.Children = make([]*vo.WorkplaceStructureVO, 0)
+	if position.Properties != nil {
+		if needRollUp, exists := position.Properties[NeedRollUp]; exists {
+			v.WorkLoadRollUp = needRollUp.(bool)
+		}
+	}
+	v.WorkLoad = make(map[string]float64)
+	return &v
+}
+
+func (service *EfficiencyService) mergeTime(structure *vo.WorkplaceStructureVO, summary *entity.WorkLoadWithProcessSummary) {
+	structure.DirectWorkTime += math.Round(float64(summary.ProcessSummary.DirectWorkTime)*10/3600.0) / 10
+	structure.IndirectWorkTime += math.Round(float64(summary.ProcessSummary.IndirectWorkTime)*10/3600.0) / 10
+	structure.IdleTime += math.Round(float64(summary.ProcessSummary.IdleTime)*10/3600.0) / 10
+	structure.RestTime += math.Round(float64(summary.ProcessSummary.RestTime)*10/3600.0) / 10
+	structure.AttendanceTime += math.Round(float64(summary.ProcessSummary.AttendanceTime)*10/3600.0) / 10
+}
+
+func (service *EfficiencyService) mergeWorkLoad(structure *vo.WorkplaceStructureVO, summary *entity.WorkLoadWithProcessSummary, workLoadUnits []calc_dynamic_param.WorkLoadUnit) {
+	if structure.WorkLoad == nil {
+		structure.WorkLoad = make(map[string]float64, 0)
+	}
+
+	for _, workLoadUnit := range workLoadUnits {
+		structureValue := float64(0)
+		if sv, exists := structure.WorkLoad[workLoadUnit.Code]; exists {
+			structureValue = sv
+		}
+		summaryValue := float64(0)
+		if v, exists := summary.WorkLoad[workLoadUnit.Code]; exists {
+			summaryValue = v
+		}
+
+		structure.WorkLoad[workLoadUnit.Code] = summaryValue + structureValue
+	}
+}
+
+func (service *EfficiencyService) generateWorkplaceColumns(workLoadUnits []calc_dynamic_param.WorkLoadUnit) []*vo.TableColumnVO {
+	columns := []*vo.TableColumnVO{
+		{"名称", "name", "name"},
+	}
 
 	for _, unit := range workLoadUnits {
 		columns = append(columns, &vo.TableColumnVO{
