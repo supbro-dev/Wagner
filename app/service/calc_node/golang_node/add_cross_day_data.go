@@ -4,7 +4,7 @@
 * @Last Modified by:   supbro
 * @Last Modified time: 2025/6/7 22:12
  */
-package golang
+package golang_node
 
 import (
 	"sort"
@@ -33,7 +33,7 @@ func AddCrossDayData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	}
 
 	// 处理昨天的数据
-	if ctx.TomorrowAttendanceStartTime != nil {
+	if ctx.TodayAttendanceStartTime != nil {
 		yesterdayWorksBelongsToday := make([]domain.Actionable, 0)
 		for _, yesterdayWork := range ctx.YesterdayWorkList {
 			workComputedStartTime := yesterdayWork.GetAction().ComputedStartTime

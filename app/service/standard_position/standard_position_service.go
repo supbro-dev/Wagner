@@ -8,12 +8,18 @@ import (
 	"wagner/infrastructure/persistence/entity"
 )
 
+type StandardPositionItf interface {
+	FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition
+	FindStandardPositionByWorkplace(workplaceCode string) []*domain.StandardPosition
+	FindStandardPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition
+}
+
 type StandardPositionService struct {
 	standardPositionDao *dao.StandardPositionDao
 	workplaceDao        *dao.WorkplaceDao
 }
 
-func CreateStandardPositionService(standardPositionDao *dao.StandardPositionDao, workplaceDao *dao.WorkplaceDao) *StandardPositionService {
+func CreateStandardPositionService(standardPositionDao *dao.StandardPositionDao, workplaceDao *dao.WorkplaceDao) StandardPositionItf {
 	return &StandardPositionService{standardPositionDao, workplaceDao}
 }
 
@@ -22,6 +28,7 @@ var OtherProcess = &domain.StandardPosition{
 	Code: "Others",
 }
 
+// todo 需要提供缓存
 func (service *StandardPositionService) FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition {
 	maxVersion := service.standardPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
 	positionList := service.standardPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)

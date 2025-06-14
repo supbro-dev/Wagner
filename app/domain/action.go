@@ -28,7 +28,7 @@ type Action struct {
 	// 环节编码
 	ProcessCode string
 	// 环节实例
-	Process StandardPosition
+	Process *StandardPosition
 }
 
 type Actionable interface {
@@ -88,6 +88,10 @@ func (in *IndirectWork) SetCutOffWorkCode(actionCode string) {
 // 考勤
 type Attendance struct {
 	Action
+}
+
+func (a *Attendance) GetAction() *Action {
+	return &a.Action
 }
 
 // 排班

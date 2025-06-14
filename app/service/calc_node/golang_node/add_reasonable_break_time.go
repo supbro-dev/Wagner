@@ -4,7 +4,7 @@
 * @Last Modified by:   supbro
 * @Last Modified time: 2025/6/9 13:38
  */
-package golang
+package golang_node
 
 import (
 	"fmt"
@@ -44,11 +44,12 @@ func AddReasonableBreakTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 			nextWorkOrRest = nil
 		}
 
-		if nextWorkOrRest != nil {
+		// 休息不会添加break时长
+		if action.ActionType != domain.REST && nextWorkOrRest != nil {
 			minIdleTime := getOrDefaultMinIdleTime(action.Process, ctx.CalcOtherParam.Work.DefaultMinIdleTimeInMinute)
 
 			nextStartTime := nextWorkOrRest.ComputedStartTime
-			diff := nextWorkOrRest.ComputedEndTime.Sub(*action.ComputedStartTime)
+			diff := nextWorkOrRest.ComputedStartTime.Sub(*action.ComputedEndTime)
 
 			if diff.Minutes() > 0 && diff.Minutes() <= float64(minIdleTime) {
 				originalEndTime := action.ComputedEndTime
@@ -62,9 +63,9 @@ func AddReasonableBreakTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 	return ctx
 }
 
-const MinIdleTimeKey = "minIdleTime"
+const MinIdleTimeKey = "minIdleTimeInMinute"
 
-func getOrDefaultMinIdleTime(process domain.StandardPosition, defaultMinIdleTime int) int {
+func getOrDefaultMinIdleTime(process *domain.StandardPosition, defaultMinIdleTime int) int {
 	if process.Properties != nil {
 		if value, exists := process.Properties[MinIdleTimeKey]; exists {
 			return value.(int)

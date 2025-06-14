@@ -35,3 +35,39 @@ func FormatDatetime(time time.Time) string {
 func FormatDate(time time.Time) string {
 	return time.Format(DateLayout)
 }
+
+func Min(t1, t2 time.Time) time.Time {
+	if t1.Before(t2) {
+		return t1
+	} else {
+		return t2
+	}
+}
+
+func Max(t1, t2 time.Time) time.Time {
+	if t1.After(t2) {
+		return t1
+	} else {
+		return t2
+	}
+}
+
+func LeftBeforeOrEqualRight(t1, t2 time.Time) bool {
+	if t1.Before(t2) {
+		return true
+	} else if t1.Equal(t2) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func LeftAfterOrEqualRight(t1, t2 time.Time) bool {
+	if t1.After(t2) {
+		return true
+	} else if t1.Equal(t2) {
+		return true
+	} else {
+		return false
+	}
+}

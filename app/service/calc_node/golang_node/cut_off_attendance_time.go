@@ -4,7 +4,7 @@
 * @Last Modified by:   supbro
 * @Last Modified time: 2025/6/7 17:01
  */
-package golang
+package golang_node
 
 import (
 	"fmt"
@@ -18,18 +18,24 @@ func CutOffAttendanceTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 	todayAttendance := ctx.TodayAttendance
 
 	// 处理昨天下班时间大于当天上班时间
-	if timeOverlap(*ctx.YesterdayAttendanceEndTime, *ctx.TodayAttendanceStartTime) {
+	if timeOverlap(ctx.YesterdayAttendanceEndTime, ctx.TodayAttendanceStartTime) {
 		todayAttendanceStartTimeMinus1Sec := ctx.TodayAttendanceStartTime.Add(-time.Second)
 		ctx.YesterdayAttendanceEndTime = &todayAttendanceStartTimeMinus1Sec
+		if ctx.YesterdayAttendance != nil {
+			ctx.YesterdayAttendance.ComputedEndTime = &todayAttendanceStartTimeMinus1Sec
+		}
 	}
 
 	// 处理昨天上班时间大于昨天下班时间
-	if timeOverlap(*ctx.YesterdayAttendanceStartTime, *ctx.YesterdayAttendanceEndTime) {
+	if timeOverlap(ctx.YesterdayAttendanceStartTime, ctx.YesterdayAttendanceEndTime) {
 		ctx.YesterdayAttendanceStartTime = ctx.YesterdayAttendanceEndTime
+		if ctx.YesterdayAttendance != nil {
+			ctx.YesterdayAttendance.ComputedStartTime = ctx.YesterdayAttendanceEndTime
+		}
 	}
 
 	// 处理当天下班时间大于第二天上班时间
-	if timeOverlap(*ctx.TodayAttendanceEndTime, *ctx.TomorrowAttendanceStartTime) {
+	if timeOverlap(ctx.TodayAttendanceEndTime, ctx.TomorrowAttendanceStartTime) {
 		tomorrowAttendanceStartTimeMinus1Sec := ctx.TomorrowAttendanceStartTime.Add(-time.Second)
 		ctx.TodayAttendanceEndTime = &tomorrowAttendanceStartTimeMinus1Sec
 
@@ -44,7 +50,7 @@ func CutOffAttendanceTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 	}
 
 	// 处理当天上班时间大于当天下班时间
-	if timeOverlap(*ctx.TodayAttendanceStartTime, *ctx.TodayAttendanceEndTime) {
+	if timeOverlap(ctx.TodayAttendanceStartTime, ctx.TodayAttendanceEndTime) {
 		ctx.TodayAttendanceStartTime = ctx.TodayAttendanceEndTime
 
 		if todayAttendance != nil {
@@ -61,6 +67,6 @@ func CutOffAttendanceTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 }
 
 // 判断左边的时间是否与右边的时间重叠
-func timeOverlap(leftTime, rightTime time.Time) bool {
-	return &leftTime != nil && &rightTime != nil && (leftTime.Equal(rightTime) || leftTime.After(rightTime))
+func timeOverlap(leftTime, rightTime *time.Time) bool {
+	return leftTime != nil && rightTime != nil && (leftTime.Equal(*rightTime) || leftTime.After(*rightTime))
 }

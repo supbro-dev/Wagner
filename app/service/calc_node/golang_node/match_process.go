@@ -4,7 +4,7 @@
 * @Last Modified by:   supbro
 * @Last Modified time: 2025/6/6 15:53
  */
-package golang
+package golang_node
 
 import (
 	"wagner/app/domain"
@@ -18,7 +18,8 @@ func MarchProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 		process := findFirstProcess(work, ctx.ProcessList)
 
 		if process != nil {
-			work.GetAction().Process = *process
+			work.GetAction().Process = process
+			work.GetAction().ProcessCode = process.Code
 		}
 	}
 

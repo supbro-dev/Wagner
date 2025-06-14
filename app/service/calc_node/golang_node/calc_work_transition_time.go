@@ -4,7 +4,7 @@
 * @Last Modified by:   supbro
 * @Last Modified time: 2025/6/10 12:39
  */
-package golang
+package golang_node
 
 import (
 	"fmt"
@@ -48,6 +48,27 @@ func CalcWorkTransitionTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 				lastWork.GetAction().AppendOperationMsg(fmt.Sprintf("作业完成到下班正常间隙调整, 原开始时间: %v, 调整后: %v", datetime_util.FormatDatetime(*originalEndTime),
 					datetime_util.FormatDatetime(*ctx.TodayAttendanceEndTime)))
+			}
+		}
+	}
+
+	// 处理休息(只用处理休息结束~作业开始，作业结束~休息开始这段在AddReasonableBreakTime中处理了）
+	if ctx.TodayRestList != nil && len(ctx.TodayRestList) > 0 {
+		for _, rest := range ctx.TodayRestList {
+			for _, work := range ctx.TodayWorkList {
+				if work.GetAction().ComputedStartTime.After(*rest.ComputedEndTime) {
+					maxRunUpTimeInMinute := ctx.CalcOtherParam.Attendance.MaxRunUpTimeInMinute
+					diff := work.GetAction().ComputedStartTime.Sub(*rest.ComputedEndTime)
+					// 小于最大开班时间，设置为工作，大于最大开班时间这里不处理，后续变为闲置
+					if diff.Minutes() <= float64(maxRunUpTimeInMinute) {
+						originalStartTime := work.GetAction().ComputedStartTime
+						work.GetAction().ComputedStartTime = rest.ComputedEndTime
+
+						work.GetAction().AppendOperationMsg(fmt.Sprintf("作业加入正常(休息后)开班时间, 原开始时间: %v, 调整后: %v", datetime_util.FormatDatetime(*originalStartTime),
+							datetime_util.FormatDatetime(*rest.ComputedEndTime)))
+					}
+					break
+				}
 			}
 		}
 	}

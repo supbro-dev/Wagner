@@ -2,20 +2,21 @@ package bootstrap
 
 import (
 	"fmt"
+	"wagner/app/global/cache"
 	"wagner/app/global/variable"
 	"wagner/app/service"
 	"wagner/app/service/action"
 	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc_node"
+	"wagner/app/service/calc_node/golang_node"
 	"wagner/app/service/employee_snapshot"
 	"wagner/app/service/sink"
 	"wagner/app/service/standard_position"
 	"wagner/app/service/workplace"
 	"wagner/app/utils/gorm"
-	"wagner/app/utils/script_util"
 	yml_config "wagner/app/utils/yml_config/impl"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/olap_dao"
-	"wagner/script/golang"
 )
 
 func init() {
@@ -54,7 +55,7 @@ func init() {
 
 	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao, scriptDao)
 
-	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapWriteClient))
+	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapWriteClient), cache.CreateHourSummaryCheckLocalCache())
 
 	workplaceService := workplace.CreateWorkplaceService(workplaceDao)
 
@@ -79,20 +80,20 @@ func init() {
 	service.Holder = serviceHolder
 
 	// 注册计算节点脚本
-	script_util.Register("SetCrossDayAttendance", golang.SetCrossDayAttendance)
-	script_util.Register("ComputeAttendanceDefaultEndTime", golang.ComputeAttendanceDefaultEndTime)
-	script_util.Register("MarchProcess", golang.MarchProcess)
-	script_util.Register("CutOffAttendanceTime", golang.CutOffAttendanceTime)
-	script_util.Register("AddCrossDayData", golang.AddCrossDayData)
-	script_util.Register("FilterOtherDaysData", golang.FilterOtherDaysData)
-	script_util.Register("FilterExpiredData", golang.FilterExpiredData)
-	script_util.Register("ComputeAttendanceDefaultStartTime", golang.ComputeAttendanceDefaultStartTime)
-	script_util.Register("PaddingUnfinishedWorkEndTime", golang.PaddingUnfinishedWorkEndTime)
-	script_util.Register("CutOffOvertimeWork", golang.CutOffOvertimeWork)
-	script_util.Register("CutOffCrossWork", golang.CutOffCrossWork)
-	script_util.Register("AddReasonableBreakTime", golang.AddReasonableBreakTime)
-	script_util.Register("CutOffWorkByRest", golang.CutOffWorkByRest)
-	script_util.Register("CalcWorkTransitionTime", golang.CalcWorkTransitionTime)
-	script_util.Register("GenerateIdleDataList", golang.GenerateIdleDataList)
-	script_util.Register("MatchRestProcess", golang.MatchRestProcess)
+	calc_node.Register("SetCrossDayAttendance", golang_node.SetCrossDayAttendance)
+	calc_node.Register("ComputeAttendanceDefaultEndTime", golang_node.ComputeAttendanceDefaultEndTime)
+	calc_node.Register("MarchProcess", golang_node.MarchProcess)
+	calc_node.Register("CutOffAttendanceTime", golang_node.CutOffAttendanceTime)
+	calc_node.Register("AddCrossDayData", golang_node.AddCrossDayData)
+	calc_node.Register("FilterOtherDaysData", golang_node.FilterOtherDaysData)
+	calc_node.Register("FilterExpiredData", golang_node.FilterExpiredData)
+	calc_node.Register("ComputeAttendanceDefaultStartTime", golang_node.ComputeAttendanceDefaultStartTime)
+	calc_node.Register("PaddingUnfinishedWorkEndTime", golang_node.PaddingUnfinishedWorkEndTime)
+	calc_node.Register("CutOffOvertimeWork", golang_node.CutOffOvertimeWork)
+	calc_node.Register("CutOffCrossWork", golang_node.CutOffCrossWork)
+	calc_node.Register("AddReasonableBreakTime", golang_node.AddReasonableBreakTime)
+	calc_node.Register("CutOffWorkByRest", golang_node.CutOffWorkByRest)
+	calc_node.Register("CalcWorkTransitionTime", golang_node.CalcWorkTransitionTime)
+	calc_node.Register("GenerateIdleData", golang_node.GenerateIdleData)
+	calc_node.Register("MatchRestProcess", golang_node.MatchRestProcess)
 }

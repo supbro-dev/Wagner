@@ -4,11 +4,12 @@
 * @Last Modified by:   supbro
 * @Last Modified time: 2025/6/5 14:12
  */
-package golang
+package golang_node
 
 import (
 	"time"
 	"wagner/app/domain"
+	"wagner/app/utils/datetime_util"
 )
 
 // 缺卡情况设置默认下班时间
@@ -16,17 +17,19 @@ func ComputeAttendanceDefaultEndTime(ctx *domain.ComputeContext) *domain.Compute
 	now := ctx.CalcStartTime
 
 	// 今天下班卡缺卡
-	if &ctx.TodayAttendanceEndTime == nil && &ctx.TodayAttendanceStartTime != nil {
+	if ctx.TodayAttendanceEndTime == nil && ctx.TodayAttendanceStartTime != nil {
 		defaultEndTime := computeAttendanceEndTime(now, *ctx.TodayAttendanceStartTime, ctx.TodayScheduling, ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour)
 		ctx.TodayAttendanceEndTime = &defaultEndTime
+		ctx.TodayAttendance.ComputedEndTime = &defaultEndTime
 	} else {
 		ctx.TodayAttendanceNoMissing = true
 	}
 
 	// 前一天下班卡缺卡
-	if &ctx.YesterdayAttendanceEndTime == nil && &ctx.YesterdayAttendanceStartTime != nil {
+	if ctx.YesterdayAttendanceEndTime == nil && ctx.YesterdayAttendanceStartTime != nil {
 		defaultEndTime := computeAttendanceEndTime(now, *ctx.YesterdayAttendanceStartTime, ctx.YesterdayScheduling, ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour)
 		ctx.YesterdayAttendanceEndTime = &defaultEndTime
+		ctx.YesterdayAttendance.EndTime = &defaultEndTime
 	}
 
 	return ctx
@@ -41,7 +44,7 @@ func computeAttendanceEndTime(now, todayAttendanceStartTime time.Time, todaySche
 
 	var defaultAttendanceEndTime time.Time
 	// 如果有排班，使用排班下班时间
-	if &todayScheduling != nil && todayScheduling.EndTime != nil {
+	if todayScheduling != nil && todayScheduling.EndTime != nil {
 		defaultAttendanceEndTime = *todayScheduling.EndTime
 	} else {
 		// 上班时间在当日12点后, 默认下班时间为上班日期后一日12点
@@ -67,7 +70,7 @@ func computeAttendanceEndTime(now, todayAttendanceStartTime time.Time, todaySche
 				todayAttendanceStartTime.Second(),
 				todayAttendanceStartTime.Nanosecond(),
 				todayAttendanceStartTime.Location(),
-			)
+			).AddDate(0, 0, 1)
 		}
 	}
 
@@ -75,7 +78,8 @@ func computeAttendanceEndTime(now, todayAttendanceStartTime time.Time, todaySche
 	if penaltyDefaultAttendanceEndTime.Before(now) && now.Before(defaultAttendanceEndTime) {
 		defaultAttendanceEndTime = now
 	} else {
-		defaultAttendanceEndTime = penaltyDefaultAttendanceEndTime
+		// 默认下班时间取计算下班时间和惩罚下班时间里最早的那个
+		defaultAttendanceEndTime = datetime_util.Min(penaltyDefaultAttendanceEndTime, defaultAttendanceEndTime)
 	}
 
 	// 有节点单独处理，这里先不处理

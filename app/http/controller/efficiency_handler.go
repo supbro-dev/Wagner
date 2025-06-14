@@ -66,3 +66,48 @@ func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 
 	response.ReturnSuccessJson(c, efficiencyVO)
 }
+
+func (p EfficiencyHandler) ComputeEmployee(c *gin.Context) {
+	employeeNumber := c.Query("employeeNumber")
+	operateDayStr := c.Query("operateDay")
+
+	if employeeNumber == "" {
+		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, operateDayStr)
+		return
+	}
+
+	operateDay, err := datetime_util.ParseDate(operateDayStr)
+	if err != nil {
+		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, operateDayStr)
+		return
+	}
+
+	service.Holder.EfficiencyComputeService.ComputeEmployee(employeeNumber, operateDay)
+
+	response.ReturnSuccessEmptyJson(c)
+}
+
+func (p EfficiencyHandler) TimeOnTask(c *gin.Context) {
+	employeeNumber := c.Query("employeeNumber")
+	operateDayStr := c.Query("operateDay")
+
+	if employeeNumber == "" {
+		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "employeeNumber")
+		return
+	}
+
+	if operateDayStr == "" {
+		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "operateDay")
+		return
+	}
+
+	operateDay, err := datetime_util.ParseDate(operateDayStr)
+	if err != nil {
+		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, operateDayStr)
+		return
+	}
+
+	timeOnTaskVO := service.Holder.EfficiencyComputeService.TimeOnTask(employeeNumber, operateDay)
+
+	response.ReturnSuccessJson(c, timeOnTaskVO)
+}

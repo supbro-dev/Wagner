@@ -100,13 +100,19 @@ func (service *ActionService) convertAction(actionEntities []*entity.ActionEntit
 			copier.Copy(&scheduling, &e)
 			day2Scheduling[operateDay] = &scheduling
 
-			if restList := service.convertRestListFromScheduling(&scheduling); restList != nil {
+			// 这里先设置计算后的时间为原始时间，看之后是否需要去掉
+			scheduling.ComputedStartTime = scheduling.StartTime
+			scheduling.ComputedEndTime = scheduling.EndTime
+
+			if restList := service.convertRestListFromScheduling(&scheduling, e.Properties); restList != nil {
 				day2RestList[operateDay] = restList
 			}
 		case domain.ATTENDANCE:
 			attendance := domain.Attendance{Action: domain.Action{Properties: properties}}
 
 			copier.Copy(&attendance, &e)
+			attendance.ComputedStartTime = attendance.StartTime
+			attendance.ComputedEndTime = attendance.EndTime
 			day2Attendance[operateDay] = &attendance
 		default:
 
@@ -115,37 +121,44 @@ func (service *ActionService) convertAction(actionEntities []*entity.ActionEntit
 	return
 }
 
-func (service *ActionService) convertRestListFromScheduling(scheduling *domain.Scheduling) []*domain.Rest {
-	if restListValue, exist := scheduling.Properties["restList"]; exist {
-		array, err := json_util.Parse2JsonArray(restListValue.(string))
-		if err != nil {
-			panic(err)
-		}
-
-		restList := make([]*domain.Rest, 0)
-		for i := 0; i < len(array.MustArray()); i++ {
-			json := array.GetIndex(i)
-			startTime, err := datetime_util.ParseDatetime(json.Get("startTime").MustString())
-			if err != nil {
-				panic(err)
-			}
-
-			endTime, err := datetime_util.ParseDatetime(json.Get("endTime").MustString())
-			if err != nil {
-				panic(err)
-			}
-			rest := domain.Rest{
-				Action: domain.Action{
-					StartTime: &startTime,
-					EndTime:   &endTime,
-				},
-			}
-			restList = append(restList, &rest)
-		}
-		return restList
-	} else {
-		return nil
+func (service *ActionService) convertRestListFromScheduling(scheduling *domain.Scheduling, properties string) []*domain.Rest {
+	if properties == "" {
+		return make([]*domain.Rest, 0)
 	}
+
+	if json, err := json_util.Parse2Json(properties); err == nil {
+		if array, exists := json.CheckGet("restList"); exists {
+			restList := make([]*domain.Rest, 0)
+			for i := 0; i < len(array.MustArray()); i++ {
+				r := array.GetIndex(i)
+				startTime, err := datetime_util.ParseDatetime(r.Get("startTime").MustString())
+				if err != nil {
+					panic(err)
+				}
+
+				endTime, err := datetime_util.ParseDatetime(r.Get("endTime").MustString())
+				if err != nil {
+					panic(err)
+				}
+				rest := domain.Rest{
+					Action: domain.Action{
+						EmployeeNumber:    scheduling.EmployeeNumber,
+						WorkplaceCode:     scheduling.WorkplaceCode,
+						OperateDay:        scheduling.OperateDay,
+						ActionType:        domain.REST,
+						StartTime:         &startTime,
+						EndTime:           &endTime,
+						ComputedStartTime: &startTime,
+						ComputedEndTime:   &endTime,
+					},
+				}
+				restList = append(restList, &rest)
+			}
+			return restList
+		}
+	}
+
+	return nil
 }
 
 // 如果配置了数据来源有额外属性，在这个方法设置

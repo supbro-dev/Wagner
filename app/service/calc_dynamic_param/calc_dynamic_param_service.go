@@ -13,7 +13,6 @@ import (
 	"wagner/app/global/container"
 	"wagner/app/global/my_const"
 	"wagner/app/utils/json_util"
-	"wagner/app/utils/script_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
 )
@@ -53,9 +52,6 @@ type CalcNodeList struct {
 // 计算节点
 type CalcNode struct {
 	NodeName string
-	NodeType script_util.ScriptType
-	// 计算脚本
-	Script string
 }
 
 // 其他各类参数
@@ -213,31 +209,26 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 
 	nodeNames := strings.Split(json.Get(entity.NODE_NAMES).MustString(), ",")
 
-	scripts := service.scriptDao.FindByNameWithMaxVersion(nodeNames)
-
-	scriptName2Entity := make(map[string]entity.ScriptEntity)
-	for _, scriptEntity := range scripts {
-		scriptName2Entity[scriptEntity.Name] = scriptEntity
-	}
-
+	// 不再查询script表，golang对动态加载脚本支持的不好
+	//scripts := service.scriptDao.FindByNameWithMaxVersion(nodeNames)
+	//
+	//scriptName2Entity := make(map[string]entity.ScriptEntity)
+	//for _, scriptEntity := range scripts {
+	//	scriptName2Entity[scriptEntity.Name] = scriptEntity
+	//}
+	//
 	calcNodes := make([]*CalcNode, 0)
 	for _, nodeName := range nodeNames {
-		if scriptEntity, exists := scriptName2Entity[nodeName]; exists {
-			scriptType := script_util.ScriptType(scriptEntity.Type)
-
-			node := CalcNode{
-				NodeName: nodeName,
-				NodeType: scriptType,
-				Script:   scriptEntity.Content,
-			}
-			calcNodes = append(calcNodes, &node)
+		node := CalcNode{
+			NodeName: nodeName,
 		}
+		calcNodes = append(calcNodes, &node)
 	}
 
 	return CalcNodeList{calcNodes}
 }
 
-var defaultCalcOtherParam = CalcOtherParam{
+var DefaultCalcOtherParam = CalcOtherParam{
 	Attendance: AttendanceParam{
 		// 默认惩罚8小时
 		AttendanceAbsencePenaltyHour: 8,
@@ -261,7 +252,7 @@ var defaultCalcOtherParam = CalcOtherParam{
 
 func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) CalcOtherParam {
 	otherParam := CalcOtherParam{}
-	copyError := copier.Copy(&otherParam, &defaultCalcOtherParam)
+	copyError := copier.Copy(&otherParam, &DefaultCalcOtherParam)
 	if copyError != nil {
 		panic(copyError)
 	}

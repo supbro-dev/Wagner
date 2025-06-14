@@ -4,11 +4,12 @@
 * @Last Modified by:   supbro
 * @Last Modified time: 2025/6/10 09:06
  */
-package golang
+package golang_node
 
 import (
 	"fmt"
 	"github.com/jinzhu/copier"
+	"sort"
 	"wagner/app/domain"
 	"wagner/app/utils/datetime_util"
 )
@@ -32,6 +33,12 @@ func CutOffWorkByRest(ctx *domain.ComputeContext) *domain.ComputeContext {
 	}
 
 	ctx.TodayWorkList = append(ctx.TodayWorkList, newWorkList...)
+
+	// 每次操作完workList，进行排序
+	sort.Slice(ctx.TodayWorkList, func(i, j int) bool {
+		return ctx.TodayWorkList[i].GetAction().ComputedStartTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedStartTime)
+	})
+
 	return ctx
 }
 
@@ -57,24 +64,36 @@ func cutOffWork(work domain.Actionable, restList []*domain.Rest) domain.Work {
 			} else if work.GetAction().ComputedEndTime.After(*rest.ComputedEndTime) {
 				// work |s        |e
 				// rest     |s  |e
+
+				// 设置新生成的作业
 				var newWork domain.Work
-				if _, ok := work.(*domain.DirectWork); ok {
-					newWork = &domain.DirectWork{}
-				} else if _, ok := work.(*domain.IndirectWork); ok {
-					newWork = &domain.IndirectWork{}
+				if directWork, ok := work.(*domain.DirectWork); ok {
+					newDirectWork := &domain.DirectWork{}
+					copyErr := copier.Copy(&newDirectWork, directWork)
+					if copyErr != nil {
+						panic(copyErr)
+					}
+					newWork = newDirectWork
+				} else if indirectWork, ok := work.(*domain.IndirectWork); ok {
+					newIndirectWork := &domain.IndirectWork{}
+					copyErr := copier.Copy(&newIndirectWork, indirectWork)
+					if copyErr != nil {
+						panic(copyErr)
+					}
+					newWork = newIndirectWork
 				}
-
-				copyErr := copier.Copy(&newWork, work)
-				if copyErr != nil {
-					panic(copyErr)
-				}
-
 				newWork.GetAction().Process = work.GetAction().Process
 				newWork.GetAction().OperationMsgList = make([]string, 0)
 				// 清空所有工作量
 				if newDirectWork, ok := newWork.(*domain.DirectWork); ok {
 					newDirectWork.WorkLoad = make(map[string]float64)
 				}
+				newWork.GetAction().ComputedStartTime = rest.ComputedEndTime
+				newWork.GetAction().ComputedEndTime = work.GetAction().ComputedEndTime
+				newWork.GetAction().AppendOperationMsg(fmt.Sprintf("因休息开始创建, 开始时间：%v，结束时间: %v", datetime_util.FormatDatetime(*rest.ComputedEndTime),
+					datetime_util.FormatDatetime(*work.GetAction().ComputedEndTime)))
+
+				// 处理原作业
 				work.GetAction().ComputedEndTime = rest.ComputedStartTime
 				work.GetAction().AppendOperationMsg(fmt.Sprintf("被休息开始截断, 原结束时间: %v, 调整后: %v",
 					datetime_util.FormatDatetime(*originalEndTime), datetime_util.FormatDatetime(*work.GetAction().ComputedEndTime)))

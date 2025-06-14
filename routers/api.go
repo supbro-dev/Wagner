@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"wagner/app/global/variable"
-	"wagner/app/http/container"
+	"wagner/app/http/controller"
 	"wagner/app/utils/gin_release"
 )
 
@@ -40,17 +40,16 @@ func InitApiRouter() *gin.Engine {
 	//  创建一个门户类接口路由组
 	vApi := router.Group("/api/v1/")
 	{
-		eff := vApi.Group("efficiency/")
-		{
-			eff.GET("compute", container.GetHandler("efficiencyCompute"))
-		}
 		workplace := vApi.Group("workplace/")
 		{
-			workplace.GET("all", container.GetHandler("workplace"))
+			workplace.GET("all", controller.WorkplaceHandler{}.FindAll)
 		}
 		efficiency := vApi.Group("efficiency/")
+		efficiencyHandler := controller.EfficiencyHandler{}
 		{
-			efficiency.GET("employee", container.GetHandler("efficiency.employee"))
+			efficiency.GET("employee", efficiencyHandler.EmployeeEfficiency)
+			efficiency.GET("compute", efficiencyHandler.ComputeEmployee)
+			efficiency.GET("timeOnTask", efficiencyHandler.TimeOnTask)
 		}
 	}
 	return router
