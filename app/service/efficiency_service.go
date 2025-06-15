@@ -57,6 +57,10 @@ func (service *EfficiencyService) convertEntity2Vo(entityList []*entity.WorkLoad
 			}
 		}
 
+		employeeSummary.DirectWorkTimeRate = math.Round(employeeSummary.DirectWorkTime / employeeSummary.AttendanceTime * 100)
+		employeeSummary.IndirectWorkTimeRate = math.Round(employeeSummary.IndirectWorkTime / employeeSummary.AttendanceTime * 100)
+		employeeSummary.IdleTimeRate = math.Round(employeeSummary.IdleTime / employeeSummary.AttendanceTime * 100)
+
 		if e.WorkLoad != nil && len(e.WorkLoad) > 0 {
 			employeeSummary.WorkLoad = e.WorkLoad
 		}
@@ -115,6 +119,7 @@ func (service *EfficiencyService) generateEmployeeColumns(workLoadUnits []calc_d
 		{"闲置工时(h)", "idleTime", "idleTime"},
 		{"休息时长(h)", "restTime", "restTime"},
 		{"出勤工时(h)", "attendanceTime", "attendanceTime"},
+		{"工时占比", "timeRate", "timeRate"},
 	}...)
 
 	return columns
