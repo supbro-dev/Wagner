@@ -34,4 +34,7 @@ type EmployeeSummaryVO struct {
 	AttendanceTime       float64            `json:"attendanceTime"`  // 出勤时长
 	ProcessProperty      string             `json:"processProperty"` // 环节额外属性
 	WorkLoad             map[string]float64 `json:"workLoad"`
+	DirectWorkTimeRate   float64            `json:"directWorkTimeRate"`
+	IndirectWorkTimeRate float64            `json:"indirectWorkTimeRate"`
+	IdleTimeRate         float64            `json:"idleTimeRate"`
 }
