@@ -26,11 +26,17 @@
 
 ## 多维度环节人效管理
 TimeOnTask
-
+![](assets/timeOnTask.png)
 
 员工环节人效
 
+![](assets/employeeEfficiency.png)
+
 工作点环节人效
+![](assets/workplaceEfficiency.png)
 
 员工实时状态
 待完善
+
+## 前端工程
+https://github.com/supbro-dev/Wagner-front/
