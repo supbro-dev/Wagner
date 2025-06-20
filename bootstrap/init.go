@@ -46,6 +46,7 @@ func init() {
 
 	workplaceDao := dao.CreateWorkplaceDao(client)
 	scriptDao := dao.CreateScriptDao(client)
+	employeeStatusDao := dao.CreateEmployeeStatusDao(client)
 
 	actionService := action.CreateActionService(dao.CreateActionRepository(client))
 
@@ -59,6 +60,8 @@ func init() {
 
 	workplaceService := workplace.CreateWorkplaceService(workplaceDao)
 
+	employeeStatusSinkService := sink.CreateEmployeeStatusSinkService(employeeStatusDao)
+
 	domainServiceHolder := service.DomainServiceHolder{
 		EmployeeSnapshotService: employeeSnapshotService,
 		ActionService:           actionService,
@@ -70,11 +73,12 @@ func init() {
 	service.DomainHolder = domainServiceHolder
 
 	efficiencyComputeService := service.CreateEfficiencyComputeService()
-	efficiencyService := service.CreateEfficiencyService(olap_dao.CreateHourSummaryResultDao(olapReadClient))
+	efficiencyService := service.CreateEfficiencyService(olap_dao.CreateHourSummaryResultDao(olapReadClient), employeeStatusDao)
 	serviceHolder := service.ServiceHolder{
-		EfficiencyComputeService: efficiencyComputeService,
-		EfficiencyService:        efficiencyService,
-		SummarySinkService:       summarySinkService,
+		EfficiencyComputeService:  efficiencyComputeService,
+		EfficiencyService:         efficiencyService,
+		SummarySinkService:        summarySinkService,
+		EmployeeStatusSinkService: employeeStatusSinkService,
 	}
 
 	service.Holder = serviceHolder
