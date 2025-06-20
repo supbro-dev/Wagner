@@ -17,22 +17,24 @@ import (
 	"wagner/app/service/calc_dynamic_param"
 	"wagner/app/utils/datetime_util"
 	"wagner/app/utils/json_util"
+	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
 	"wagner/infrastructure/persistence/olap_dao"
 	"wagner/infrastructure/persistence/query"
 )
 
 type EfficiencyService struct {
-	dao *olap_dao.HourSummaryResultDao
+	hourSummaryResultDao *olap_dao.HourSummaryResultDao
+	employeeStatusDao    *dao.EmployeeStatusDao
 }
 
-func CreateEfficiencyService(dao *olap_dao.HourSummaryResultDao) *EfficiencyService {
-	return &EfficiencyService{dao}
+func CreateEfficiencyService(hourSummaryResultDao *olap_dao.HourSummaryResultDao, employeeStatusDao *dao.EmployeeStatusDao) *EfficiencyService {
+	return &EfficiencyService{hourSummaryResultDao, employeeStatusDao}
 }
 
 func (service *EfficiencyService) EmployeeEfficiency(workplaceCode, employeeNumber string, dateRange []*time.Time, aggregateDimension domain.AggregateDimension, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit) *vo.EmployeeEfficiencyVO {
 	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplaceCode, EmployeeNumber: employeeNumber, DateRange: dateRange, AggregateDimension: aggregateDimension, IsCrossPosition: isCrossPosition, WorkLoadUnit: workLoadUnits}
-	employeeSummaryEntities := service.dao.QueryEmployeeEfficiency(resultQuery)
+	employeeSummaryEntities := service.hourSummaryResultDao.QueryEmployeeEfficiency(resultQuery)
 
 	employeeEfficiencyVO := service.convertEntity2Vo(employeeSummaryEntities, workLoadUnits, aggregateDimension)
 	return employeeEfficiencyVO
@@ -127,7 +129,7 @@ func (service *EfficiencyService) generateEmployeeColumns(workLoadUnits []calc_d
 
 func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplace, dateRange []*time.Time, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, standardPositions []*domain.StandardPosition) *vo.WorkplaceEfficiencyVO {
 	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplace.Code, DateRange: dateRange, IsCrossPosition: isCrossPosition, WorkLoadUnit: workLoadUnits}
-	processSummaries := service.dao.QueryWorkplaceEfficiency(resultQuery)
+	processSummaries := service.hourSummaryResultDao.QueryWorkplaceEfficiency(resultQuery)
 
 	treeRoot := service.buildWorkplaceStructureTree(workplace, standardPositions, processSummaries, workLoadUnits)
 	columns := service.generateWorkplaceColumns(workLoadUnits)
@@ -274,4 +276,107 @@ func (service *EfficiencyService) generateWorkplaceColumns(workLoadUnits []calc_
 	}...)
 
 	return columns
+}
+
+func (service *EfficiencyService) QueryEmployeeStatus(workplaceCode string, operateDay time.Time) *vo.EmployeeStatusVO {
+	employeeStatusEntities := service.employeeStatusDao.FindByWorkplaceAndDate(workplaceCode, operateDay)
+	// 如果有工作组基本信息，在这里需要进行转化
+	employeeStatusVO := service.convertEmployeeStatusEntity2Vo(employeeStatusEntities, nil)
+	return employeeStatusVO
+}
+
+func (service *EfficiencyService) convertEmployeeStatusEntity2Vo(entities []*entity.EmployeeStatusEntity, groupCode2Name map[string]string) *vo.EmployeeStatusVO {
+	groupCodeList := make([]string, 0)
+	group2EachEmployeeStatusList := make(map[string][]*vo.EachEmployeeStatusVO)
+	group2Count := make(map[string]*vo.GroupStatusNumVO, 0)
+	status2Desc := map[string]string{
+		"DIRECT_WORKING":            "直接工作中",
+		"INDIRECT_WORKING":          "间接工作中",
+		"IDLE":                      "空闲中",
+		"REST":                      "休息中",
+		"OFF_DUTY":                  "已下班",
+		"OFF_DUTY_WITHOUT_END_TIME": "下班未打卡",
+	}
+
+	defaultWorkGroupName := "默认分组"
+
+	for _, statusEntity := range entities {
+		workGroupName := statusEntity.WorkGroupCode
+		if statusEntity.WorkGroupCode == "" {
+			workGroupName = defaultWorkGroupName
+		}
+
+		if groupCode2Name != nil {
+			workGroupName = groupCode2Name[statusEntity.WorkGroupCode]
+		}
+
+		if _, exists := group2EachEmployeeStatusList[workGroupName]; !exists {
+			group2EachEmployeeStatusList[workGroupName] = make([]*vo.EachEmployeeStatusVO, 0)
+			groupCodeList = append(groupCodeList, statusEntity.WorkGroupCode)
+			group2Count[workGroupName] = &vo.GroupStatusNumVO{}
+		}
+
+		eachEmployeeStatusList := group2EachEmployeeStatusList[workGroupName]
+		groupStatusNumVO := group2Count[workGroupName]
+
+		var lastActionDesc string
+		if statusEntity.Status == entity.DirectWorking {
+			lastActionDesc = fmt.Sprintf("于%v开始进行%v直接作业", datetime_util.FormatDatetime(*statusEntity.LastActionTime), statusEntity.LastActionCode)
+		} else if statusEntity.Status == entity.IndirectWorking {
+			lastActionDesc = fmt.Sprintf("于%v开始进行%v间接作业", datetime_util.FormatDatetime(*statusEntity.LastActionTime), statusEntity.LastActionCode)
+		} else if statusEntity.Status == entity.Idle {
+			lastActionDesc = fmt.Sprintf("从%v起处于闲置中", datetime_util.FormatDatetime(*statusEntity.LastActionTime))
+		} else if statusEntity.Status == entity.Idle {
+			lastActionDesc = fmt.Sprintf("从%v起处于休息中", datetime_util.FormatDatetime(*statusEntity.LastActionTime))
+		} else if statusEntity.Status == entity.OffDutyWithoutEndTime {
+			lastActionDesc = fmt.Sprintf("从%v完成最后一次作业，下班未打卡", datetime_util.FormatDatetime(*statusEntity.LastActionTime))
+		} else {
+			lastActionDesc = fmt.Sprintf("于%v下班", datetime_util.FormatDatetime(*statusEntity.LastActionTime))
+		}
+		eachEmployeeStatusList = append(eachEmployeeStatusList, &vo.EachEmployeeStatusVO{
+			EmployeeNumber: statusEntity.EmployeeNumber,
+			EmployeeName:   statusEntity.EmployeeName,
+			StatusDesc:     status2Desc[string(statusEntity.Status)],
+			LastActionDesc: lastActionDesc,
+		})
+		group2EachEmployeeStatusList[workGroupName] = eachEmployeeStatusList
+
+		switch statusEntity.Status {
+		case entity.DirectWorking:
+			groupStatusNumVO.DirectWorkingNum++
+		case entity.IndirectWorking:
+			groupStatusNumVO.IndirectWorkingNum++
+		case entity.Idle:
+			groupStatusNumVO.IdleNum++
+		case entity.Rest:
+			groupStatusNumVO.RestNum++
+		case entity.OffDuty:
+			groupStatusNumVO.OffDutyNum++
+		case entity.OffDutyWithoutEndTime:
+			groupStatusNumVO.OffDutyWithoutEndTimeNum++
+		}
+	}
+
+	// 按顺序生成小组结果
+	groupStatus := make([]*vo.GroupStatusVO, 0)
+	for _, groupCode := range groupCodeList {
+		groupStatusVO := vo.GroupStatusVO{
+			GroupCode: groupCode,
+		}
+		if groupCode2Name != nil {
+			groupStatusVO.GroupName = groupCode2Name[groupCode]
+		} else if groupCode == "" {
+			groupStatusVO.GroupName = defaultWorkGroupName
+		} else {
+			groupStatusVO.GroupName = groupCode
+		}
+		groupStatusVO.GroupStatusNum = group2Count[groupStatusVO.GroupName]
+		groupStatusVO.EmployeeStatusList = group2EachEmployeeStatusList[groupStatusVO.GroupName]
+
+		groupStatus = append(groupStatus, &groupStatusVO)
+	}
+
+	return &vo.EmployeeStatusVO{
+		groupStatus,
+	}
 }

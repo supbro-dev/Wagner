@@ -19,6 +19,31 @@ import (
 type EfficiencyHandler struct {
 }
 
+func (p EfficiencyHandler) EmployeeStatus(c *gin.Context) {
+	workplaceCode := c.Query("workplaceCode")
+	operateDayStr := c.Query("operateDay")
+
+	if workplaceCode == "" {
+		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "workplaceCode")
+		return
+	}
+
+	if operateDayStr == "" {
+		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "operateDay")
+		return
+	}
+
+	operateDay, err := datetime_util.ParseDate(operateDayStr)
+	if err != nil {
+		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, operateDayStr)
+		return
+	}
+
+	employeeStatusVO := service.Holder.EfficiencyService.QueryEmployeeStatus(workplaceCode, operateDay)
+
+	response.ReturnSuccessJson(c, employeeStatusVO)
+}
+
 func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 	employeeNumber := c.Query("employeeNumber")
 	workplaceCode := c.Query("workplaceCode")

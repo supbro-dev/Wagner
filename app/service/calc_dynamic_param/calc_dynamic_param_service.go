@@ -11,7 +11,6 @@ import (
 	"github.com/jinzhu/copier"
 	"strings"
 	"wagner/app/global/container"
-	"wagner/app/global/my_const"
 	"wagner/app/utils/json_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
@@ -28,7 +27,7 @@ type CalcParam struct {
 // 不同维度的存储属性
 type SinkStorage struct {
 	// 存储类型
-	SinkType my_const.SinkType
+	SinkType SinkType
 	// 表名
 	tableName string
 	// 如果是聚合场景，聚合字段
@@ -73,6 +72,15 @@ type WorkLoadAggregateType string
 var (
 	AggregateEndHour    WorkLoadAggregateType = "end"        // 物品数量记录到结束小时
 	AggregateProportion WorkLoadAggregateType = "proportion" // 物品数量按比例分摊
+)
+
+type SinkType string
+
+const (
+	// 数据汇总
+	SUMMARY SinkType = "SUMMARY"
+	// 个人当日状态
+	EMPLOYEE_STATUS = "EMPLOYEE_STATUS"
 )
 
 type HourSummaryParam struct {
@@ -146,7 +154,7 @@ func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynami
 	for i := 0; i < len(array.MustArray()); i++ {
 		data := array.GetIndex(i)
 		sinkStorage := SinkStorage{
-			SinkType:  my_const.SinkType(data.Get(entity.SINK_TYPE).MustString()),
+			SinkType:  SinkType(data.Get(entity.SINK_TYPE).MustString()),
 			tableName: data.Get(entity.TABLE_NAME).MustString(),
 		}
 

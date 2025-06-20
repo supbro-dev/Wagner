@@ -5,9 +5,10 @@ import (
 )
 
 type ServiceHolder struct {
-	EfficiencyComputeService *EfficiencyComputeService
-	EfficiencyService        *EfficiencyService
-	SummarySinkService       *sink.SummarySinkService
+	EfficiencyComputeService  *EfficiencyComputeService
+	EfficiencyService         *EfficiencyService
+	SummarySinkService        *sink.SummarySinkService
+	EmployeeStatusSinkService *sink.EmployeeStatusSinkService
 }
 
 var (

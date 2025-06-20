@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 	"wagner/app/domain"
-	"wagner/app/global/my_const"
 	"wagner/app/http/vo"
 	"wagner/app/service/calc_dynamic_param"
 	"wagner/app/service/calc_node"
 	"wagner/app/utils/lock"
 	"wagner/app/utils/log"
+	"wagner/infrastructure/persistence/entity"
 )
 
 // 人效计算服务
@@ -48,8 +48,10 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	// 5.处理聚合
 	for _, storage := range calcParam.SinkStorages {
 		switch storage.SinkType {
-		case my_const.SUMMARY:
+		case calc_dynamic_param.SUMMARY:
 			service.handleSummary(ctx, storage, calcParam.CalcOtherParam)
+		case calc_dynamic_param.EMPLOYEE_STATUS:
+			service.handleEmployeeStatus(ctx)
 		}
 	}
 
@@ -488,4 +490,103 @@ func (service *EfficiencyComputeService) initComputeContext() domain.ComputeCont
 	ctx := domain.ComputeContext{}
 
 	return ctx
+}
+
+func (service *EfficiencyComputeService) handleEmployeeStatus(ctx *domain.ComputeContext) {
+	employeeStatusSinkService := Holder.EmployeeStatusSinkService
+	employeeStatusEntity := service.filterEmployeeStatus(ctx)
+	employeeStatusSinkService.InsertOrUpdateEmployeeStatus(employeeStatusEntity)
+}
+
+func (service *EfficiencyComputeService) filterEmployeeStatus(ctx *domain.ComputeContext) *entity.EmployeeStatusEntity {
+	if ctx.TodayAttendance != nil && ctx.TodayAttendance.EndTime != nil {
+		attendanceStatus := entity.EmployeeStatusEntity{
+			EmployeeNumber: ctx.Employee.Number,
+			EmployeeName:   ctx.Employee.Name,
+			OperateDay:     &ctx.OperateDay,
+			WorkplaceCode:  ctx.Workplace.Code,
+			Status:         entity.OffDuty,
+			LastActionTime: ctx.TodayAttendance.EndTime,
+			LastActionCode: ctx.TodayAttendance.ActionCode,
+			WorkGroupCode:  ctx.Employee.WorkGroupCode,
+		}
+
+		if ctx.TodayWorkList != nil && len(ctx.TodayWorkList) > 0 {
+			for _, actionable := range ctx.TodayWorkList {
+				if actionable.GetAction().StartTime.After(*ctx.TodayAttendance.EndTime) {
+					log.ComputeLogger.Warn(fmt.Sprintf("下班后仍然有其他动作:%v", actionable.GetAction().ActionCode))
+					break
+				}
+			}
+		}
+
+		return &attendanceStatus
+	} else {
+		if ctx.TodayWorkList != nil && len(ctx.TodayWorkList) > 0 {
+			var status *entity.EmployeeStatusEntity
+
+			now := ctx.CalcStartTime
+			// 从后往前遍历
+			for i := len(ctx.TodayWorkList) - 1; i >= 0; i-- {
+				action := ctx.TodayWorkList[i]
+
+				// 动作的结束时间为当前时间，说明动作正在进行中
+				if action.GetAction().EndTime == nil && action.GetAction().ComputedEndTime.Equal(now) {
+					status = &entity.EmployeeStatusEntity{
+						EmployeeNumber: ctx.Employee.Number,
+						EmployeeName:   ctx.Employee.Name,
+						OperateDay:     &ctx.OperateDay,
+						WorkplaceCode:  ctx.Workplace.Code,
+						WorkGroupCode:  ctx.Employee.WorkGroupCode,
+					}
+
+					if action.GetAction().ActionType == domain.IDLE {
+						status.Status = entity.Idle
+						if i == 0 && ctx.TodayAttendance != nil {
+							status.LastActionTime = ctx.TodayAttendance.StartTime
+							status.LastActionCode = ctx.TodayAttendance.ActionCode
+						} else if i > 0 {
+							status.LastActionTime = ctx.TodayWorkList[i-1].GetAction().ComputedEndTime
+							status.LastActionCode = ctx.TodayWorkList[i-1].GetAction().ActionCode
+						}
+					} else {
+						status.LastActionTime = action.GetAction().StartTime
+						status.LastActionCode = action.GetAction().ActionCode
+						switch action.GetAction().ActionType {
+						case domain.REST:
+							status.Status = entity.Rest
+						case domain.DIRECT_WORK:
+							status.Status = entity.DirectWorking
+						case domain.INDIRECT_WORK:
+							status.Status = entity.IndirectWorking
+						}
+					}
+
+					break
+				}
+			}
+
+			// 如果没有正在进行中的作业，且没有考勤，认为OffDutyWithoutEndTime
+
+			if status == nil {
+				lastAction := ctx.TodayWorkList[len(ctx.TodayWorkList)-1]
+
+				status = &entity.EmployeeStatusEntity{
+					EmployeeNumber: ctx.Employee.Number,
+					EmployeeName:   ctx.Employee.Name,
+					OperateDay:     &ctx.OperateDay,
+					WorkplaceCode:  ctx.Workplace.Code,
+					WorkGroupCode:  ctx.Employee.WorkGroupCode,
+					Status:         entity.OffDutyWithoutEndTime,
+					LastActionTime: lastAction.GetAction().ComputedEndTime,
+					LastActionCode: lastAction.GetAction().ActionCode,
+				}
+
+				return status
+			}
+
+		}
+	}
+
+	return nil
 }

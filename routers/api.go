@@ -51,6 +51,7 @@ func InitApiRouter() *gin.Engine {
 			efficiency.GET("compute", efficiencyHandler.ComputeEmployee)
 			efficiency.GET("timeOnTask", efficiencyHandler.TimeOnTask)
 			efficiency.GET("workplace", efficiencyHandler.WorkplaceEfficiency)
+			efficiency.GET("employeeStatus", efficiencyHandler.EmployeeStatus)
 		}
 	}
 	return router
