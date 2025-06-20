@@ -32,7 +32,13 @@ func AddReasonableBreakTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 	// 排序
 	sort.Slice(actionList, func(i, j int) bool {
-		return actionList[i].ComputedStartTime.Before(*actionList[j].ComputedStartTime)
+		if actionList[i].ComputedStartTime.Before(*actionList[j].ComputedStartTime) {
+			return true
+		} else if actionList[i].ComputedStartTime.After(*actionList[j].ComputedStartTime) {
+			return false
+		} else {
+			return actionList[i].ComputedEndTime.Before(*actionList[j].ComputedEndTime)
+		}
 	})
 
 	for i, action := range actionList {

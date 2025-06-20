@@ -16,7 +16,7 @@ import (
 // 生成闲置工时
 func GenerateIdleData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	todayActionList := ctx.TodayWorkList
-	
+
 	idleList := make([]domain.Actionable, 0)
 	var nextAction domain.Actionable
 	for i, action := range todayActionList {
@@ -61,8 +61,14 @@ func GenerateIdleData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	ctx.TodayIdleList = idleList
 	// 最终的结果中加入休息、闲置
 	todayActionList = append(todayActionList, idleList...)
-	sort.Slice(todayActionList, func(i, j int) bool {
-		return todayActionList[i].GetAction().ComputedStartTime.Before(*todayActionList[j].GetAction().ComputedStartTime)
+	sort.Slice(ctx.TodayWorkList, func(i, j int) bool {
+		if ctx.TodayWorkList[i].GetAction().ComputedStartTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedStartTime) {
+			return true
+		} else if ctx.TodayWorkList[i].GetAction().ComputedStartTime.After(*ctx.TodayWorkList[j].GetAction().ComputedStartTime) {
+			return false
+		} else {
+			return ctx.TodayWorkList[i].GetAction().ComputedEndTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedEndTime)
+		}
 	})
 
 	ctx.TodayWorkList = todayActionList

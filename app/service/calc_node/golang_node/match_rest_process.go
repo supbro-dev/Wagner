@@ -20,7 +20,13 @@ func MatchRestProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 		todayActionList = append(todayActionList, rest)
 	}
 	sort.Slice(todayActionList, func(i, j int) bool {
-		return todayActionList[i].GetAction().ComputedStartTime.Before(*todayActionList[j].GetAction().ComputedStartTime)
+		if todayActionList[i].GetAction().ComputedStartTime.Before(*todayActionList[j].GetAction().ComputedStartTime) {
+			return true
+		} else if todayActionList[i].GetAction().ComputedStartTime.After(*todayActionList[j].GetAction().ComputedStartTime) {
+			return false
+		} else {
+			return todayActionList[i].GetAction().ComputedEndTime.Before(*todayActionList[j].GetAction().ComputedEndTime)
+		}
 	})
 
 	for i, action := range todayActionList {
