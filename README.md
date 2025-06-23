@@ -28,7 +28,7 @@ go version
 ```
 
 ### 2.进入项目目录
-假设你的项目位于 `<font style="color:rgb(100, 116, 139);">/path/to/your/project</font>`，使用终端进入该目录：
+假设你的项目位于/path/to/your/project，使用终端进入该目录：
 
 ```shell
 cd /path/to/your/project
@@ -41,7 +41,7 @@ cd /path/to/your/project
 go mod tidy
 ```
 
-这条命令会根据你的`<font style="color:rgb(100, 116, 139);">go.mod</font>`文件下载所有依赖项。
+这条命令会根据你的go.mod文件下载所有依赖项。
 
 ### 4.构建项目
 由于main.go在/cmd/api下，所以需要指定相对路径
@@ -50,7 +50,7 @@ go mod tidy
  go build -o wagner ./cmd/api
 ```
 
-这将在当前目录下生成一个名为`<font style="color:rgb(100, 116, 139);">myapp</font>`（在Windows下是`<font style="color:rgb(100, 116, 139);">myapp.exe</font>`）的可执行文件。
+这将在当前目录下生成一个名为 wagner（在Windows下是`wagner.exe`）的可执行文件。
 
 ### 5.初始化mysql数据库
 依次执行
