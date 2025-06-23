@@ -24,8 +24,7 @@ func CutOffCrossWork(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 		if nextWork != nil {
 			// 如果当前作业未结束，下一个作业已经开始，视为作业交叉，需要进行截断
-			if work.GetAction().ComputedEndTime.After(*nextWork.GetAction().ComputedStartTime) ||
-				work.GetAction().ComputedEndTime.Equal(*nextWork.GetAction().ComputedStartTime) {
+			if work.GetAction().ComputedEndTime.After(*nextWork.GetAction().ComputedStartTime) {
 				originalEndTime := work.GetAction().ComputedEndTime
 				computedEndTime := nextWork.GetAction().ComputedStartTime
 

@@ -1,9 +1,23 @@
 -- 初始化工作点
-INSERT INTO workplace
-VALUES (1, now(), now(), 'workplace1', '1号工作点', 'NORTH', 'FOOD');
+INSERT INTO workplace (`code`,
+                       `name`,
+                       `region_code`,
+                       `industry_code`,
+                       `sub_industry_code`)
+VALUES ('workplace1', '1号工作点', 'NORTH', 'FOOD', null);
 
 -- 初始化员工信息
-INSERT INTO `employee`
+INSERT INTO `employee` (`id`,
+                        `gmt_create`,
+                        `gmt_modified`,
+                        `name`,
+                        `number`,
+                        `identity`,
+                        `sensitive_info`,
+                        `workplace_code`,
+                        `position_code`,
+                        `work_group_code`,
+                        `status`)
 VALUES (1, now(), now(), '大兄弟', 'A1001', '1001', NULL, 'workplace1', 'pick', NULL, 'WORKING');
 INSERT INTO `employee`
 VALUES (2, now(), now(), '张伟', 'A1002', '1002', NULL, 'workplace1', 'pick', 'WG1', 'WORKING');

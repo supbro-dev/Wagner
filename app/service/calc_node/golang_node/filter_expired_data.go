@@ -51,9 +51,14 @@ func FilterExpiredData(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 	// 每次操作完workList，进行排序
 	sort.Slice(ctx.TodayWorkList, func(i, j int) bool {
-		return ctx.TodayWorkList[i].GetAction().ComputedStartTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedStartTime)
+		if ctx.TodayWorkList[i].GetAction().ComputedStartTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedStartTime) {
+			return true
+		} else if ctx.TodayWorkList[i].GetAction().ComputedStartTime.After(*ctx.TodayWorkList[j].GetAction().ComputedStartTime) {
+			return false
+		} else {
+			return ctx.TodayWorkList[i].GetAction().ComputedEndTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedEndTime)
+		}
 	})
-
 	return ctx
 }
 

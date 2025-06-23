@@ -9,6 +9,7 @@ package golang_node
 import (
 	"sort"
 	"wagner/app/domain"
+	"wagner/app/utils/datetime_util"
 )
 
 // 把第二天/昨天两天的数据，在今天考勤上下班时间范围内的数据，归属到今天
@@ -18,7 +19,8 @@ func AddCrossDayData(ctx *domain.ComputeContext) *domain.ComputeContext {
 		tomorrowWorksBelongsToday := make([]domain.Actionable, 0)
 		for _, tomorrowWork := range ctx.TomorrowWorkList {
 			workComputedStartTime := (tomorrowWork).GetAction().ComputedStartTime
-			if workComputedStartTime.Before(*ctx.TodayAttendanceEndTime) || workComputedStartTime.Equal(*ctx.TodayAttendanceEndTime) {
+
+			if datetime_util.LeftBeforeOrEqualRight(*workComputedStartTime, *ctx.TodayAttendanceEndTime) {
 				tomorrowWorksBelongsToday = append(tomorrowWorksBelongsToday, tomorrowWork)
 			}
 		}
@@ -37,7 +39,7 @@ func AddCrossDayData(ctx *domain.ComputeContext) *domain.ComputeContext {
 		yesterdayWorksBelongsToday := make([]domain.Actionable, 0)
 		for _, yesterdayWork := range ctx.YesterdayWorkList {
 			workComputedStartTime := yesterdayWork.GetAction().ComputedStartTime
-			if workComputedStartTime.Equal(*ctx.TodayAttendanceStartTime) || workComputedStartTime.After(*ctx.TodayAttendanceStartTime) {
+			if datetime_util.LeftAfterOrEqualRight(*workComputedStartTime, *ctx.TodayAttendanceStartTime) {
 				yesterdayWorksBelongsToday = append(yesterdayWorksBelongsToday, yesterdayWork)
 			}
 		}
@@ -55,7 +57,13 @@ func AddCrossDayData(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 	// 每次操作完workList，进行排序
 	sort.Slice(ctx.TodayWorkList, func(i, j int) bool {
-		return ctx.TodayWorkList[i].GetAction().ComputedStartTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedStartTime)
+		if ctx.TodayWorkList[i].GetAction().ComputedStartTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedStartTime) {
+			return true
+		} else if ctx.TodayWorkList[i].GetAction().ComputedStartTime.After(*ctx.TodayWorkList[j].GetAction().ComputedStartTime) {
+			return false
+		} else {
+			return ctx.TodayWorkList[i].GetAction().ComputedEndTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedEndTime)
+		}
 	})
 
 	return ctx

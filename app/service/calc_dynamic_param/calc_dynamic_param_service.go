@@ -253,7 +253,7 @@ var DefaultCalcOtherParam = CalcOtherParam{
 			{"包裹数", "packageNum"},
 		},
 		LookBackDays:               2,
-		DefaultMaxTimeInMinute:     30,
+		DefaultMaxTimeInMinute:     60,
 		DefaultMinIdleTimeInMinute: 10,
 	},
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	router := routers.InitApiRouter()
+	router := routers.InitRouter()
 	startup_banner.Run()
 	_ = router.Run(variable.Config.GetString("HttpServer.Api.Port"))
 }
