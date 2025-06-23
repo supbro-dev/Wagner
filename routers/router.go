@@ -4,13 +4,15 @@ import (
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"wagner/app/global/variable"
 	"wagner/app/http/controller"
 	"wagner/app/utils/gin_release"
 )
 
-func InitApiRouter() *gin.Engine {
-
+func InitRouter() *gin.Engine {
 	var router *gin.Engine
 	// 非调试模式（生产模式） 日志写到日志文件
 	if variable.Config.GetBool("AppDebug") == false {
@@ -29,13 +31,9 @@ func InitApiRouter() *gin.Engine {
 
 	_ = router.SetTrustedProxies(nil)
 
-	router.GET("/", func(context *gin.Context) {
-		context.String(http.StatusOK, "Api 模块接口 hello Wagner！")
-	})
-
-	//处理静态资源（不建议gin框架处理静态资源，参见 Public/readme.md 说明 ）
-	router.Static("/public", "./public") //  定义静态资源路由与实际目录映射关系
-	//router.StaticFile("/abcd", "./public/readme.md") // 可以根据文件名绑定需要返回的文件名
+	//router.GET("/", func(context *gin.Context) {
+	//	context.String(http.StatusOK, "Api 模块接口 hello Wagner！")
+	//})
 
 	//  创建一个门户类接口路由组
 	vApi := router.Group("/api/v1/")
@@ -54,5 +52,41 @@ func InitApiRouter() *gin.Engine {
 			efficiency.GET("employeeStatus", efficiencyHandler.EmployeeStatus)
 		}
 	}
+
+	// 前端静态文件加载
+	// 服务 React 静态文件
+	reactStaticPath := filepath.Join("static", "web")
+	router.Static("/web", reactStaticPath)
+
+	// 配置主页路由
+	router.GET("/", func(c *gin.Context) {
+		// 重定向到 React 应用的入口
+		c.Redirect(http.StatusMovedPermanently, "/web")
+	})
+
+	// 处理前端路由：所有未匹配的路由都返回 React 的 index.html
+	router.NoRoute(func(c *gin.Context) {
+		indexPath := filepath.Join(reactStaticPath, "index.html")
+		if _, err := os.Stat(indexPath); err == nil {
+			c.File(indexPath)
+		} else {
+			c.String(http.StatusNotFound, "Page not found")
+		}
+	})
+
+	// 处理前端路由的中间件
+	router.Use(func(c *gin.Context) {
+		// 排除静态文件和 API 请求
+		if strings.HasPrefix(c.Request.URL.Path, "/static") ||
+			strings.HasPrefix(c.Request.URL.Path, "/api/v1") {
+			c.Next()
+			return
+		}
+
+		// 返回 index.html
+		c.File(filepath.Join("./static", "index.html"))
+		c.Abort() // 终止后续处理
+	})
+
 	return router
 }
