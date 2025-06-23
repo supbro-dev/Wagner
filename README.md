@@ -74,19 +74,23 @@ wager.exe
 ### TimeOnTask
 [http://localhost:8080/web/timeOnTask](http://localhost:8080/web/timeOnTask)
 
-![](https://cdn.nlark.com/yuque/0/2025/png/42401961/1750037358234-8752640c-78c5-4442-9aeb-97b70fc6bf49.png)
-
+![](assets/timeOnTask.png)
 
 
 ## 员工环节人效
 [http://localhost:8080/web/employeeEfficiency](http://localhost:8080/web/employeeEfficiency)
 
-![](https://cdn.nlark.com/yuque/0/2025/png/42401961/1750039120458-a2e0b6ae-68e3-4b01-88cf-76014be9fd4a.png)
+![](assets/employeeEfficiency.png)
+
 
 ## 工作点环节人效
 [http://localhost:8080/web/workplaceEfficiency](http://localhost:8080/web/workplaceEfficiency)
 
-![](https://cdn.nlark.com/yuque/0/2025/png/42401961/1750039191481-e15728c2-39bf-49dc-a236-a37a44dc3a6d.png)
+![](assets/workplaceEfficiency.png)
 
 ## 员工实时状态
 [http://localhost:8080/web/employeeStatus](http://localhost:8080/web/employeeStatus)
+
+## 前端工程
+https://github.com/supbro-dev/Wagner-front/
+
