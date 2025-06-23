@@ -12,7 +12,6 @@ require (
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/gin-contrib/pprof v1.5.3
 	github.com/gin-gonic/gin v1.10.1
-	github.com/go-playground/assert/v2 v2.2.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0

@@ -2,6 +2,7 @@
 *.exe
 *.test
 /bin/
+wagner
 
 # 系统文件
 .DS_Store
