@@ -20,23 +20,77 @@
 ----------
 
 ## 快速开始
-待完善
+### 1.确保已安装Go环境
+首先需要确保已经正确安装了Go，并设置了环境变量（GOPATH、GOROOT等）。可以通过以下命令检查：
+
+```shell
+go version
+```
+
+### 2.进入项目目录
+假设你的项目位于 `<font style="color:rgb(100, 116, 139);">/path/to/your/project</font>`，使用终端进入该目录：
+
+```shell
+cd /path/to/your/project
+```
+
+### 3.安装项目依赖
+如果你的项目使用了第三方库，你需要先下载依赖。在项目根目录下运行：
+
+```shell
+go mod tidy
+```
+
+这条命令会根据你的`<font style="color:rgb(100, 116, 139);">go.mod</font>`文件下载所有依赖项。
+
+### 4.构建项目
+由于main.go在/cmd/api下，所以需要指定相对路径
+
+```shell
+ go build -o wagner ./cmd/api
+```
+
+这将在当前目录下生成一个名为`<font style="color:rgb(100, 116, 139);">myapp</font>`（在Windows下是`<font style="color:rgb(100, 116, 139);">myapp.exe</font>`）的可执行文件。
+
+### 5.初始化mysql数据库
+依次执行
+
+1. db_mysql.sql 初始化表结构
+2. init_data.sql 初始化基础数据
+3. demo.sql 初始化人员测试场景
+
+### 6.运行项目
+```shell
+# Linux/Mac
+./wagner
+
+# Windows
+wager.exe
+```
 
 ----------
 
 ## 多维度环节人效管理
-TimeOnTask
+### TimeOnTask
+[http://localhost:8080/web/timeOnTask](http://localhost:8080/web/timeOnTask)
+
 ![](assets/timeOnTask.png)
 
-员工环节人效
+
+## 员工环节人效
+[http://localhost:8080/web/employeeEfficiency](http://localhost:8080/web/employeeEfficiency)
 
 ![](assets/employeeEfficiency.png)
 
-工作点环节人效
+
+## 工作点环节人效
+[http://localhost:8080/web/workplaceEfficiency](http://localhost:8080/web/workplaceEfficiency)
+
 ![](assets/workplaceEfficiency.png)
 
-员工实时状态
-待完善
+## 员工实时状态
+[http://localhost:8080/web/employeeStatus](http://localhost:8080/web/employeeStatus)
 
 ## 前端工程
 https://github.com/supbro-dev/Wagner-front/
+
