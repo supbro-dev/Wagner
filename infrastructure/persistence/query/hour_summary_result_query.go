@@ -19,4 +19,6 @@ type HourSummaryResultQuery struct {
 	AggregateDimension domain.AggregateDimension
 	IsCrossPosition    domain.IsCrossPosition
 	WorkLoadUnit       []calc_dynamic_param.WorkLoadUnit
+	CurrentPage        int
+	PageSize           int
 }

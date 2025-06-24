@@ -9,9 +9,11 @@ package vo
 type EmployeeEfficiencyVO struct {
 	TableDataList []*EmployeeSummaryVO `json:"tableDataList"`
 	Columns       []*TableColumnVO     `json:"columns"`
+	Page          *Page                `json:"page"`
 }
 
 type EmployeeSummaryVO struct {
+	Key                  string             `json:"key"`
 	EmployeeNumber       string             `json:"employeeNumber"`
 	EmployeeName         string             `json:"employeeName"`
 	OperateDay           string             `json:"operateDay"`

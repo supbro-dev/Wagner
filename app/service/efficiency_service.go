@@ -32,11 +32,23 @@ func CreateEfficiencyService(hourSummaryResultDao *olap_dao.HourSummaryResultDao
 	return &EfficiencyService{hourSummaryResultDao, employeeStatusDao}
 }
 
-func (service *EfficiencyService) EmployeeEfficiency(workplaceCode, employeeNumber string, dateRange []*time.Time, aggregateDimension domain.AggregateDimension, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit) *vo.EmployeeEfficiencyVO {
-	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplaceCode, EmployeeNumber: employeeNumber, DateRange: dateRange, AggregateDimension: aggregateDimension, IsCrossPosition: isCrossPosition, WorkLoadUnit: workLoadUnits}
+func (service *EfficiencyService) EmployeeEfficiency(workplaceCode, employeeNumber string, dateRange []*time.Time, aggregateDimension domain.AggregateDimension, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, currentPage, pageSize int) *vo.EmployeeEfficiencyVO {
+	resultQuery := query.HourSummaryResultQuery{
+		WorkplaceCode:      workplaceCode,
+		EmployeeNumber:     employeeNumber,
+		DateRange:          dateRange,
+		AggregateDimension: aggregateDimension,
+		IsCrossPosition:    isCrossPosition,
+		WorkLoadUnit:       workLoadUnits,
+		CurrentPage:        currentPage,
+		PageSize:           pageSize}
 	employeeSummaryEntities := service.hourSummaryResultDao.QueryEmployeeEfficiency(resultQuery)
 
+	total := service.hourSummaryResultDao.TotalEmployeeEfficiency(resultQuery)
+
 	employeeEfficiencyVO := service.convertEntity2Vo(employeeSummaryEntities, workLoadUnits, aggregateDimension)
+	employeeEfficiencyVO.Page = &vo.Page{CurrentPage: currentPage, PageSize: pageSize, Total: total}
+
 	return employeeEfficiencyVO
 }
 
@@ -45,6 +57,7 @@ func (service *EfficiencyService) convertEntity2Vo(entityList []*entity.WorkLoad
 	for _, e := range entityList {
 		employeeSummary := vo.EmployeeSummaryVO{}
 		copier.Copy(&employeeSummary, &e.EmployeeSummary)
+		employeeSummary.Key = e.EmployeeSummary.UniqueKey
 		employeeSummary.OperateDay = datetime_util.FormatDate(e.EmployeeSummary.OperateDay)
 		employeeSummary.DirectWorkTime = math.Round(employeeSummary.DirectWorkTime*10/3600.0) / 10
 		employeeSummary.IndirectWorkTime = math.Round(employeeSummary.IndirectWorkTime*10/3600.0) / 10
@@ -59,9 +72,11 @@ func (service *EfficiencyService) convertEntity2Vo(entityList []*entity.WorkLoad
 			}
 		}
 
-		employeeSummary.DirectWorkTimeRate = math.Round(employeeSummary.DirectWorkTime / employeeSummary.AttendanceTime * 100)
-		employeeSummary.IndirectWorkTimeRate = math.Round(employeeSummary.IndirectWorkTime / employeeSummary.AttendanceTime * 100)
-		employeeSummary.IdleTimeRate = math.Round(employeeSummary.IdleTime / employeeSummary.AttendanceTime * 100)
+		if employeeSummary.AttendanceTime != float64(0) {
+			employeeSummary.DirectWorkTimeRate = math.Round(employeeSummary.DirectWorkTime / employeeSummary.AttendanceTime * 100)
+			employeeSummary.IndirectWorkTimeRate = math.Round(employeeSummary.IndirectWorkTime / employeeSummary.AttendanceTime * 100)
+			employeeSummary.IdleTimeRate = math.Round(employeeSummary.IdleTime / employeeSummary.AttendanceTime * 100)
+		}
 
 		if e.WorkLoad != nil && len(e.WorkLoad) > 0 {
 			employeeSummary.WorkLoad = e.WorkLoad
@@ -72,7 +87,8 @@ func (service *EfficiencyService) convertEntity2Vo(entityList []*entity.WorkLoad
 	columns := service.generateEmployeeColumns(workLoadUnits, aggregateDimension)
 
 	v := vo.EmployeeEfficiencyVO{
-		tableDataList, columns,
+		TableDataList: tableDataList,
+		Columns:       columns,
 	}
 
 	return &v

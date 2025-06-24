@@ -8,6 +8,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"strconv"
 	"time"
 	"wagner/app/domain"
 	"wagner/app/global/my_error"
@@ -51,6 +52,8 @@ func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 	isCrossPosition := c.Query("isCrossPosition")
 	startDateStr := c.Query("startDate")
 	endDateStr := c.Query("endDate")
+	currentPage := c.Query("currentPage")
+	pageSize := c.Query("pageSize")
 
 	if workplaceCode == "" {
 		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "workplaceCode")
@@ -64,6 +67,11 @@ func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 
 	if startDateStr == "" || endDateStr == "" {
 		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "startDate or endDate")
+		return
+	}
+
+	if currentPage == "" || pageSize == "" {
+		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "page")
 		return
 	}
 
@@ -86,8 +94,11 @@ func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 
 	workLoadUnits := calcParam.CalcOtherParam.Work.WorkLoadUnits
 
+	currentPageInt, _ := strconv.Atoi(currentPage)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+
 	efficiencyVO := service.Holder.EfficiencyService.EmployeeEfficiency(workplaceCode, employeeNumber, []*time.Time{&startDate, &endDate},
-		domain.AggregateDimension(aggregateDimension), domain.IsCrossPosition(isCrossPosition), workLoadUnits)
+		domain.AggregateDimension(aggregateDimension), domain.IsCrossPosition(isCrossPosition), workLoadUnits, currentPageInt, pageSizeInt)
 
 	response.ReturnSuccessJson(c, efficiencyVO)
 }
