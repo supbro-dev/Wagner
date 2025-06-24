@@ -17,7 +17,7 @@ CREATE TABLE `employee`
     UNIQUE KEY `number_UNIQUE` (`number`),
     UNIQUE KEY `identity_UNIQUE` (`identity`),
     KEY               `idx_workplace_status` (`workplace_code`,`status`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='员工信息';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='员工信息';
 
 -- 员工动作表
 
@@ -37,7 +37,7 @@ CREATE TABLE `action`
     `work_load`       json                 DEFAULT NULL COMMENT '工作量',
     PRIMARY KEY (`id`),
     KEY               `idx_employee_start_time_workplace` (`employee_number`,`start_time`,`workplace_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户动作表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户动作表';
 
 -- 工作点表
 
@@ -53,7 +53,7 @@ CREATE TABLE `workplace`
     `sub_industry_code` varchar(45)          DEFAULT NULL COMMENT '子行业编码',
     PRIMARY KEY (`id`),
     UNIQUE KEY `code_UNIQUE` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='工作点';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='工作点';
 
 -- 动态计算配置表
 
@@ -68,7 +68,7 @@ CREATE TABLE `calc_dynamic_param`
     `content`           json        NOT NULL COMMENT '配置内容',
     PRIMARY KEY (`id`),
     KEY                 `idx_ic_sic` (`industry_code`,`sub_industry_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='动态计算配置';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='动态计算配置';
 
 -- 人效环节
 CREATE TABLE `standard_position`
@@ -90,7 +90,7 @@ CREATE TABLE `standard_position`
     PRIMARY KEY (`id`),
     KEY                 `idx_version` (`version`),
     KEY                 `idx_ic_sic` (`industry_code`,`sub_industry_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='人效环节';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='人效环节';
 
 -- 小时聚合结果表
 
@@ -125,7 +125,24 @@ CREATE TABLE `hour_summary_result`
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_unique_key` (`unique_key`),
     KEY                      `idx_en_od_pc_ot_wp` (`employee_number`,`operate_day`,`position_code`,`operate_time`,`workplace_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='小时聚合结果';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='小时聚合结果';
+
+CREATE TABLE `employee_status`
+(
+    `id`               bigint      NOT NULL AUTO_INCREMENT COMMENT 'Id',
+    `gmt_create`       datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `gmt_modified`     datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    `employee_number`  varchar(45) NOT NULL COMMENT '员工工号',
+    `employee_name`    varchar(45) NOT NULL COMMENT '员工姓名',
+    `operate_day`      date        NOT NULL COMMENT '工作日期',
+    `workplace_code`   varchar(45) NOT NULL COMMENT '工作点编码',
+    `status`           varchar(45) NOT NULL COMMENT '员工状态',
+    `last_action_time` datetime    NOT NULL COMMENT '上次动作发生时间',
+    `last_action_code` varchar(45) NOT NULL COMMENT '上次动作发生编码',
+    `work_group_code`  varchar(45)          DEFAULT NULL COMMENT '工作组编码',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_wc_od_en` (`workplace_code`,`operate_day`,`employee_number`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='员工状态表';
 
 -- 脚本定义表（暂时没用到）
 CREATE TABLE `script`
@@ -140,4 +157,4 @@ CREATE TABLE `script`
     `version`      int         NOT NULL COMMENT '版本',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_name_version` (`name`,`version`)
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='脚本';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='脚本';

@@ -27,6 +27,7 @@ type EmployeeSummaryEntity struct {
 	RestTime             int       `gorm:"column:rest_time" json:"restTime"`
 	AttendanceTime       int       `gorm:"column:attendance_time" json:"attendanceTime"`   // 出勤时长
 	ProcessProperty      string    `gorm:"column:process_property" json:"processProperty"` // 环节额外属性
+	UniqueKey            string    `gorm:"column:unique_key" json:"uniqueKey"`             // 环节额外属性
 }
 
 type WorkLoadWithEmployeeSummary struct {
