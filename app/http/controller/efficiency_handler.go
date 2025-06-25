@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 	"wagner/app/domain"
-	"wagner/app/global/my_error"
+	"wagner/app/global/business_error"
 	"wagner/app/service"
 	"wagner/app/utils/datetime_util"
 	"wagner/app/utils/response"
@@ -25,18 +25,18 @@ func (p EfficiencyHandler) EmployeeStatus(c *gin.Context) {
 	operateDayStr := c.Query("operateDay")
 
 	if workplaceCode == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "workplaceCode")
+		response.ReturnError(c, business_error.ParamIsNil("workplaceCode"))
 		return
 	}
 
 	if operateDayStr == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "operateDay")
+		response.ReturnError(c, business_error.ParamIsNil("operateDay"))
 		return
 	}
 
 	operateDay, err := datetime_util.ParseDate(operateDayStr)
 	if err != nil {
-		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, operateDayStr)
+		response.ReturnError(c, business_error.ParamIsWrong("operateDay"))
 		return
 	}
 
@@ -56,34 +56,34 @@ func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 	pageSize := c.Query("pageSize")
 
 	if workplaceCode == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "workplaceCode")
+		response.ReturnError(c, business_error.ParamIsNil("workplaceCode"))
 		return
 	}
 
 	if aggregateDimension == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "aggregateDimension")
+		response.ReturnError(c, business_error.ParamIsNil("aggregateDimension"))
 		return
 	}
 
 	if startDateStr == "" || endDateStr == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "startDate or endDate")
+		response.ReturnError(c, business_error.ParamIsNil("startDate", "endDate"))
 		return
 	}
 
 	if currentPage == "" || pageSize == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "page")
+		response.ReturnError(c, business_error.ParamIsNil("currentPage", "pageSize"))
 		return
 	}
 
 	startDate, err := datetime_util.ParseDate(startDateStr)
 	if err != nil {
-		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, startDateStr)
+		response.ReturnError(c, business_error.ParamIsWrong("startDate"))
 		return
 	}
 
 	endDate, err := datetime_util.ParseDate(endDateStr)
 	if err != nil {
-		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, endDateStr)
+		response.ReturnError(c, business_error.ParamIsWrong("endDate"))
 		return
 	}
 
@@ -108,19 +108,21 @@ func (p EfficiencyHandler) ComputeEmployee(c *gin.Context) {
 	operateDayStr := c.Query("operateDay")
 
 	if employeeNumber == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, operateDayStr)
+		response.ReturnError(c, business_error.ParamIsNil("employeeNumber"))
 		return
 	}
 
 	operateDay, err := datetime_util.ParseDate(operateDayStr)
 	if err != nil {
-		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, operateDayStr)
+		response.ReturnError(c, business_error.ParamIsWrong("operateDay"))
 		return
 	}
 
-	service.Holder.EfficiencyComputeService.ComputeEmployee(employeeNumber, operateDay)
-
-	response.ReturnSuccessEmptyJson(c)
+	if isSuccess, err := service.Holder.EfficiencyComputeService.ComputeEmployee(employeeNumber, operateDay); err != nil {
+		response.ReturnError(c, err)
+	} else {
+		response.ReturnSuccessJson(c, isSuccess)
+	}
 }
 
 func (p EfficiencyHandler) TimeOnTask(c *gin.Context) {
@@ -128,24 +130,27 @@ func (p EfficiencyHandler) TimeOnTask(c *gin.Context) {
 	operateDayStr := c.Query("operateDay")
 
 	if employeeNumber == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "employeeNumber")
+		response.ReturnError(c, business_error.ParamIsNil("employeeNumber"))
 		return
 	}
 
 	if operateDayStr == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "operateDay")
+		response.ReturnError(c, business_error.ParamIsNil("operateDay"))
 		return
 	}
 
 	operateDay, err := datetime_util.ParseDate(operateDayStr)
 	if err != nil {
-		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, operateDayStr)
+		response.ReturnError(c, business_error.ParamIsWrong("operateDay"))
 		return
 	}
 
-	timeOnTaskVO := service.Holder.EfficiencyComputeService.TimeOnTask(employeeNumber, operateDay)
+	if timeOnTaskVO, err := service.Holder.EfficiencyComputeService.TimeOnTask(employeeNumber, operateDay); err != nil {
+		response.ReturnError(c, err)
+	} else {
+		response.ReturnSuccessJson(c, timeOnTaskVO)
+	}
 
-	response.ReturnSuccessJson(c, timeOnTaskVO)
 }
 
 func (p EfficiencyHandler) WorkplaceEfficiency(c *gin.Context) {
@@ -155,24 +160,24 @@ func (p EfficiencyHandler) WorkplaceEfficiency(c *gin.Context) {
 	endDateStr := c.Query("endDate")
 
 	if workplaceCode == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "workplaceCode")
+		response.ReturnError(c, business_error.ParamIsNil("workplaceCode"))
 		return
 	}
 
 	if startDateStr == "" || endDateStr == "" {
-		response.ErrorSystem(c, my_error.ParamNilCode, my_error.ParamNilMsg, "startDate or endDate")
+		response.ReturnError(c, business_error.ParamIsNil("startDate", "endDate"))
 		return
 	}
 
 	startDate, err := datetime_util.ParseDate(startDateStr)
 	if err != nil {
-		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, startDateStr)
+		response.ReturnError(c, business_error.ParamIsWrong("startDate"))
 		return
 	}
 
 	endDate, err := datetime_util.ParseDate(endDateStr)
 	if err != nil {
-		response.ErrorSystem(c, my_error.ParamErrorCode, my_error.ParamErrorMsg, endDateStr)
+		response.ReturnError(c, business_error.ParamIsWrong("endDate"))
 		return
 	}
 

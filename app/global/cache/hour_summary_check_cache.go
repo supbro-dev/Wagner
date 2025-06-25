@@ -9,7 +9,9 @@ package cache
 import (
 	"fmt"
 	"time"
+	"wagner/app/global/business_error"
 	"wagner/app/global/container"
+	"wagner/app/global/error_handler"
 )
 
 type HourSummaryCheckCache struct {
@@ -20,7 +22,7 @@ type HourSummaryCheckCache struct {
 func CreateHourSummaryCheckLocalCache() *HourSummaryCheckCache {
 	cache, err := container.GetOrCreateCache[string, string](container.HOUR_SUMMARY_MD5)
 	if err != nil {
-		panic(err)
+		error_handler.LogAndPanic(business_error.ServerErrorCausedBy(err))
 	}
 	return &HourSummaryCheckCache{localCache: cache}
 }

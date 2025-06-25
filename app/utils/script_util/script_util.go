@@ -14,7 +14,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
 	"reflect"
-	"wagner/app/global/my_error"
+	"wagner/app/global/business_error"
 )
 
 type ScriptType string
@@ -48,12 +48,9 @@ func Run[P any, V any](scriptName, script string, scriptType ScriptType, input P
 			// 尝试将结构体转换为 map[string]interface{}
 			return runEl[map[string]interface{}, V](script, convertToMapStringInterface(input))
 		}
-
-		// 类型不符合要求，返回错误
-		return zero, fmt.Errorf("脚本解析失败: %v, %v",
-			my_error.ElScriptMustUseMapCode, my_error.ElScriptMustUseMapMsg)
+		return zero, business_error.ElScriptMustUseMap()
 	}
-	return zero, fmt.Errorf("脚本解析失败: %v, %v", my_error.ScriptWrongTypeCode, my_error.ScriptWrongTypeMsg)
+	return zero, business_error.ScriptWrongType()
 }
 
 func convertToMapStringInterface(input any) map[string]interface{} {

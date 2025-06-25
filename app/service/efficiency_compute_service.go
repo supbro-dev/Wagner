@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 	"wagner/app/domain"
+	"wagner/app/global/business_error"
+	"wagner/app/global/error_handler"
 	"wagner/app/http/vo"
 	"wagner/app/service/calc_dynamic_param"
 	"wagner/app/service/calc_node"
@@ -27,23 +29,31 @@ func CreateEfficiencyComputeService() *EfficiencyComputeService {
 	return &EfficiencyComputeService{}
 }
 
-func (service *EfficiencyComputeService) TimeOnTask(employeeNumber string, operateDay time.Time) *vo.TimeOnTaskVO {
-	ctx, calcParam := service.createAndComputeCtx(employeeNumber, operateDay)
+func (service *EfficiencyComputeService) TimeOnTask(employeeNumber string, operateDay time.Time) (*vo.TimeOnTaskVO, *business_error.BusinessError) {
+	ctx, calcParam, err := service.createAndComputeCtx(employeeNumber, operateDay)
+	if err != nil {
+		return nil, err
+	}
 	timeOnTaskVO := service.buildTimeOnTask(ctx, calcParam.CalcOtherParam.Work.WorkLoadUnits)
 
-	return timeOnTaskVO
+	return timeOnTaskVO, nil
 }
 
-func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, operateDay time.Time) {
+func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, operateDay time.Time) (bool, *business_error.BusinessError) {
 	// 3.根据计算粒度分布式加锁
-	lockSuccess, err := lock.Lock(employeeNumber)
-	log.ComputeLogger.Info("lock success", lockSuccess)
-
-	if err != nil {
-		panic(err)
+	if lockSuccess, err := lock.Lock(employeeNumber); err != nil {
+		return false, error_handler.LogAndPanic(business_error.LockFailureBySystemError(err))
+	} else if lockSuccess {
+		log.ComputeLogger.Info("lock success", lockSuccess)
+	} else {
+		return false, business_error.LockFailure()
 	}
 
-	ctx, calcParam := service.createAndComputeCtx(employeeNumber, operateDay)
+	ctx, calcParam, err := service.createAndComputeCtx(employeeNumber, operateDay)
+
+	if err != nil {
+		return false, err
+	}
 
 	// 5.处理聚合
 	for _, storage := range calcParam.SinkStorages {
@@ -55,10 +65,13 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 		}
 	}
 
-	unlockSuccess, err := lock.Unlock(employeeNumber)
-	log.ComputeLogger.Info("unlock success", unlockSuccess)
-	if err != nil {
-		panic(err)
+	if unlockSuccess, err := lock.Unlock(employeeNumber); err != nil {
+		return false, error_handler.LogAndPanic(business_error.UnlockFailureBySystemError(err))
+	} else if unlockSuccess {
+		log.ComputeLogger.Info("unlock success", unlockSuccess)
+		return true, nil
+	} else {
+		return false, business_error.UnlockFailure()
 	}
 }
 
@@ -220,7 +233,7 @@ func (service *EfficiencyComputeService) buildWorkLoadDesc(current *vo.ProcessDu
 	}
 }
 
-func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber string, operateDay time.Time) (*domain.ComputeContext, *calc_dynamic_param.CalcParam) {
+func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber string, operateDay time.Time) (*domain.ComputeContext, *calc_dynamic_param.CalcParam, *business_error.BusinessError) {
 	employeeSnapshotService := DomainHolder.EmployeeSnapshotService
 	calcDynamicParamService := DomainHolder.CalcDynamicParamService
 	standardPositionService := DomainHolder.StandardPositionService
@@ -246,7 +259,9 @@ func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber stri
 	}
 
 	// 4. 注入原始数据
-	injectActions(&ctx, *calcParam)
+	if _, err := injectActions(&ctx, *calcParam); err != nil {
+		return nil, nil, business_error.InjectDataError(err)
+	}
 
 	// 4.循环执行所有节点
 	ctx.CalcStartTime = time.Now()
@@ -256,12 +271,12 @@ func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber stri
 			ctxRes := f(ctxPointer)
 			ctxPointer = ctxRes
 		} else {
-			panic("没有找到对应的计算节点")
+			return nil, nil, business_error.NoCalcNodeError()
 		}
 	}
 	ctx.CalcEndTime = time.Now()
 
-	return ctxPointer, calcParam
+	return ctxPointer, calcParam, nil
 }
 
 // 处理聚合存储逻辑
@@ -452,7 +467,7 @@ func (service *EfficiencyComputeService) buildAggregateKey(operateTime time.Time
 	return key
 }
 
-func injectActions(ctx *domain.ComputeContext, param calc_dynamic_param.CalcParam) {
+func injectActions(ctx *domain.ComputeContext, param calc_dynamic_param.CalcParam) (bool, error) {
 	actionService := DomainHolder.ActionService
 
 	yesterday := ctx.OperateDay.AddDate(0, 0, -1)
@@ -471,6 +486,8 @@ func injectActions(ctx *domain.ComputeContext, param calc_dynamic_param.CalcPara
 
 	ctx.TodayScheduling = day2Scheduling[ctx.OperateDay]
 	ctx.TodayRestList = day2RestList[ctx.OperateDay]
+
+	return true, nil
 }
 
 // 根据工作点获取人效计算参数

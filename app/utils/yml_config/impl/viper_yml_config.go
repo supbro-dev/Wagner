@@ -3,12 +3,12 @@ package yml_config
 import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"log"
 	"sync"
 	"time"
+	"wagner/app/global/business_error"
 	"wagner/app/global/container"
-	"wagner/app/global/my_error"
 	"wagner/app/global/variable"
+	"wagner/app/utils/log"
 	"wagner/app/utils/yml_config"
 )
 
@@ -46,7 +46,9 @@ func CreateYamlFactory(fileName ...string) yml_config.YmlConfigInterf {
 	yamlConfig.SetConfigType("yml")
 
 	if err := yamlConfig.ReadInConfig(); err != nil {
-		log.Fatal(my_error.ServerOccurredErrorWithMsg + err.Error())
+		systemError := business_error.ServerOccurredError(business_error.OsError, err)
+		log.BusinessErrorLog(systemError)
+		panic(systemError)
 	}
 
 	return &ymlConfig{
