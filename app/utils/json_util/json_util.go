@@ -55,11 +55,19 @@ func NewJson() *simplejson.Json {
 	return simplejson.New()
 }
 
+func ToString(json *simplejson.Json) string {
+	bytes, err := json.MarshalJSON()
+	if err != nil {
+		// ignore
+	}
+	return string(bytes)
+}
+
 // 对象转化成json字符串
 func ToJsonString(obj interface{}) string {
-	if jsonBytes, err := json.Marshal(obj); err != nil {
-		panic(err)
-	} else {
-		return string(jsonBytes)
+	jsonBytes, err := json.Marshal(obj)
+	if err != nil {
+		// ignore
 	}
+	return string(jsonBytes)
 }

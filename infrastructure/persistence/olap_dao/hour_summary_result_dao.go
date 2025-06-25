@@ -15,7 +15,9 @@ import (
 	"strconv"
 	"strings"
 	"wagner/app/domain"
+	"wagner/app/global/business_error"
 	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/utils/log"
 	"wagner/infrastructure/persistence/common"
 	"wagner/infrastructure/persistence/entity"
 	"wagner/infrastructure/persistence/query"
@@ -100,10 +102,15 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 		Offset((query.CurrentPage - 1) * query.PageSize).
 		Find(&rawResult)
 
-	return dao.convertRaw2Entity(rawResult)
+	raw2Entity, err := dao.convertRaw2Entity(rawResult)
+	if err != nil {
+		log.BusinessErrorLog(err)
+		return make([]*entity.WorkLoadWithEmployeeSummary, 0)
+	}
+	return raw2Entity
 }
 
-func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]interface{}) []*entity.WorkLoadWithEmployeeSummary {
+func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]interface{}) ([]*entity.WorkLoadWithEmployeeSummary, *business_error.BusinessError) {
 	// 创建命名策略（默认使用蛇形命名）
 	namer := schema.NamingStrategy{
 		SingularTable: true, // 可选：单数表名
@@ -112,7 +119,7 @@ func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]inter
 	// 解析模型 Schema（不再需要 CacheStore）
 	sch, err := schema.Parse(entity.EmployeeSummaryEntity{}, common.SchemaCache, &namer)
 	if err != nil {
-		panic(err)
+		return nil, business_error.ReflectSetDataError(err)
 	}
 
 	result := make([]*entity.WorkLoadWithEmployeeSummary, 0)
@@ -130,7 +137,7 @@ func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]inter
 			if entityField.CanSet() && entityField.IsValid() {
 				err := dao.setEntityValue(&entityField, value)
 				if err != nil {
-					panic(err)
+					return nil, business_error.ReflectSetDataError(err)
 				}
 			}
 		}
@@ -150,11 +157,11 @@ func (dao *HourSummaryResultDao) convertRaw2Entity(resultList []map[string]inter
 		})
 	}
 
-	return result
+	return result, nil
 
 }
 
-func (dao *HourSummaryResultDao) convertRaw2ProcessEntity(resultList []map[string]interface{}) []*entity.WorkLoadWithProcessSummary {
+func (dao *HourSummaryResultDao) convertRaw2ProcessEntity(resultList []map[string]interface{}) ([]*entity.WorkLoadWithProcessSummary, *business_error.BusinessError) {
 	// 创建命名策略（默认使用蛇形命名）
 	namer := schema.NamingStrategy{
 		SingularTable: true, // 可选：单数表名
@@ -163,7 +170,7 @@ func (dao *HourSummaryResultDao) convertRaw2ProcessEntity(resultList []map[strin
 	// 解析模型 Schema（不再需要 CacheStore）
 	sch, err := schema.Parse(entity.ProcessSummaryEntity{}, common.SchemaCache, &namer)
 	if err != nil {
-		panic(err)
+		return nil, business_error.ReflectSetDataError(err)
 	}
 
 	result := make([]*entity.WorkLoadWithProcessSummary, 0)
@@ -181,7 +188,7 @@ func (dao *HourSummaryResultDao) convertRaw2ProcessEntity(resultList []map[strin
 			if entityField.CanSet() && entityField.IsValid() {
 				err := dao.setEntityValue(&entityField, value)
 				if err != nil {
-					panic(err)
+					return nil, business_error.ReflectSetDataError(err)
 				}
 			}
 		}
@@ -201,12 +208,12 @@ func (dao *HourSummaryResultDao) convertRaw2ProcessEntity(resultList []map[strin
 		})
 	}
 
-	return result
+	return result, nil
 
 }
 
 // setValue 处理具体类型转换
-func (dao *HourSummaryResultDao) setEntityValue(field *reflect.Value, value interface{}) error {
+func (dao *HourSummaryResultDao) setEntityValue(field *reflect.Value, value interface{}) *business_error.BusinessError {
 	if value == nil {
 		return nil // 忽略 NULL 值（假设字段允许零值）
 	}
@@ -234,22 +241,22 @@ func (dao *HourSummaryResultDao) setEntityValue(field *reflect.Value, value inte
 		if i, err := strconv.ParseInt(value.(string), 10, 64); err == nil {
 			field.SetInt(i)
 		} else {
-			panic(err)
+			return business_error.ReflectSetDataError(err)
 		}
 	case reflect.Float32, reflect.Float64:
 		if f, err := strconv.ParseFloat(value.(string), 64); err == nil {
 			field.SetFloat(f)
 		} else {
-			panic(err)
+			return business_error.ReflectSetDataError(err)
 		}
 	case reflect.Bool:
 		if b, err := strconv.ParseBool(value.(string)); err == nil {
 			field.SetBool(b)
 		} else {
-			panic(err)
+			return business_error.ReflectSetDataError(err)
 		}
 	default:
-		return fmt.Errorf("unsupported field type: %s", field.Type())
+		return business_error.UnsupportedFieldTypeError()
 	}
 	return nil
 }
@@ -297,7 +304,12 @@ func (dao *HourSummaryResultDao) QueryWorkplaceEfficiency(query query.HourSummar
 		Group(groupBy).
 		Find(&rawResult)
 
-	return dao.convertRaw2ProcessEntity(rawResult)
+	processEntity, err := dao.convertRaw2ProcessEntity(rawResult)
+	if err != nil {
+		log.BusinessErrorLog(err)
+		return make([]*entity.WorkLoadWithProcessSummary, 0)
+	}
+	return processEntity
 }
 
 func (dao *HourSummaryResultDao) TotalEmployeeEfficiency(query query.HourSummaryResultQuery) int {

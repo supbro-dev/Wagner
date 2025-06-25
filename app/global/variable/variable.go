@@ -1,10 +1,10 @@
 package variable
 
 import (
-	"log"
 	"os"
 	"strings"
-	"wagner/app/global/my_error"
+	"wagner/app/global/business_error"
+	"wagner/app/utils/log"
 	"wagner/app/utils/yml_config"
 )
 
@@ -24,7 +24,7 @@ func init() {
 			BasePath = curPath
 		}
 	} else {
-		log.Fatal(my_error.ServerOccurredErrorMsg)
+		log.BusinessErrorLog(business_error.ServerOccurredError(business_error.OsError, err))
 	}
 
 }

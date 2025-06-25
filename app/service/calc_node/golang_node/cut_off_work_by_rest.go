@@ -75,17 +75,11 @@ func cutOffWork(work domain.Actionable, restList []*domain.Rest) domain.Work {
 				var newWork domain.Work
 				if directWork, ok := work.(*domain.DirectWork); ok {
 					newDirectWork := &domain.DirectWork{}
-					copyErr := copier.Copy(&newDirectWork, directWork)
-					if copyErr != nil {
-						panic(copyErr)
-					}
+					copier.Copy(&newDirectWork, directWork)
 					newWork = newDirectWork
 				} else if indirectWork, ok := work.(*domain.IndirectWork); ok {
 					newIndirectWork := &domain.IndirectWork{}
-					copyErr := copier.Copy(&newIndirectWork, indirectWork)
-					if copyErr != nil {
-						panic(copyErr)
-					}
+					copier.Copy(&newIndirectWork, indirectWork)
 					newWork = newIndirectWork
 				}
 				newWork.GetAction().Process = work.GetAction().Process

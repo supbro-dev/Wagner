@@ -2,7 +2,9 @@ package bootstrap
 
 import (
 	"fmt"
+	"wagner/app/global/business_error"
 	"wagner/app/global/cache"
+	"wagner/app/global/error_handler"
 	"wagner/app/global/variable"
 	"wagner/app/service"
 	"wagner/app/service/action"
@@ -31,17 +33,17 @@ func init() {
 
 	client, err := gorm.GetOneMysqlClient()
 	if err != nil {
-		panic(err)
+		error_handler.LogAndPanic(business_error.CreateMysqlClientError(err))
 	}
 
 	// olap建议读写分别创建客户端
 	olapWriteClient, err := gorm.GetOneOlapClient()
 	if err != nil {
-		panic(err)
+		error_handler.LogAndPanic(business_error.CreateOlapClientError(err))
 	}
 	olapReadClient, err := gorm.GetOneOlapClient()
 	if err != nil {
-		panic(err)
+		error_handler.LogAndPanic(business_error.CreateOlapClientError(err))
 	}
 
 	workplaceDao := dao.CreateWorkplaceDao(client)

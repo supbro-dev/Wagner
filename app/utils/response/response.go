@@ -3,7 +3,7 @@ package response
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"wagner/app/global/my_error"
+	"wagner/app/global/business_error"
 )
 
 var successCode = 0
@@ -28,7 +28,7 @@ func ReturnJson(context *gin.Context, httpCode int, dataCode int, msg string, da
 }
 
 // ErrorSystem 系统执行代码错误
-func ErrorSystem(c *gin.Context, errorCode int, msg string, data interface{}) {
-	ReturnJson(c, http.StatusInternalServerError, errorCode, my_error.ServerOccurredErrorWithMsg+msg, data)
+func ReturnError(c *gin.Context, error *business_error.BusinessError) {
+	ReturnJson(c, http.StatusInternalServerError, error.Code, error.Message, error.Args)
 	c.Abort()
 }

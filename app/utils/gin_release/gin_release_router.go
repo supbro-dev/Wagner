@@ -2,10 +2,9 @@ package gin_release
 
 import (
 	"errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
-	"wagner/app/global/my_error"
+	"wagner/app/global/business_error"
 	"wagner/app/utils/log"
 	"wagner/app/utils/response"
 )
@@ -30,7 +29,7 @@ func CustomRecovery() gin.HandlerFunc {
 	return gin.RecoveryWithWriter(DefaultErrorWriter, func(c *gin.Context, err interface{}) {
 		// 这里针对发生的panic等异常进行统一响应即可
 		// 这里的 err 数据类型为 ：runtime.boundsError  ，需要转为普通数据类型才可以输出
-		response.ErrorSystem(c, my_error.ServerOccurredErrorCode, fmt.Sprintf("%s", err), nil)
+		response.ReturnError(c, business_error.ServerOccurredError(business_error.HttpInvokeError, err))
 	})
 }
 
@@ -40,7 +39,7 @@ type PanicExceptionRecord struct{}
 func (p *PanicExceptionRecord) Write(b []byte) (n int, err error) {
 	errStr := string(b)
 	err = errors.New(errStr)
-	log.SystemLogger.Error(my_error.ServerOccurredErrorMsg)
+	log.BusinessErrorLog(business_error.ServerOccurredError(business_error.SystemError, err))
 	//variable.ZapLog.Error(consts.ServerOccurredErrorMsg, zap.String("errStrace", errStr))
 	return len(errStr), err
 }
