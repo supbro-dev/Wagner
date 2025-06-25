@@ -10,7 +10,9 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/jinzhu/copier"
 	"strings"
+	"wagner/app/global/business_error"
 	"wagner/app/global/container"
+	"wagner/app/global/error_handler"
 	"wagner/app/utils/json_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
@@ -110,7 +112,7 @@ type WorkLoadUnit struct {
 func CreateCalcDynamicParamService(calcDynamicParamDao *dao.CalcDynamicParamDao, workplaceDao *dao.WorkplaceDao, scriptDao *dao.ScriptDao) *CalcDynamicParamService {
 	cache, err := container.GetOrCreateCache[string, CalcParam](container.DYNAMIC_PARAM)
 	if err != nil {
-		panic(err)
+		error_handler.LogAndPanic(business_error.CreateCacheError(err))
 	}
 	return &CalcDynamicParamService{calcDynamicParamDao: calcDynamicParamDao, workplaceDao: workplaceDao, scriptDao: scriptDao, cache: cache}
 }
@@ -118,10 +120,10 @@ func CreateCalcDynamicParamService(calcDynamicParamDao *dao.CalcDynamicParamDao,
 // 根据工作点信息获取全量计算参数配置
 // Parameters: 工作点编码
 // Returns: 计算参数配置列表
-func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode string) *CalcParam {
+func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode string) (*CalcParam, *business_error.BusinessError) {
 	workplaceEntity := service.workplaceDao.FindByCode(workplaceCode)
 	if &workplaceEntity == nil {
-		return nil
+		return nil, business_error.WorkplaceDoseNotExist(workplaceCode)
 	}
 
 	paramList := service.calcDynamicParamDao.FindByIndustry(workplaceEntity.IndustryCode, workplaceEntity.SubIndustryCode)
@@ -131,23 +133,38 @@ func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode strin
 	for _, param := range paramList {
 		switch param.Type {
 		case entity.INJECT_SOURCE:
-			calcParam.InjectSource = service.buildInjectSources(param)
+			sources, err := service.buildInjectSources(param)
+			if err != nil {
+				return nil, err
+			}
+			calcParam.InjectSource = *sources
 		case entity.SINK_STORAGE:
-			calcParam.SinkStorages = service.buildSinkStorages(param)
+			storages, err := service.buildSinkStorages(param)
+			if err != nil {
+				return nil, err
+			}
+			calcParam.SinkStorages = storages
 		case entity.DYNAMIC_CALC_NODE:
-			calcParam.CalcNodeList = service.buildCalcNodeList(param)
+			nodeList, err := service.buildCalcNodeList(param)
+			if err != nil {
+				return nil, err
+			}
+			calcParam.CalcNodeList = *nodeList
 		case entity.CALC_PARAM:
-			calcParam.CalcOtherParam = service.buildCalcOtherParam(param)
+			otherParam, err := service.buildCalcOtherParam(param)
+			if err != nil {
+				return nil, err
+			}
+			calcParam.CalcOtherParam = *otherParam
 		}
 	}
-	return &calcParam
+	return &calcParam, nil
 }
 
-func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynamicParamEntity) []SinkStorage {
+func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynamicParamEntity) ([]SinkStorage, *business_error.BusinessError) {
 	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
-		// todo 所有panic检查是否可以做处理
-		panic(err)
+		return nil, business_error.ParseCalcParamError(err)
 	}
 
 	fields := make([]SinkStorage, 0)
@@ -183,13 +200,13 @@ func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynami
 		fields = append(fields, sinkStorage)
 	}
 
-	return fields
+	return fields, nil
 }
 
-func (service CalcDynamicParamService) buildInjectSources(param entity.CalcDynamicParamEntity) InjectSource {
+func (service CalcDynamicParamService) buildInjectSources(param entity.CalcDynamicParamEntity) (*InjectSource, *business_error.BusinessError) {
 	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
-		panic(err)
+		return nil, business_error.ParseCalcParamError(err)
 	}
 
 	originalField := InjectSource{
@@ -206,13 +223,13 @@ func (service CalcDynamicParamService) buildInjectSources(param entity.CalcDynam
 		}
 	}
 
-	return originalField
+	return &originalField, nil
 }
 
-func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynamicParamEntity) CalcNodeList {
+func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynamicParamEntity) (*CalcNodeList, *business_error.BusinessError) {
 	json, err := json_util.Parse2Json(param.Content)
 	if err != nil {
-		panic(err)
+		return nil, business_error.ParseCalcParamError(err)
 	}
 
 	nodeNames := strings.Split(json.Get(entity.NODE_NAMES).MustString(), ",")
@@ -233,7 +250,7 @@ func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynami
 		calcNodes = append(calcNodes, &node)
 	}
 
-	return CalcNodeList{calcNodes}
+	return &CalcNodeList{calcNodes}, nil
 }
 
 var DefaultCalcOtherParam = CalcOtherParam{
@@ -258,15 +275,13 @@ var DefaultCalcOtherParam = CalcOtherParam{
 	},
 }
 
-func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) CalcOtherParam {
+func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) (*CalcOtherParam, *business_error.BusinessError) {
 	otherParam := CalcOtherParam{}
-	copyError := copier.Copy(&otherParam, &DefaultCalcOtherParam)
-	if copyError != nil {
-		panic(copyError)
-	}
+	copier.Copy(&otherParam, &DefaultCalcOtherParam)
+
 	err := json_util.Parse2Object[CalcOtherParam](param.Content, &otherParam)
 	if err != nil {
-		panic(err)
+		return nil, business_error.ParseCalcParamError(err)
 	}
-	return otherParam
+	return &otherParam, nil
 }

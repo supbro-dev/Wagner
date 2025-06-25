@@ -109,12 +109,7 @@ func (service *SummarySinkService) convert2ProcessProperty(process *domain.Stand
 		}
 	}
 
-	s, err := json.MarshalJSON()
-	if err != nil {
-		panic(err)
-	}
-
-	return string(s)
+	return json_util.ToString(json)
 }
 
 func (service *SummarySinkService) generateUniqueKey(key *domain.HourSummaryAggregateKey) string {

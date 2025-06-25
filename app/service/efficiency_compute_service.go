@@ -42,7 +42,8 @@ func (service *EfficiencyComputeService) TimeOnTask(employeeNumber string, opera
 func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, operateDay time.Time) (bool, *business_error.BusinessError) {
 	// 3.根据计算粒度分布式加锁
 	if lockSuccess, err := lock.Lock(employeeNumber); err != nil {
-		return false, error_handler.LogAndPanic(business_error.LockFailureBySystemError(err))
+		error_handler.LogAndPanic(business_error.LockFailureBySystemError(err))
+		return false, nil
 	} else if lockSuccess {
 		log.ComputeLogger.Info("lock success", lockSuccess)
 	} else {
@@ -66,7 +67,8 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	}
 
 	if unlockSuccess, err := lock.Unlock(employeeNumber); err != nil {
-		return false, error_handler.LogAndPanic(business_error.UnlockFailureBySystemError(err))
+		error_handler.LogAndPanic(business_error.UnlockFailureBySystemError(err))
+		return false, nil
 	} else if unlockSuccess {
 		log.ComputeLogger.Info("unlock success", unlockSuccess)
 		return true, nil
@@ -245,7 +247,10 @@ func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber stri
 
 	// 2.初始化计算参数
 	// 包括动态维度，计算聚合结果，工序加工节点列表，工序映射服务
-	calcParam := calcDynamicParamService.FindParamsByWorkplace(employee.WorkplaceCode)
+	calcParam, err := calcDynamicParamService.FindParamsByWorkplace(employee.WorkplaceCode)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// 3. 查询工序映射关系
 	standardPositionList := standardPositionService.FindStandardPositionByWorkplace(employee.WorkplaceCode)
@@ -474,20 +479,22 @@ func injectActions(ctx *domain.ComputeContext, param calc_dynamic_param.CalcPara
 	tomorrow := ctx.OperateDay.AddDate(0, 0, 1)
 	operateDayRange := []time.Time{yesterday, ctx.OperateDay, tomorrow}
 
-	day2WorkList, day2Attendance, day2Scheduling, day2RestList := actionService.FindEmployeeActions(ctx.Employee.Number, operateDayRange, param.InjectSource)
+	if day2ActionData, err := actionService.FindEmployeeActions(ctx.Employee.Number, operateDayRange, param.InjectSource); err != nil {
+		return false, err
+	} else {
+		ctx.YesterdayWorkList = day2ActionData.Day2WorkList[yesterday]
+		ctx.TodayWorkList = day2ActionData.Day2WorkList[ctx.OperateDay]
+		ctx.TomorrowWorkList = day2ActionData.Day2WorkList[tomorrow]
 
-	ctx.YesterdayWorkList = day2WorkList[yesterday]
-	ctx.TodayWorkList = day2WorkList[ctx.OperateDay]
-	ctx.TomorrowWorkList = day2WorkList[tomorrow]
+		ctx.YesterdayAttendance = day2ActionData.Day2Attendance[yesterday]
+		ctx.TodayAttendance = day2ActionData.Day2Attendance[ctx.OperateDay]
+		ctx.TomorrowAttendance = day2ActionData.Day2Attendance[tomorrow]
 
-	ctx.YesterdayAttendance = day2Attendance[yesterday]
-	ctx.TodayAttendance = day2Attendance[ctx.OperateDay]
-	ctx.TomorrowAttendance = day2Attendance[tomorrow]
+		ctx.TodayScheduling = day2ActionData.Day2Scheduling[ctx.OperateDay]
+		ctx.TodayRestList = day2ActionData.Day2RestList[ctx.OperateDay]
 
-	ctx.TodayScheduling = day2Scheduling[ctx.OperateDay]
-	ctx.TodayRestList = day2RestList[ctx.OperateDay]
-
-	return true, nil
+		return true, nil
+	}
 }
 
 // 根据工作点获取人效计算参数

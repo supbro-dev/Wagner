@@ -152,15 +152,15 @@ type StandardPositionMock struct {
 }
 
 func (service *StandardPositionMock) FindStandardPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
-	panic("implement me")
+	return nil
 }
 
 func (service *StandardPositionMock) FindStandardPositionByWorkplace(workplaceCode string) []*domain.StandardPosition {
-	panic("implement me")
+	return nil
 }
 
 func (service *StandardPositionMock) FindStandardPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
-	panic("implement me")
+	return nil
 }
 
 func (service *StandardPositionMock) FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition {

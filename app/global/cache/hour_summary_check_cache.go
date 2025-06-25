@@ -20,11 +20,12 @@ type HourSummaryCheckCache struct {
 }
 
 func CreateHourSummaryCheckLocalCache() *HourSummaryCheckCache {
-	cache, err := container.GetOrCreateCache[string, string](container.HOUR_SUMMARY_MD5)
-	if err != nil {
+	if cache, err := container.GetOrCreateCache[string, string](container.HOUR_SUMMARY_MD5); err != nil {
 		error_handler.LogAndPanic(business_error.ServerErrorCausedBy(err))
+		return nil
+	} else {
+		return &HourSummaryCheckCache{localCache: cache}
 	}
-	return &HourSummaryCheckCache{localCache: cache}
 }
 
 func (c *HourSummaryCheckCache) PutResultMd5(employeeNumber, workplaceCode string, operateDay time.Time, md5 string) bool {

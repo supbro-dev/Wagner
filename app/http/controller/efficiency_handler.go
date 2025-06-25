@@ -87,8 +87,13 @@ func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 		return
 	}
 
-	calcParam := service.DomainHolder.CalcDynamicParamService.FindParamsByWorkplace(workplaceCode)
+	calcParam, e := service.DomainHolder.CalcDynamicParamService.FindParamsByWorkplace(workplaceCode)
+	if e != nil {
+		response.ReturnError(c, e)
+		return
+	}
 	if calcParam == nil {
+		response.ReturnError(c, business_error.CannotFindCalcParamByWorkplace(workplaceCode))
 		return
 	}
 
@@ -181,8 +186,13 @@ func (p EfficiencyHandler) WorkplaceEfficiency(c *gin.Context) {
 		return
 	}
 
-	calcParam := service.DomainHolder.CalcDynamicParamService.FindParamsByWorkplace(workplaceCode)
+	calcParam, e := service.DomainHolder.CalcDynamicParamService.FindParamsByWorkplace(workplaceCode)
+	if e != nil {
+		response.ReturnError(c, e)
+		return
+	}
 	if calcParam == nil {
+		response.ReturnError(c, business_error.CannotFindCalcParamByWorkplace(workplaceCode))
 		return
 	}
 

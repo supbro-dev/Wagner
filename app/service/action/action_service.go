@@ -10,6 +10,7 @@ import (
 	"github.com/jinzhu/copier"
 	"time"
 	"wagner/app/domain"
+	"wagner/app/global/business_error"
 	"wagner/app/service/calc_dynamic_param"
 	"wagner/app/utils/datetime_util"
 	"wagner/app/utils/json_util"
@@ -21,6 +22,13 @@ type ActionService struct {
 	actionDao *dao.ActionDao
 }
 
+type Day2ActionData struct {
+	Day2WorkList   map[time.Time][]domain.Actionable
+	Day2Attendance map[time.Time]*domain.Attendance
+	Day2Scheduling map[time.Time]*domain.Scheduling
+	Day2RestList   map[time.Time][]*domain.Rest
+}
+
 func CreateActionService(actionDao *dao.ActionDao) *ActionService {
 	return &ActionService{actionDao: actionDao}
 }
@@ -28,42 +36,35 @@ func CreateActionService(actionDao *dao.ActionDao) *ActionService {
 // 根据工号和日期列表查找动作，并转换成动作对应子类型
 // Parameters: employeeNumber，operateDayList 最近3天列表，originalFieldParam 属性映射关系
 // Returns: 天2动作列表
-func (service *ActionService) FindEmployeeActions(employeeNumber string, operateDayList []time.Time, originalFieldParam calc_dynamic_param.InjectSource) (day2WorkList map[time.Time][]domain.Actionable,
-	day2Attendance map[time.Time]*domain.Attendance,
-	day2Scheduling map[time.Time]*domain.Scheduling,
-	day2RestList map[time.Time][]*domain.Rest) {
+func (service *ActionService) FindEmployeeActions(employeeNumber string, operateDayList []time.Time, originalFieldParam calc_dynamic_param.InjectSource) (*Day2ActionData, *business_error.BusinessError) {
 	actionList := service.actionDao.FindBy(employeeNumber, operateDayList)
 
-	list, attendance, scheduling, restList := service.convertAction(actionList, originalFieldParam)
-
-	return list, attendance, scheduling, restList
+	return service.convertAction(actionList, originalFieldParam)
 }
 
 func (service *ActionService) FindWorkplaceActions(workplaceCode, operateDay string) []domain.Action {
 	return nil
 }
 
-func (service *ActionService) convertAction(actionEntities []*entity.ActionEntity, param calc_dynamic_param.InjectSource) (
-	day2WorkList map[time.Time][]domain.Actionable,
-	day2Attendance map[time.Time]*domain.Attendance,
-	day2Scheduling map[time.Time]*domain.Scheduling,
-	day2RestList map[time.Time][]*domain.Rest) {
-
-	day2WorkList = make(map[time.Time][]domain.Actionable)
-	day2Attendance = make(map[time.Time]*domain.Attendance)
-	day2Scheduling = make(map[time.Time]*domain.Scheduling)
-	day2RestList = make(map[time.Time][]*domain.Rest)
+func (service *ActionService) convertAction(actionEntities []*entity.ActionEntity, param calc_dynamic_param.InjectSource) (*Day2ActionData, *business_error.BusinessError) {
+	day2WorkList := make(map[time.Time][]domain.Actionable)
+	day2Attendance := make(map[time.Time]*domain.Attendance)
+	day2Scheduling := make(map[time.Time]*domain.Scheduling)
+	day2RestList := make(map[time.Time][]*domain.Rest)
 
 	for _, e := range actionEntities {
 		actionType := e.ActionType
-		properties := handleExtraProperty(e.Properties, param)
+		properties, err := handleExtraProperty(e.Properties, param)
+		if err != nil {
+			return nil, err
+		}
 		operateDay := e.OperateDay
 
 		switch domain.ActionType(actionType) {
 		case domain.DIRECT_WORK:
 			raw, err := json_util.Parse2Map(e.WorkLoad)
 			if err != nil {
-				panic(err)
+				return nil, business_error.InjectDataError(err)
 			}
 
 			workLoad := make(map[string]float64)
@@ -104,7 +105,11 @@ func (service *ActionService) convertAction(actionEntities []*entity.ActionEntit
 			scheduling.ComputedStartTime = scheduling.StartTime
 			scheduling.ComputedEndTime = scheduling.EndTime
 
-			if restList := service.convertRestListFromScheduling(&scheduling, e.Properties); restList != nil {
+			restList, err := service.convertRestListFromScheduling(&scheduling, e.Properties)
+			if err != nil {
+				return nil, err
+			}
+			if len(restList) > 0 {
 				day2RestList[operateDay] = restList
 			}
 		case domain.ATTENDANCE:
@@ -118,62 +123,65 @@ func (service *ActionService) convertAction(actionEntities []*entity.ActionEntit
 
 		}
 	}
-	return
+	return &Day2ActionData{day2WorkList, day2Attendance, day2Scheduling, day2RestList}, nil
 }
 
-func (service *ActionService) convertRestListFromScheduling(scheduling *domain.Scheduling, properties string) []*domain.Rest {
+func (service *ActionService) convertRestListFromScheduling(scheduling *domain.Scheduling, properties string) ([]*domain.Rest, *business_error.BusinessError) {
 	if properties == "" {
-		return make([]*domain.Rest, 0)
+		return make([]*domain.Rest, 0), nil
 	}
 
-	if json, err := json_util.Parse2Json(properties); err == nil {
-		if array, exists := json.CheckGet("restList"); exists {
-			restList := make([]*domain.Rest, 0)
-			for i := 0; i < len(array.MustArray()); i++ {
-				r := array.GetIndex(i)
-				startTime, err := datetime_util.ParseDatetime(r.Get("startTime").MustString())
-				if err != nil {
-					panic(err)
-				}
+	json, err := json_util.Parse2Json(properties)
+	if err != nil {
+		return nil, business_error.InjectDataError(err)
+	}
+	array, exists := json.CheckGet("restList")
+	if !exists {
+		return nil, nil
+	}
 
-				endTime, err := datetime_util.ParseDatetime(r.Get("endTime").MustString())
-				if err != nil {
-					panic(err)
-				}
-				rest := domain.Rest{
-					Action: domain.Action{
-						EmployeeNumber:    scheduling.EmployeeNumber,
-						WorkplaceCode:     scheduling.WorkplaceCode,
-						OperateDay:        scheduling.OperateDay,
-						ActionType:        domain.REST,
-						StartTime:         &startTime,
-						EndTime:           &endTime,
-						ComputedStartTime: &startTime,
-						ComputedEndTime:   &endTime,
-					},
-				}
-				restList = append(restList, &rest)
-			}
-			return restList
+	restList := make([]*domain.Rest, 0)
+	for i := 0; i < len(array.MustArray()); i++ {
+		r := array.GetIndex(i)
+		startTime, err := datetime_util.ParseDatetime(r.Get("startTime").MustString())
+		if err != nil {
+			return nil, business_error.InjectDataError(err)
 		}
-	}
 
-	return nil
+		endTime, err := datetime_util.ParseDatetime(r.Get("endTime").MustString())
+		if err != nil {
+			return nil, business_error.InjectDataError(err)
+		}
+		rest := domain.Rest{
+			Action: domain.Action{
+				EmployeeNumber:    scheduling.EmployeeNumber,
+				WorkplaceCode:     scheduling.WorkplaceCode,
+				OperateDay:        scheduling.OperateDay,
+				ActionType:        domain.REST,
+				StartTime:         &startTime,
+				EndTime:           &endTime,
+				ComputedStartTime: &startTime,
+				ComputedEndTime:   &endTime,
+			},
+		}
+		restList = append(restList, &rest)
+	}
+	return restList, nil
 }
 
 // 如果配置了数据来源有额外属性，在这个方法设置
 // Parameters: properties原始属性, param配置参数
 // return: 过滤后的属性
-func handleExtraProperty(properties string, param calc_dynamic_param.InjectSource) map[string]interface{} {
+func handleExtraProperty(properties string, param calc_dynamic_param.InjectSource) (map[string]interface{}, *business_error.BusinessError) {
 	if param.FieldSet.IsEmpty() || properties == "" {
-		return nil
+		return nil, nil
 	}
 
 	domainProperties := make(map[string]interface{})
 
 	propertyMap, err := json_util.Parse2Map(properties)
 	if err != nil {
-		panic(err)
+		return nil, business_error.InjectDataError(err)
 	}
 	for key, value := range propertyMap {
 		if param.FieldSet.Contains(key) {
@@ -181,5 +189,5 @@ func handleExtraProperty(properties string, param calc_dynamic_param.InjectSourc
 		}
 	}
 
-	return domainProperties
+	return domainProperties, nil
 }

@@ -7,8 +7,8 @@ import (
 	"time"
 	"wagner/app/global/business_error"
 	"wagner/app/global/container"
+	"wagner/app/global/error_handler"
 	"wagner/app/global/variable"
-	"wagner/app/utils/log"
 	"wagner/app/utils/yml_config"
 )
 
@@ -24,7 +24,7 @@ func init() {
 	lastChangeTime = time.Now()
 	cache, err := container.GetOrCreateCache[string, interface{}](container.CONFIG)
 	if err != nil {
-		panic(err)
+		error_handler.LogAndPanic(business_error.CreateCacheError(err))
 	}
 	containerFactory = cache
 }
@@ -46,9 +46,7 @@ func CreateYamlFactory(fileName ...string) yml_config.YmlConfigInterf {
 	yamlConfig.SetConfigType("yml")
 
 	if err := yamlConfig.ReadInConfig(); err != nil {
-		systemError := business_error.ServerOccurredError(business_error.OsError, err)
-		log.BusinessErrorLog(systemError)
-		panic(systemError)
+		error_handler.LogAndPanic(business_error.ServerOccurredError(business_error.OsError, err))
 	}
 
 	return &ymlConfig{

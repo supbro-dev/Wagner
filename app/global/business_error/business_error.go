@@ -19,6 +19,10 @@ var (
 	SystemError     string = "系统异常"
 	LockHandleError string = "锁异常"
 	ComputeError    string = "计算异常"
+	CacheError      string = "缓存异常"
+	BasicDataError  string = "基础数据异常"
+	MysqlError      string = "Mysql异常"
+	DaoError        string = "DAO异常"
 )
 
 // 实现 error 接口
@@ -85,4 +89,40 @@ func InjectDataError(err error) *BusinessError {
 
 func NoCalcNodeError() *BusinessError {
 	return &BusinessError{ComputeError, 9302, "没有找到对应的计算节点", nil, nil}
+}
+
+func ParseCalcParamError(err error) *BusinessError {
+	return &BusinessError{ParamError, 9303, "解析计算参数异常", nil, err}
+}
+
+func CannotFindCalcParamByWorkplace(workplaceCode interface{}) *BusinessError {
+	return &BusinessError{ParamError, 9304, "根据工作点%v查找不到计算参数", []interface{}{workplaceCode}, nil}
+}
+
+// CACHE
+func CreateCacheError(err error) *BusinessError {
+	return &BusinessError{CacheError, 9401, "创建缓存失败", nil, err}
+}
+
+// BASIC_DATA
+func WorkplaceDoseNotExist(code interface{}) *BusinessError {
+	return &BusinessError{BasicDataError, 9501, "工作点%v不存在", []interface{}{code}, nil}
+}
+
+// MYSQL
+func CreateMysqlClientError(err error) *BusinessError {
+	return &BusinessError{MysqlError, 9601, "创建Mysql客户端异常", nil, err}
+}
+
+func CreateOlapClientError(err error) *BusinessError {
+	return &BusinessError{MysqlError, 9602, "创建Olap客户端异常", nil, err}
+}
+
+// DAO
+func ReflectSetDataError(err error) *BusinessError {
+	return &BusinessError{DaoError, 9701, "通过反射设置数据异常", nil, err}
+}
+
+func UnsupportedFieldTypeError() *BusinessError {
+	return &BusinessError{DaoError, 9702, "不支持的属性类型", nil, nil}
 }

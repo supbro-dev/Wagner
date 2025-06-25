@@ -12,7 +12,7 @@ import (
 )
 
 // Log并Panic,如果业务异常封装了异常来源，直接panic异常来源
-func LogAndPanic(err *business_error.BusinessError) *business_error.BusinessError {
+func LogAndPanic(err *business_error.BusinessError) {
 	log.BusinessErrorLog(err)
 	if err.CausedError != nil {
 		panic(err.CausedError)
