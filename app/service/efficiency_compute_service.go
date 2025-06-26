@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 	"wagner/app/domain"
 	"wagner/app/global/business_error"
@@ -40,14 +41,15 @@ func (service *EfficiencyComputeService) TimeOnTask(employeeNumber string, opera
 }
 
 func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, operateDay time.Time) (bool, *business_error.BusinessError) {
-	// 3.根据计算粒度分布式加锁
+	// 根据计算粒度分布式加锁
 	if lockSuccess, err := lock.Lock(employeeNumber); err != nil {
 		error_handler.LogAndPanic(business_error.LockFailureBySystemError(err))
 		return false, nil
-	} else if lockSuccess {
-		log.ComputeLogger.Info("lock success", lockSuccess)
-	} else {
+	} else if !lockSuccess {
+		log.ComputeLogger.Info("employee:{}, lock failure", employeeNumber)
 		return false, business_error.LockFailure()
+	} else {
+		log.ComputeLogger.Info("employee:{}, lock success", employeeNumber)
 	}
 
 	ctx, calcParam, err := service.createAndComputeCtx(employeeNumber, operateDay)
@@ -56,7 +58,7 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 		return false, err
 	}
 
-	// 5.处理聚合
+	// 处理聚合
 	for _, storage := range calcParam.SinkStorages {
 		switch storage.SinkType {
 		case calc_dynamic_param.SUMMARY:
@@ -66,14 +68,16 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 		}
 	}
 
+	// 根据计算粒度分布式解锁
 	if unlockSuccess, err := lock.Unlock(employeeNumber); err != nil {
 		error_handler.LogAndPanic(business_error.UnlockFailureBySystemError(err))
 		return false, nil
-	} else if unlockSuccess {
-		log.ComputeLogger.Info("unlock success", unlockSuccess)
-		return true, nil
-	} else {
+	} else if !unlockSuccess {
+		log.ComputeLogger.Info("employee:{}, unlock failure", employeeNumber)
 		return false, business_error.UnlockFailure()
+	} else {
+		log.ComputeLogger.Info("employee:{}, unlock success", employeeNumber)
+		return true, nil
 	}
 }
 
@@ -613,4 +617,124 @@ func (service *EfficiencyComputeService) filterEmployeeStatus(ctx *domain.Comput
 	}
 
 	return nil
+}
+
+func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, operateDay time.Time) (bool, *business_error.BusinessError) {
+	workplaceService := DomainHolder.WorkplaceService
+	employeeSnapshotService := DomainHolder.EmployeeSnapshotService
+	calcDynamicParamService := DomainHolder.CalcDynamicParamService
+	standardPositionService := DomainHolder.StandardPositionService
+
+	workplace := workplaceService.FindByCode(workplaceCode)
+	if workplace == nil {
+		return false, business_error.WorkplaceDoseNotExist(workplaceCode)
+	}
+
+	// 1.获取工作点下所有员工当天快照
+	employeeSnapshots := employeeSnapshotService.FindWorkplaceEmployeeSnapshot(workplace, operateDay)
+
+	// 2.初始化计算参数
+	// 包括动态维度，计算聚合结果，工序加工节点列表，工序映射服务
+	calcParam, err := calcDynamicParamService.FindParamsByWorkplace(workplaceCode)
+	if err != nil {
+		return false, err
+	}
+
+	// 3. 查询工序映射关系
+	standardPositionList := standardPositionService.FindStandardPositionByWorkplace(workplaceCode)
+
+	var wg sync.WaitGroup
+	ctxChannel := make(chan *domain.ComputeContext)
+
+	for _, employeeSnapshot := range employeeSnapshots {
+		wg.Add(1)
+		go runComputeEmployee(service, employeeSnapshot, workplace, operateDay, calcParam, standardPositionList, &wg, ctxChannel)
+	}
+
+	// 等待协程完成
+	wg.Wait()
+
+	isAllSuccess := false
+	successNum := 0
+	for ctx := range ctxChannel { // 从通道接收数据
+		// 处理聚合
+		for _, storage := range calcParam.SinkStorages {
+			switch storage.SinkType {
+			case calc_dynamic_param.SUMMARY:
+				service.handleSummary(ctx, storage, calcParam.CalcOtherParam)
+			case calc_dynamic_param.EMPLOYEE_STATUS:
+				service.handleEmployeeStatus(ctx)
+			}
+		}
+		// 根据计算粒度分布式解锁
+		if unlockSuccess, err := lock.Unlock(ctx.Employee.Number); err != nil {
+			businessError := business_error.UnlockFailureBySystemError(err)
+			log.BusinessErrorLog(businessError)
+		} else if !unlockSuccess {
+			log.ComputeLogger.Info("employee:{}, lock failure", ctx.Employee.Number)
+		} else {
+			log.ComputeLogger.Info("employee:{}, lock success", ctx.Employee.Number)
+			successNum++
+		}
+	}
+
+	if successNum == len(employeeSnapshots) {
+		isAllSuccess = true
+	}
+
+	return isAllSuccess, nil
+}
+
+func (service *EfficiencyComputeService) computeEachEmployee(employeeSnapshot *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time,
+	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.StandardPosition) (*domain.ComputeContext, *business_error.BusinessError) {
+	// 根据计算粒度分布式加锁
+	if lockSuccess, err := lock.Lock(employeeSnapshot.Number); err != nil {
+		businessError := business_error.LockFailureBySystemError(err)
+		log.BusinessErrorLog(businessError)
+		return nil, businessError
+	} else if !lockSuccess {
+		log.ComputeLogger.Info("employee:{}, lock failure", employeeSnapshot.Number)
+		return nil, business_error.LockFailure()
+	} else {
+		log.ComputeLogger.Info("employee:{}, lock success", employeeSnapshot.Number)
+	}
+
+	ctx := domain.ComputeContext{
+		Employee:       employeeSnapshot,
+		Workplace:      workplace,
+		OperateDay:     operateDay,
+		ProcessList:    standardPositionList,
+		CalcOtherParam: calcParam.CalcOtherParam,
+	}
+
+	// 4. 注入原始数据
+	if _, err := injectActions(&ctx, *calcParam); err != nil {
+		return nil, business_error.InjectDataError(err)
+	}
+
+	// 4.循环执行所有节点
+	ctx.CalcStartTime = time.Now()
+	ctxPointer := &ctx
+	for _, node := range calcParam.CalcNodeList.List {
+		if f, exists := calc_node.GetFunction(node.NodeName); exists {
+			ctxRes := f(ctxPointer)
+			ctxPointer = ctxRes
+		} else {
+			return nil, business_error.NoCalcNodeError()
+		}
+	}
+	ctx.CalcEndTime = time.Now()
+
+	return &ctx, nil
+}
+
+func runComputeEmployee(service *EfficiencyComputeService, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time,
+	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.StandardPosition, wg *sync.WaitGroup, channel chan *domain.ComputeContext) {
+	// 协程结束时通知WaitGroup
+	defer wg.Done()
+	if eachCtx, err := service.computeEachEmployee(employee, workplace, operateDay, calcParam, standardPositionList); err == nil {
+		channel <- eachCtx
+	} else {
+		log.BusinessErrorLog(err)
+	}
 }

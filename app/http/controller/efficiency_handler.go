@@ -130,6 +130,28 @@ func (p EfficiencyHandler) ComputeEmployee(c *gin.Context) {
 	}
 }
 
+func (p EfficiencyHandler) ComputeWorkplace(c *gin.Context) {
+	workplaceCode := c.Query("workplaceCode")
+	operateDayStr := c.Query("operateDay")
+
+	if workplaceCode == "" {
+		response.ReturnError(c, business_error.ParamIsNil("workplaceCode"))
+		return
+	}
+
+	operateDay, err := datetime_util.ParseDate(operateDayStr)
+	if err != nil {
+		response.ReturnError(c, business_error.ParamIsWrong("operateDay"))
+		return
+	}
+
+	if isSuccess, err := service.Holder.EfficiencyComputeService.ComputeWorkplace(workplaceCode, operateDay); err != nil {
+		response.ReturnError(c, err)
+	} else {
+		response.ReturnSuccessJson(c, isSuccess)
+	}
+}
+
 func (p EfficiencyHandler) TimeOnTask(c *gin.Context) {
 	employeeNumber := c.Query("employeeNumber")
 	operateDayStr := c.Query("operateDay")

@@ -17,13 +17,28 @@ func CreateEmployeeSnapshotService(employeeDao *dao.EmployeeDao) *EmployeeSnapsh
 	return &EmployeeSnapshotService{employeeDao: employeeDao}
 }
 
+// 根据员工工号和日期查找这天的员工快照列表
 func (service *EmployeeSnapshotService) FindEmployeeSnapshot(employeeNumber string, operateDay time.Time) *domain.EmployeeSnapshot {
 	// 生产环境需要根据员工一段时间的履历，获取在某个工作点某天的人员快照，这里简单使用人员信息代替
 	employee := service.employeeDao.FindByNumber(employeeNumber)
-	return convertEmployee(*employee)
+	return convertEmployee(employee)
 }
 
-func convertEmployee(employee entity.EmployeeEntity) *domain.EmployeeSnapshot {
+// 根据工作点和日期查找这天在工作点工作的员工快照列表
+func (service *EmployeeSnapshotService) FindWorkplaceEmployeeSnapshot(workplace *domain.Workplace, operateDay time.Time) []*domain.EmployeeSnapshot {
+	// 生产环境需要根据员工一段时间的履历，获取在某个工作点某天的人员快照，这里简单使用人员信息代替
+	employeeEntities := service.employeeDao.FindByWorkplaceCode(workplace.Code)
+
+	employeeSnapshotList := make([]*domain.EmployeeSnapshot, 0)
+	for _, employeeEntity := range employeeEntities {
+		employeeSnapshot := convertEmployee(employeeEntity)
+		employeeSnapshotList = append(employeeSnapshotList, employeeSnapshot)
+	}
+
+	return employeeSnapshotList
+}
+
+func convertEmployee(employee *entity.EmployeeEntity) *domain.EmployeeSnapshot {
 	employeeSnapshot := domain.EmployeeSnapshot{}
 	copier.Copy(&employeeSnapshot, employee)
 
