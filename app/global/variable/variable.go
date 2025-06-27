@@ -24,7 +24,7 @@ func init() {
 			BasePath = curPath
 		}
 	} else {
-		log.BusinessErrorLog(business_error.ServerOccurredError(business_error.OsError, err))
+		log.LogBusinessError(business_error.ServerOccurredError(business_error.OsError, err))
 	}
 
 }
