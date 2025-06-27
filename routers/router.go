@@ -45,8 +45,9 @@ func InitRouter() *gin.Engine {
 		efficiency := vApi.Group("efficiency/")
 		efficiencyHandler := controller.EfficiencyHandler{}
 		{
+			efficiency.GET("computeEmployee", efficiencyHandler.ComputeEmployee)
+			efficiency.GET("computeWorkplace", efficiencyHandler.ComputeWorkplace)
 			efficiency.GET("employee", efficiencyHandler.EmployeeEfficiency)
-			efficiency.GET("compute", efficiencyHandler.ComputeEmployee)
 			efficiency.GET("timeOnTask", efficiencyHandler.TimeOnTask)
 			efficiency.GET("workplace", efficiencyHandler.WorkplaceEfficiency)
 			efficiency.GET("employeeStatus", efficiencyHandler.EmployeeStatus)

@@ -18,3 +18,10 @@ func (dao *EmployeeDao) FindByNumber(number string) *entity.EmployeeEntity {
 	dao.db.Where("number = ?", number).Find(&employee)
 	return &employee
 }
+
+func (dao *EmployeeDao) FindByWorkplaceCode(code string) []*entity.EmployeeEntity {
+	employeeList := make([]*entity.EmployeeEntity, 0)
+	dao.db.Where("workplace_code = ?", code).Find(&employeeList)
+
+	return employeeList
+}
