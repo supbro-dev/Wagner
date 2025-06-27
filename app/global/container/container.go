@@ -27,6 +27,7 @@ var (
 	CONFIG           ContainerKey = "config"
 	DYNAMIC_PARAM    ContainerKey = "dynamic_param"
 	HOUR_SUMMARY_MD5 ContainerKey = "hour_sum_md5"
+	LOCK             ContainerKey = "lock"
 )
 
 // 根据cacheName创建或获取一个泛型缓存
@@ -53,12 +54,34 @@ func GetOrCreateCache[K comparable, V any](cacheName ContainerKey) (*GenericCach
 	return cache, nil
 }
 
-func newGenericCache[K comparable, V any](key ContainerKey) (*GenericCache[K, V], error) {
-	var maxEntries int64 = 100
+func GetOrCreateCacheWithMaxCost[K comparable, V any](cacheName ContainerKey, maxCost int64) (*GenericCache[K, V], error) {
+	// 检查是否已存在该名称的缓存
+	if val, ok := sMap.Load(cacheName); ok {
+		if cache, ok := val.(*GenericCache[K, V]); ok {
+			return cache, nil
+		}
+		// 类型不匹配时返回错误
+		return nil, fmt.Errorf("cache '%s' already exists with different type", cacheName)
+	}
+
+	// 创建新的缓存实例
+	cache, err := newGenericCacheWithMaxCost[K, V](cacheName, maxCost)
+	if err != nil {
+		return nil, err
+	}
+
+	// 存储并返回新创建的缓存
+	sMap.Store(cacheName, cache)
+	return cache, nil
+}
+
+var defaultMaxCost int64 = 1000
+
+func newGenericCacheWithMaxCost[K comparable, V any](key ContainerKey, maxCost int64) (*GenericCache[K, V], error) {
 	cache, err := ristretto.NewCache(&ristretto.Config{
-		NumCounters: maxEntries * 10, // 建议为最大键数的10倍
-		MaxCost:     maxEntries,      // 最大容量（按条目数）
-		BufferItems: 64,              // 建议值
+		NumCounters: maxCost * 10, // 建议为最大键数的10倍
+		MaxCost:     maxCost,      // 最大容量（按条目数）
+		BufferItems: 64,           // 建议值
 	})
 	if err != nil {
 		return nil, err
@@ -68,6 +91,9 @@ func newGenericCache[K comparable, V any](key ContainerKey) (*GenericCache[K, V]
 		name:  key,
 		cache: cache,
 	}, nil
+}
+func newGenericCache[K comparable, V any](key ContainerKey) (*GenericCache[K, V], error) {
+	return newGenericCacheWithMaxCost[K, V](key, defaultMaxCost)
 }
 
 // Set  1.以键值对的形式将代码注册到容器

@@ -17,6 +17,6 @@ func LogAndPanic(err *business_error.BusinessError) {
 	if err.CausedError != nil {
 		panic(err.CausedError)
 	} else {
-		panic(err)
+		panic(err.CausedError)
 	}
 }

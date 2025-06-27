@@ -1,7 +1,6 @@
 package bootstrap
 
 import (
-	"fmt"
 	"wagner/app/global/business_error"
 	"wagner/app/global/cache"
 	"wagner/app/global/error_handler"
@@ -16,6 +15,7 @@ import (
 	"wagner/app/service/standard_position"
 	"wagner/app/service/workplace"
 	"wagner/app/utils/gorm"
+	"wagner/app/utils/lock"
 	yml_config "wagner/app/utils/yml_config/impl"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/olap_dao"
@@ -29,7 +29,13 @@ func init() {
 	variable.OrmConfig = yml_config.CreateYamlFactory("gorm")
 	variable.OrmConfig.ConfigFileChangeListen()
 
-	fmt.Println("finished init")
+	lockType := variable.Config.Get("Lock.Type")
+
+	if lockType == "Local" {
+		lock.InitLocalLock()
+	} else if lockType == "Distributed" {
+		lock.InitDistributedLock(variable.Config.GetString("Lock.Distributed.RedisAddr"), variable.Config.GetString("Lock.Distributed.Password"))
+	}
 
 	client, err := gorm.GetOneMysqlClient()
 	if err != nil {

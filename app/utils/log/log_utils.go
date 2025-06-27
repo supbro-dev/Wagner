@@ -14,5 +14,5 @@ var (
 )
 
 func LogBusinessError(businessError *business_error.BusinessError) {
-	BusinessErrorLogger.Error(businessError.Type, businessError.Message)
+	BusinessErrorLogger.Error(businessError.Type, "异常信息", businessError.Message)
 }

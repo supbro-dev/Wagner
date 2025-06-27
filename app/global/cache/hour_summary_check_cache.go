@@ -20,7 +20,9 @@ type HourSummaryCheckCache struct {
 }
 
 func CreateHourSummaryCheckLocalCache() *HourSummaryCheckCache {
-	if cache, err := container.GetOrCreateCache[string, string](container.HOUR_SUMMARY_MD5); err != nil {
+	// 设置1000的成本上线，超过1000后按LRU淘汰
+	var maxCost int64 = 1000
+	if cache, err := container.GetOrCreateCacheWithMaxCost[string, string](container.HOUR_SUMMARY_MD5, maxCost); err != nil {
 		error_handler.LogAndPanic(business_error.ServerErrorCausedBy(err))
 		return nil
 	} else {
