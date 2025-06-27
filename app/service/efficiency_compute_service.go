@@ -42,14 +42,14 @@ func (service *EfficiencyComputeService) TimeOnTask(employeeNumber string, opera
 
 func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, operateDay time.Time) (bool, *business_error.BusinessError) {
 	// 根据计算粒度分布式加锁
-	if lockSuccess, err := lock.Lock(employeeNumber); err != nil {
+	if lockSuccess, err := lock.Lock(employeeNumber, operateDay, 2); err != nil {
 		error_handler.LogAndPanic(business_error.LockFailureBySystemError(err))
 		return false, nil
 	} else if !lockSuccess {
-		log.ComputeLogger.Info("employee:{}, lock failure", employeeNumber)
+		log.ComputeLogger.Info("员工人效数据计算，加锁失败", "number", employeeNumber)
 		return false, business_error.LockFailure()
 	} else {
-		log.ComputeLogger.Info("employee:{}, lock success", employeeNumber)
+		log.ComputeLogger.Info("员工人效数据计算，加锁成功", "number", employeeNumber)
 	}
 
 	ctx, calcParam, err := service.createAndComputeCtx(employeeNumber, operateDay)
@@ -69,14 +69,14 @@ func (service *EfficiencyComputeService) ComputeEmployee(employeeNumber string, 
 	}
 
 	// 根据计算粒度分布式解锁
-	if unlockSuccess, err := lock.Unlock(employeeNumber); err != nil {
+	if unlockSuccess, err := lock.Unlock(employeeNumber, operateDay); err != nil {
 		error_handler.LogAndPanic(business_error.UnlockFailureBySystemError(err))
 		return false, nil
 	} else if !unlockSuccess {
-		log.ComputeLogger.Info("employee:{}, unlock failure", employeeNumber)
+		log.ComputeLogger.Info("员工人效数据计算，解锁失败", "number", employeeNumber)
 		return false, business_error.UnlockFailure()
 	} else {
-		log.ComputeLogger.Info("employee:{}, unlock success", employeeNumber)
+		log.ComputeLogger.Info("员工人效数据计算，解锁成功", "number", employeeNumber)
 		return true, nil
 	}
 }
@@ -681,7 +681,7 @@ func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, 
 		successNum++
 
 		// 根据计算粒度分布式解锁
-		if unlockSuccess, err := lock.Unlock(computeResult.EmployeeNumber); err != nil {
+		if unlockSuccess, err := lock.Unlock(computeResult.EmployeeNumber, operateDay); err != nil {
 			businessError := business_error.UnlockFailureBySystemError(err)
 			log.LogBusinessError(businessError)
 		} else if !unlockSuccess {
@@ -705,7 +705,7 @@ func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, 
 func (service *EfficiencyComputeService) computeEachEmployee(employeeSnapshot *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time,
 	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.StandardPosition) (*domain.ComputeContext, *business_error.BusinessError) {
 	// 根据计算粒度分布式加锁
-	if lockSuccess, err := lock.Lock(employeeSnapshot.Number); err != nil {
+	if lockSuccess, err := lock.Lock(employeeSnapshot.Number, operateDay, 2); err != nil {
 		businessError := business_error.LockFailureBySystemError(err)
 		log.LogBusinessError(businessError)
 		return nil, businessError
