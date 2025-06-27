@@ -69,7 +69,11 @@ wager.exe
 ```
 
 ----------
+## 人效计算引擎整体架构
+以下红色部分为Wagner涵盖的功能模块，如需用在互联网生产环境，可参考整体设计架构图
+![](assets/structure.png)
 
+----------
 ## 多维度环节人效管理
 ### TimeOnTask
 [http://localhost:8080/web/timeOnTask](http://localhost:8080/web/timeOnTask)
