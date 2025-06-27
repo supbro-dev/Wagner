@@ -10,7 +10,7 @@
 2. 灵活的员工动作模型，包含排班、考勤、直接作业、间接作业四种类型
 3. 只需做数据层面的对接，基于原始作业数据，直接计算得到环节人效数据
 4. 基于人+天的单人人效计算入口
-5. 基于工作点+天的批量人效计算入口（待完善）
+5. 基于工作点+天的批量人效计算入口
 6. 工作点的部门/岗位/环节管理功能（待完善）
 7. 多维度环节人效管理
    a. TimeOnTask
@@ -72,6 +72,13 @@ wager.exe
 ## 人效计算引擎整体架构
 以下红色部分为Wagner涵盖的功能模块，如需用在互联网生产环境，可参考整体设计架构图
 ![](assets/structure.png)
+----------
+## 环节人效计算
+### 基于人+天的单人人效计算入口
+http://localhost:8080/api/v1/efficiency/computeEmployee?employeeNumber=员工工号&operateDay=日期
+
+### 基于工作点+天的批量人效计算入口
+http://localhost:8080/api/v1/efficiency/computeWorkplace?workplaceCode=工作点编码&operateDay=日期
 
 ----------
 ## 多维度环节人效管理

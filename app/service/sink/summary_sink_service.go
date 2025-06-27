@@ -35,12 +35,17 @@ func (service *SummarySinkService) BatchInsertSummaryResult(resultList []*domain
 		// 计算结果相等，无需重复写库
 		return
 	}
-	service.updateDeleted(&query.HourSummaryResultDelete{EmployeeNumber: employee.Number, WorkplaceCode: workplace.Code, OperateDay: operateDay}, resultList)
+	if len(resultList) == 0 {
+		service.cache.PutResultMd5(employee.Number, workplace.Code, operateDay, md5)
+		return
+	} else {
+		service.updateDeleted(&query.HourSummaryResultDelete{EmployeeNumber: employee.Number, WorkplaceCode: workplace.Code, OperateDay: operateDay}, resultList)
 
-	entityList := service.convertDomain2Entity(resultList, employee, workplace, operateDay)
-	service.hourSummaryResultDao.BatchInsertOrUpdateByUnqKey(entityList)
+		entityList := service.convertDomain2Entity(resultList, employee, workplace, operateDay)
+		service.hourSummaryResultDao.BatchInsertOrUpdateByUnqKey(entityList)
 
-	service.cache.PutResultMd5(employee.Number, workplace.Code, operateDay, md5)
+		service.cache.PutResultMd5(employee.Number, workplace.Code, operateDay, md5)
+	}
 }
 
 // 尝试把没有被更新的数据进行逻辑删除

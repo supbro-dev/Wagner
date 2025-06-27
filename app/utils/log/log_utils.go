@@ -13,6 +13,6 @@ var (
 	InfoLogger          = slog.New(slog.NewTextHandler(os.Stdout, nil))
 )
 
-func BusinessErrorLog(businessError *business_error.BusinessError) {
+func LogBusinessError(businessError *business_error.BusinessError) {
 	BusinessErrorLogger.Error(businessError.Type, businessError.Message)
 }

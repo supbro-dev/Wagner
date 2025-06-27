@@ -104,7 +104,7 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 
 	raw2Entity, err := dao.convertRaw2Entity(rawResult)
 	if err != nil {
-		log.BusinessErrorLog(err)
+		log.LogBusinessError(err)
 		return make([]*entity.WorkLoadWithEmployeeSummary, 0)
 	}
 	return raw2Entity
@@ -306,7 +306,7 @@ func (dao *HourSummaryResultDao) QueryWorkplaceEfficiency(query query.HourSummar
 
 	processEntity, err := dao.convertRaw2ProcessEntity(rawResult)
 	if err != nil {
-		log.BusinessErrorLog(err)
+		log.LogBusinessError(err)
 		return make([]*entity.WorkLoadWithProcessSummary, 0)
 	}
 	return processEntity

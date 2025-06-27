@@ -39,7 +39,7 @@ type PanicExceptionRecord struct{}
 func (p *PanicExceptionRecord) Write(b []byte) (n int, err error) {
 	errStr := string(b)
 	err = errors.New(errStr)
-	log.BusinessErrorLog(business_error.ServerOccurredError(business_error.SystemError, err))
+	log.LogBusinessError(business_error.ServerOccurredError(business_error.SystemError, err))
 	//variable.ZapLog.Error(consts.ServerOccurredErrorMsg, zap.String("errStrace", errStr))
 	return len(errStr), err
 }
