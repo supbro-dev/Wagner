@@ -13,6 +13,7 @@ import (
 	"wagner/app/http/vo"
 	"wagner/app/service/calc_dynamic_param"
 	"wagner/app/service/calc_node"
+	"wagner/app/utils/datetime_util"
 	"wagner/app/utils/lock"
 	"wagner/app/utils/log"
 	"wagner/infrastructure/persistence/entity"
@@ -179,6 +180,7 @@ func (service *EfficiencyComputeService) buildProcessDurationList(todayWorkList 
 
 func (service *EfficiencyComputeService) initProcessDuration(actionable domain.Actionable, workplaceName string) *vo.ProcessDurationVO {
 	processDurationVO := vo.ProcessDurationVO{
+		Id:            fmt.Sprintf("%v-%v", datetime_util.FormatDatetime(*actionable.GetAction().ComputedStartTime), actionable.GetAction().ProcessCode),
 		ProcessCode:   actionable.GetAction().ProcessCode,
 		ProcessName:   actionable.GetAction().Process.Name,
 		ActionType:    actionable.GetAction().ActionType,
@@ -198,8 +200,8 @@ func (service *EfficiencyComputeService) mergeProcessDuration(current *vo.Proces
 	current.Duration += duration
 
 	detail := vo.ProcessDurationDetailVO{
-		StartTime: *work.GetAction().ComputedStartTime,
-		EndTime:   *work.GetAction().ComputedEndTime,
+		StartTime: datetime_util.FormatDatetime(*work.GetAction().ComputedStartTime),
+		EndTime:   datetime_util.FormatDatetime(*work.GetAction().ComputedEndTime),
 		Duration:  math.Round(duration / 60),
 	}
 	if work.GetAction().OperationMsgList != nil {
