@@ -88,7 +88,7 @@ http://localhost:8080/api/v1/efficiency/computeWorkplace?workplaceCode=工作点
 
 ![](assets/timeOnTask.png)
 
-点击甘特图，可以查看每个时间段的工时加工工程
+点击甘特图，可以查看每个时间段的工时加工过程
 ![](assets/timeOnTaskDetail.png)
 
 
