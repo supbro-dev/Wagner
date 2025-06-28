@@ -34,7 +34,15 @@ func init() {
 	if lockType == "Local" {
 		lock.InitLocalLock()
 	} else if lockType == "Distributed" {
-		lock.InitDistributedLock(variable.Config.GetString("Lock.Distributed.RedisAddr"), variable.Config.GetString("Lock.Distributed.Password"))
+		lock.InitDistributedLock(variable.Config.GetString("Redis.Addr"), variable.Config.GetString("Redis.Password"))
+	}
+
+	hourSummaryCheckCacheType := variable.Config.GetString("Cache.HourSummaryCheck.Type")
+	var hourSummaryCheckCache *cache.HourSummaryCheckCache
+	if hourSummaryCheckCacheType == "Local" {
+		hourSummaryCheckCache = cache.CreateHourSummaryCheckLocalCache()
+	} else {
+		hourSummaryCheckCache = cache.CreateHourSummaryCheckRemoteCache(variable.Config.GetString("Redis.Addr"), variable.Config.GetString("Redis.Password"))
 	}
 
 	client, err := gorm.GetOneMysqlClient()
@@ -64,7 +72,7 @@ func init() {
 
 	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao, scriptDao)
 
-	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapWriteClient), cache.CreateHourSummaryCheckLocalCache())
+	summarySinkService := sink.CreateSummarySinkService(olap_dao.CreateHourSummaryResultDao(olapWriteClient), hourSummaryCheckCache)
 
 	workplaceService := workplace.CreateWorkplaceService(workplaceDao)
 

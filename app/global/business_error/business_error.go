@@ -104,6 +104,10 @@ func CreateCacheError(err error) *BusinessError {
 	return &BusinessError{CacheError, 9401, "创建缓存失败", nil, err}
 }
 
+func SetToRedisError(err error) *BusinessError {
+	return &BusinessError{CacheError, 9402, "Redis缓存Set失败", nil, err}
+}
+
 // BASIC_DATA
 func WorkplaceDoseNotExist(code interface{}) *BusinessError {
 	return &BusinessError{BasicDataError, 9501, "工作点%v不存在", []interface{}{code}, nil}

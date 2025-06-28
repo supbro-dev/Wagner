@@ -3,8 +3,12 @@ AppDebug: true   # 设置程序所处的模式，debug=true 调试模式，日�
 HttpServer:
   Api:
     Port: ":8080"                 #门户网站类端口,注意前面有冒号
+Redis:
+  Addr: "39.105.20.187:6379"
+  Password: "qwer1234"
 Lock:
   Type: "Distributed" # Local或Distributed
-  Distributed:
-      RedisAddr: "39.105.20.187:6379"
-      Password: "qwer1234"
+Cache:
+  HourSummaryCheck:
+    Type: "Distributed" # Local或Distributed
+
