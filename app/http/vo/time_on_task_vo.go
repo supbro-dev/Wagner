@@ -43,6 +43,7 @@ type RestVO struct {
 }
 
 type ProcessDurationVO struct {
+	Id            string                    `json:"id"`
 	StartTime     time.Time                 `json:"startTime"`
 	EndTime       time.Time                 `json:"endTime"`
 	ActionType    domain.ActionType         `json:"actionType"`
@@ -56,8 +57,8 @@ type ProcessDurationVO struct {
 }
 
 type ProcessDurationDetailVO struct {
-	StartTime        time.Time `json:"startTime"`
-	EndTime          time.Time `json:"endTime"`
-	Duration         float64   `json:"duration"`
-	OperationMessage string    `json:"OperationMessage"`
+	StartTime        string  `json:"startTime"`
+	EndTime          string  `json:"endTime"`
+	Duration         float64 `json:"duration"`
+	OperationMessage string  `json:"operationMessage"`
 }
