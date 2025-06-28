@@ -8,6 +8,7 @@ package sink
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 	"wagner/app/domain"
@@ -30,18 +31,27 @@ func CreateSummarySinkService(hourSummaryResultDao *olap_dao.HourSummaryResultDa
 }
 
 func (service *SummarySinkService) BatchInsertSummaryResult(resultList []*domain.HourSummaryResult, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time) {
-	md5 := md5_util.Md5(json_util.ToJsonString(resultList))
+	entityList := service.convertDomain2Entity(resultList, employee, workplace, operateDay)
+
+	// 排序
+	sort.Slice(entityList, func(i, j int) bool {
+		this := entityList[i]
+		that := entityList[j]
+		if this.OperateTime != that.OperateTime {
+			return this.OperateTime.Before(that.OperateTime)
+		} else {
+			return strings.Compare(this.UniqueKey, that.UniqueKey) > 0
+		}
+	})
+
+	md5 := md5_util.Md5(json_util.ToJsonString(entityList))
+
 	if md5Value, exists := service.cache.GutResultMd5(employee.Number, workplace.Code, operateDay); exists && md5 == md5Value {
 		// 计算结果相等，无需重复写库
-		return
-	}
-	if len(resultList) == 0 {
-		service.cache.PutResultMd5(employee.Number, workplace.Code, operateDay, md5)
 		return
 	} else {
 		service.updateDeleted(&query.HourSummaryResultDelete{EmployeeNumber: employee.Number, WorkplaceCode: workplace.Code, OperateDay: operateDay}, resultList)
 
-		entityList := service.convertDomain2Entity(resultList, employee, workplace, operateDay)
 		service.hourSummaryResultDao.BatchInsertOrUpdateByUnqKey(entityList)
 
 		service.cache.PutResultMd5(employee.Number, workplace.Code, operateDay, md5)
