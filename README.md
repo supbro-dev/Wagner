@@ -83,9 +83,13 @@ http://localhost:8080/api/v1/efficiency/computeWorkplace?workplaceCode=工作点
 ----------
 ## 多维度环节人效管理
 ### TimeOnTask
+可以查看每个员工从上班到下班期间的所有工作内容及闲置时间段
 [http://localhost:8080/web/timeOnTask](http://localhost:8080/web/timeOnTask)
 
 ![](assets/timeOnTask.png)
+
+点击甘特图，可以查看每个时间段的工时加工工程
+![](assets/timeOnTaskDetail.png)
 
 
 ## 员工环节人效
