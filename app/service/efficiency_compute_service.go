@@ -134,13 +134,7 @@ func (service *EfficiencyComputeService) buildTimeOnTask(ctx *domain.ComputeCont
 }
 
 func (service *EfficiencyComputeService) buildProcessDurationList(todayWorkList []domain.Actionable, workplaceName string, workLoadUnitCode2Name map[string]string, workLoadCodeList []string) []*vo.ProcessDurationVO {
-	workList := make([]domain.Actionable, 0)
-	for _, actionable := range todayWorkList {
-		if actionable.GetAction().ActionType != domain.REST {
-			workList = append(workList, actionable)
-		}
-	}
-
+	workList := todayWorkList
 	processDurationList := make([]*vo.ProcessDurationVO, 0)
 	if workList == nil || len(workList) == 0 {
 		return processDurationList

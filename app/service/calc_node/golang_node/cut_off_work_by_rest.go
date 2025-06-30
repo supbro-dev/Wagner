@@ -56,14 +56,14 @@ func cutOffWork(work domain.Actionable, restList []*domain.Rest) domain.Work {
 		}
 		// work |s         |e
 		// rest    |s
-		startBeforeEqualRestEndAfterRest := (work.GetAction().ComputedStartTime.Before(*rest.ComputedStartTime) || work.GetAction().ComputedStartTime.Equal(*rest.ComputedStartTime)) &&
+		startBeforeEqualRestEndAfterRest := datetime_util.LeftBeforeOrEqualRight(*work.GetAction().ComputedStartTime, *rest.ComputedStartTime) &&
 			work.GetAction().ComputedEndTime.After(*rest.ComputedStartTime)
 
 		if startBeforeEqualRestEndAfterRest {
 			originalEndTime := work.GetAction().ComputedEndTime
 			// work |s          |e
 			// rest    |s           |e
-			if work.GetAction().ComputedEndTime.Before(*rest.ComputedEndTime) || work.GetAction().ComputedEndTime.Equal(*rest.ComputedEndTime) {
+			if datetime_util.LeftBeforeOrEqualRight(*work.GetAction().ComputedEndTime, *rest.ComputedEndTime) {
 				work.GetAction().ComputedEndTime = rest.ComputedStartTime
 				work.GetAction().AppendOperationMsg(fmt.Sprintf("被休息开始截断, 原结束时间: %v, 调整后: %v",
 					datetime_util.FormatDatetime(*originalEndTime), datetime_util.FormatDatetime(*work.GetAction().ComputedEndTime)))
