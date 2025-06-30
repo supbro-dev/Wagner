@@ -32,9 +32,9 @@ VALUES ('A1002', 'workplace1',
         CONCAT(CURDATE(), ' 18:00:00'),
         'Scheduling',
         CONCAT('{"restList": [',
-               '{"startTime": "', DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 11:30:00', '", "endTime": "', DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 12:30:00', '"}',
+               '{"startTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), ' 11:30:00', '", "endTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), ' 12:30:00', '"}',
                ',',
-               '{"startTime": "', DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 15:00:00', '", "endTime": "', DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 15:15:00', '"}',
+               '{"startTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), ' 15:00:00', '", "endTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), ' 15:15:00', '"}',
                ']}'),
         CURDATE(),
         'SCH002',
@@ -95,5 +95,92 @@ VALUES
 
 
 
+-- 王芳正常作业数据
+-- 排班数据（全天排班，含两个休息时段）
+INSERT INTO `action` (`employee_number`, `workplace_code`, `start_time`, `end_time`, `action_type`, `properties`, `operate_day`, `action_code`)
+VALUES (
+           'A1003',
+           'workplace1',
+           CONCAT(CURDATE(), ' 08:00:00.000'),
+           CONCAT(CURDATE(), ' 18:00:00.000'),
+           'Scheduling',
+           concat('{"restList": [{"startTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), ' 11:30:00", "endTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'),' 12:00:00"}, {"startTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), ' 15:00:00", "endTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'),' 15:15:00"}]}'),
+           DATE_FORMAT(CURDATE(), '%Y-%m-%d'),
+           'SCH003'
+       );
 
+-- 考勤数据（当天实际出勤）
+INSERT INTO `action` (`employee_number`, `workplace_code`, `start_time`, `end_time`, `action_type`, `operate_day`, `action_code`)
+VALUES (
+           'A1003',
+           'workplace1',
+           CONCAT(CURDATE(), ' 08:05:00.000'),
+           CONCAT(CURDATE(), ' 18:05:00.000'),
+           'Attendance',
+           DATE_FORMAT(CURDATE(), '%Y-%m-%d'),
+           'ATT003'
+       );
+
+-- 直接作业数据（6个连续任务）
+INSERT INTO `action` (`employee_number`, `workplace_code`, `start_time`, `end_time`, `action_type`, `properties`, `operate_day`, `action_code`, `work_load`)
+VALUES
+    ('A1003', 'workplace1', CONCAT(CURDATE(), ' 08:30:00.000'), CONCAT(CURDATE(), ' 10:00:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW3001', '{"itemNum": 30, "skuNum": 15, "packageNum": 3}'),
+    ('A1003', 'workplace1', CONCAT(CURDATE(), ' 10:00:00.000'), CONCAT(CURDATE(), ' 11:30:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW3002', '{"itemNum": 45, "skuNum": 22, "packageNum": 5}'),
+    ('A1003', 'workplace1', CONCAT(CURDATE(), ' 12:00:00.000'), CONCAT(CURDATE(), ' 13:30:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW3003', '{"itemNum": 50, "skuNum": 25, "packageNum": 6}'),
+    ('A1003', 'workplace1', CONCAT(CURDATE(), ' 13:30:00.000'), CONCAT(CURDATE(), ' 15:00:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW3004', '{"itemNum": 55, "skuNum": 28, "packageNum": 7}'),
+    ('A1003', 'workplace1', CONCAT(CURDATE(), ' 15:15:00.000'), CONCAT(CURDATE(), ' 16:30:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW3005', '{"itemNum": 40, "skuNum": 20, "packageNum": 4}'),
+    ('A1003', 'workplace1', CONCAT(CURDATE(), ' 16:30:00.000'), CONCAT(CURDATE(), ' 17:50:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW3006', '{"itemNum": 60, "skuNum": 30, "packageNum": 8}');
+
+-- 间接作业数据（集中在直接作业前后）
+INSERT INTO `action` (`employee_number`, `workplace_code`, `start_time`, `end_time`, `action_type`, `properties`, `operate_day`, `action_code`)
+VALUES
+    ('A1003', 'workplace1', CONCAT(CURDATE(), ' 08:05:00.000'), CONCAT(CURDATE(), ' 08:30:00.000'), 'IndirectWork', '{"indirectWorkType": "B2"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'IW3001'),
+    ('A1003', 'workplace1', CONCAT(CURDATE(), ' 17:50:00.000'), CONCAT(CURDATE(), ' 18:05:00.000'), 'IndirectWork', '{"indirectWorkType": "B3"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'IW3002');
+
+
+-- 李强中午午休没有休息，仍然持续作业的情况
+-- 排班数据（含午休时段）
+INSERT INTO `action` (`employee_number`, `workplace_code`, `start_time`, `end_time`, `action_type`, `properties`, `operate_day`, `action_code`)
+VALUES (
+           'A1004',
+           'workplace1',
+           CONCAT(CURDATE(), ' 08:00:00.000'),
+           CONCAT(CURDATE(), ' 18:00:00.000'),
+           'Scheduling',
+           CONCAT('{"restList": [{"startTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), ' 12:00:00", "endTime": "', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), ' 13:00:00"}]}'),
+           DATE_FORMAT(CURDATE(), '%Y-%m-%d'),
+           'SCH004'
+       );
+
+-- 考勤数据（下班未打卡）
+INSERT INTO `action` (`employee_number`, `workplace_code`, `start_time`, `end_time`, `action_type`, `operate_day`, `action_code`)
+VALUES (
+           'A1004',
+           'workplace1',
+           CONCAT(CURDATE(), ' 08:02:00.000'),
+           NULL,  -- 下班未打卡
+           'Attendance',
+           DATE_FORMAT(CURDATE(), '%Y-%m-%d'),
+           'ATT004'
+       );
+
+-- 直接作业数据（短任务，午休时段有工作）
+INSERT INTO `action` (`employee_number`, `workplace_code`, `start_time`, `end_time`, `action_type`, `properties`, `operate_day`, `action_code`, `work_load`)
+VALUES
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 08:15:00.000'), CONCAT(CURDATE(), ' 08:28:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4001', '{"itemNum": 8, "skuNum": 4, "packageNum": 1}'),
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 08:30:00.000'), CONCAT(CURDATE(), ' 08:42:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4002', '{"itemNum": 10, "skuNum": 5, "packageNum": 2}'),
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 08:44:00.000'), CONCAT(CURDATE(), ' 08:57:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4003', '{"itemNum": 9, "skuNum": 4, "packageNum": 1}'),
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 09:00:00.000'), CONCAT(CURDATE(), ' 09:15:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4004', '{"itemNum": 12, "skuNum": 6, "packageNum": 2}'),
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 09:17:00.000'), CONCAT(CURDATE(), ' 09:30:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4005', '{"itemNum": 11, "skuNum": 5, "packageNum": 1}'),
+    -- 午休时段工作（12:00-12:20）
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 12:00:00.000'), CONCAT(CURDATE(), ' 12:20:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4006', '{"itemNum": 15, "skuNum": 7, "packageNum": 2}'),
+    -- 下午工作
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 13:20:00.000'), CONCAT(CURDATE(), ' 13:35:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4007', '{"itemNum": 14, "skuNum": 7, "packageNum": 2}'),
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 13:37:00.000'), CONCAT(CURDATE(), ' 13:50:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4008', '{"itemNum": 13, "skuNum": 6, "packageNum": 2}'),
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 13:52:00.000'), CONCAT(CURDATE(), ' 14:05:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4009', '{"itemNum": 11, "skuNum": 5, "packageNum": 1}'),
+    -- 15:00-17:00 空闲（无记录）
+    -- 傍晚工作
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 17:05:00.000'), CONCAT(CURDATE(), ' 17:18:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4010', '{"itemNum": 16, "skuNum": 8, "packageNum": 2}'),
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 17:20:00.000'), CONCAT(CURDATE(), ' 17:35:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4011', '{"itemNum": 14, "skuNum": 7, "packageNum": 2}'),
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 17:37:00.000'), CONCAT(CURDATE(), ' 17:50:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4012', '{"itemNum": 18, "skuNum": 9, "packageNum": 3}');
 

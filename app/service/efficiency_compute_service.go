@@ -202,7 +202,7 @@ func (service *EfficiencyComputeService) mergeProcessDuration(current *vo.Proces
 	detail := vo.ProcessDurationDetailVO{
 		StartTime: datetime_util.FormatDatetime(*work.GetAction().ComputedStartTime),
 		EndTime:   datetime_util.FormatDatetime(*work.GetAction().ComputedEndTime),
-		Duration:  math.Round(duration / 60),
+		Duration:  duration,
 	}
 	if work.GetAction().OperationMsgList != nil {
 		detail.OperationMessage = strings.Join(work.GetAction().OperationMsgList, "\n")
@@ -543,7 +543,7 @@ func (service *EfficiencyComputeService) filterEmployeeStatus(ctx *domain.Comput
 
 		if ctx.TodayWorkList != nil && len(ctx.TodayWorkList) > 0 {
 			for _, actionable := range ctx.TodayWorkList {
-				if actionable.GetAction().StartTime.After(*ctx.TodayAttendance.EndTime) {
+				if actionable.GetAction().ComputedStartTime.After(*ctx.TodayAttendance.EndTime) {
 					log.ComputeLogger.Warn(fmt.Sprintf("下班后仍然有其他动作:%v", actionable.GetAction().ActionCode))
 					break
 				}
