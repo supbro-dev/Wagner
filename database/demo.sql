@@ -173,7 +173,7 @@ VALUES
     ('A1004', 'workplace1', CONCAT(CURDATE(), ' 09:00:00.000'), CONCAT(CURDATE(), ' 09:15:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4004', '{"itemNum": 12, "skuNum": 6, "packageNum": 2}'),
     ('A1004', 'workplace1', CONCAT(CURDATE(), ' 09:17:00.000'), CONCAT(CURDATE(), ' 09:30:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4005', '{"itemNum": 11, "skuNum": 5, "packageNum": 1}'),
     -- 午休时段工作（12:00-12:20）
-    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 12:00:00.000'), CONCAT(CURDATE(), ' 12:20:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4006', '{"itemNum": 15, "skuNum": 7, "packageNum": 2}'),
+    ('A1004', 'workplace1', CONCAT(CURDATE(), ' 11:50:00.000'), CONCAT(CURDATE(), ' 12:20:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4006', '{"itemNum": 15, "skuNum": 7, "packageNum": 2}'),
     -- 下午工作
     ('A1004', 'workplace1', CONCAT(CURDATE(), ' 13:20:00.000'), CONCAT(CURDATE(), ' 13:35:00.000'), 'DirectWork', '{"taskType": "T001"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4007', '{"itemNum": 14, "skuNum": 7, "packageNum": 2}'),
     ('A1004', 'workplace1', CONCAT(CURDATE(), ' 13:37:00.000'), CONCAT(CURDATE(), ' 13:50:00.000'), 'DirectWork', '{"taskType": "T002"}', DATE_FORMAT(CURDATE(), '%Y-%m-%d'), 'DW4008', '{"itemNum": 13, "skuNum": 6, "packageNum": 2}'),
