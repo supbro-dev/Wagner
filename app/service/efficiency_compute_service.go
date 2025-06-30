@@ -134,13 +134,7 @@ func (service *EfficiencyComputeService) buildTimeOnTask(ctx *domain.ComputeCont
 }
 
 func (service *EfficiencyComputeService) buildProcessDurationList(todayWorkList []domain.Actionable, workplaceName string, workLoadUnitCode2Name map[string]string, workLoadCodeList []string) []*vo.ProcessDurationVO {
-	workList := make([]domain.Actionable, 0)
-	for _, actionable := range todayWorkList {
-		if actionable.GetAction().ActionType != domain.REST {
-			workList = append(workList, actionable)
-		}
-	}
-
+	workList := todayWorkList
 	processDurationList := make([]*vo.ProcessDurationVO, 0)
 	if workList == nil || len(workList) == 0 {
 		return processDurationList
@@ -202,7 +196,7 @@ func (service *EfficiencyComputeService) mergeProcessDuration(current *vo.Proces
 	detail := vo.ProcessDurationDetailVO{
 		StartTime: datetime_util.FormatDatetime(*work.GetAction().ComputedStartTime),
 		EndTime:   datetime_util.FormatDatetime(*work.GetAction().ComputedEndTime),
-		Duration:  math.Round(duration / 60),
+		Duration:  duration,
 	}
 	if work.GetAction().OperationMsgList != nil {
 		detail.OperationMessage = strings.Join(work.GetAction().OperationMsgList, "\n")
@@ -543,7 +537,7 @@ func (service *EfficiencyComputeService) filterEmployeeStatus(ctx *domain.Comput
 
 		if ctx.TodayWorkList != nil && len(ctx.TodayWorkList) > 0 {
 			for _, actionable := range ctx.TodayWorkList {
-				if actionable.GetAction().StartTime.After(*ctx.TodayAttendance.EndTime) {
+				if actionable.GetAction().ComputedStartTime.After(*ctx.TodayAttendance.EndTime) {
 					log.ComputeLogger.Warn(fmt.Sprintf("下班后仍然有其他动作:%v", actionable.GetAction().ActionCode))
 					break
 				}

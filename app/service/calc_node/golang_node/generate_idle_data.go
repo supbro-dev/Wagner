@@ -61,13 +61,13 @@ func GenerateIdleData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	ctx.TodayIdleList = idleList
 	// 最终的结果中加入休息、闲置
 	todayActionList = append(todayActionList, idleList...)
-	sort.Slice(ctx.TodayWorkList, func(i, j int) bool {
-		if ctx.TodayWorkList[i].GetAction().ComputedStartTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedStartTime) {
+	sort.Slice(todayActionList, func(i, j int) bool {
+		if todayActionList[i].GetAction().ComputedStartTime.Before(*todayActionList[j].GetAction().ComputedStartTime) {
 			return true
-		} else if ctx.TodayWorkList[i].GetAction().ComputedStartTime.After(*ctx.TodayWorkList[j].GetAction().ComputedStartTime) {
+		} else if todayActionList[i].GetAction().ComputedStartTime.After(*todayActionList[j].GetAction().ComputedStartTime) {
 			return false
 		} else {
-			return ctx.TodayWorkList[i].GetAction().ComputedEndTime.Before(*ctx.TodayWorkList[j].GetAction().ComputedEndTime)
+			return todayActionList[i].GetAction().ComputedEndTime.Before(*todayActionList[j].GetAction().ComputedEndTime)
 		}
 	})
 

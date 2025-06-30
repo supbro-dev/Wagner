@@ -104,7 +104,12 @@ http://localhost:8080/api/v1/efficiency/computeWorkplace?workplaceCode=工作点
 ![](assets/workplaceEfficiency.png)
 
 ## 员工实时状态
+该功能查询的是员工某一天实时工作状态
+- 如果查看员工历史工作日期，可以看到员工下班情况（正常下班、下班未打卡），展开子表格可看到员工明细
+- 如果查看当前日期，可以看到员工当前状态（直接作业进行中、间接作业进行中、闲置中、休息中）
 [http://localhost:8080/web/employeeStatus](http://localhost:8080/web/employeeStatus)
+
+![](assets/employeeStatus.png)
 
 ----------
 ## 前端工程
