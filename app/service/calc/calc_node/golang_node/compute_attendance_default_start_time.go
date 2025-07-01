@@ -28,6 +28,8 @@ func computeAttendanceStartTime(todayAttendanceEndTime *time.Time, todayScheduli
 	var defaultAttendanceStartTime time.Time
 	if todayScheduling != nil {
 		defaultAttendanceStartTime = *todayScheduling.StartTime
+
+		return defaultAttendanceStartTime
 	} else {
 		if todayAttendanceEndTime.Hour() < 12 {
 			defaultAttendanceStartTime = time.Date(

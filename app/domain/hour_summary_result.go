@@ -26,7 +26,7 @@ type HourSummaryResult struct {
 	Properties map[string]interface{}
 
 	// 环节信息
-	Process *StandardPosition
+	Process *ProcessPosition
 }
 
 // 聚合key

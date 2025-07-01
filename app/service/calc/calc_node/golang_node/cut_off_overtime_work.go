@@ -50,7 +50,10 @@ func CutOffOvertimeWork(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 const MaxTimeKey = "maxTimeInMinute"
 
-func getOrDefaultMaxTime(process *domain.StandardPosition, defaultMaxTime int) int {
+func getOrDefaultMaxTime(process *domain.ProcessPosition, defaultMaxTime int) int {
+	if process == nil {
+		return defaultMaxTime
+	}
 	if process.Properties != nil {
 		if value, exists := process.Properties[MaxTimeKey]; exists {
 			return value.(int)

@@ -68,7 +68,7 @@ func init() {
 
 	employeeSnapshotService := employee_snapshot.CreateEmployeeSnapshotService(dao.CreateEmployeeDao(client))
 
-	processService := process.CreateProcessServiceImpl(dao.CreateProcessPositionDao(client), dao.CreateProcessImplementDao(client), workplaceDao)
+	processService := process.CreateProcessServiceImpl(dao.CreateProcessPositionDao(client), dao.CreateProcessImplementationDao(client), workplaceDao)
 
 	calcDynamicParamService := calc_dynamic_param.CreateCalcDynamicParamService(dao.CreateCalcDynamicParamDao(client), workplaceDao, scriptDao)
 

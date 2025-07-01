@@ -8,7 +8,7 @@ package domain
 
 import "wagner/infrastructure/persistence/entity"
 
-type StandardPosition struct {
+type ProcessPosition struct {
 	Name       string
 	Code       string
 	ParentCode string
@@ -20,7 +20,7 @@ type StandardPosition struct {
 	// 环节的属性
 	Properties map[string]interface{}
 	// 路径
-	Path []*StandardPosition
+	Path []*ProcessPosition
 	// 环节匹配执行脚本
 	Script string
 	// 标识一套StandardPosition的唯一版本

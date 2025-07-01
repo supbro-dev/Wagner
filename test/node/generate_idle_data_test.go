@@ -44,6 +44,26 @@ func TestGenerateIdleData(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 09:00:00")
 					return &t
 				}(),
+				Process: &domain.ProcessPosition{
+					Code: "DW",
+				},
+			},
+		},
+
+		&domain.Rest{
+			Action: domain.Action{
+				ActionType: domain.REST,
+				ComputedStartTime: func() *time.Time {
+					t, _ := datetime_util.ParseDatetime("2025-06-13 12:00:00")
+					return &t
+				}(),
+				ComputedEndTime: func() *time.Time {
+					t, _ := datetime_util.ParseDatetime("2025-06-13 12:30:00")
+					return &t
+				}(),
+				Process: &domain.ProcessPosition{
+					Code: "IW",
+				},
 			},
 		},
 
@@ -58,6 +78,26 @@ func TestGenerateIdleData(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 17:45:00")
 					return &t
 				}(),
+				Process: &domain.ProcessPosition{
+					Code: "IW",
+				},
+			},
+		},
+
+		&domain.Rest{
+			Action: domain.Action{
+				ActionType: domain.REST,
+				ComputedStartTime: func() *time.Time {
+					t, _ := datetime_util.ParseDatetime("2025-06-13 17:50:00")
+					return &t
+				}(),
+				ComputedEndTime: func() *time.Time {
+					t, _ := datetime_util.ParseDatetime("2025-06-13 18:30:00")
+					return &t
+				}(),
+				Process: &domain.ProcessPosition{
+					Code: "IW",
+				},
 			},
 		},
 	}
@@ -74,6 +114,9 @@ func TestGenerateIdleData(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 12:30:00")
 					return &t
 				}(),
+				Process: &domain.ProcessPosition{
+					Code: "IW",
+				},
 			},
 		},
 		{
@@ -87,6 +130,9 @@ func TestGenerateIdleData(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 18:30:00")
 					return &t
 				}(),
+				Process: &domain.ProcessPosition{
+					Code: "IW",
+				},
 			},
 		},
 	}
@@ -124,11 +170,18 @@ func TestGenerateIdleData(t *testing.T) {
 		return &t
 	}()
 
+	ctx.TodayAttendance = &domain.Attendance{
+		Action: domain.Action{
+			StartTime: ctx.TodayAttendanceStartTime,
+			EndTime:   ctx.TodayAttendanceEndTime,
+		},
+	}
+
 	processServiceMock := new(ProcessServiceMock)
 	service.DomainHolder = service.DomainServiceHolder{
 		ProcessService: processServiceMock,
 	}
-	processServiceMock.On("FindProcessPositionFirstProcess", "checker", "FOOD", "ConvenientFood").Return(&domain.StandardPosition{
+	processServiceMock.On("FindProcessPositionFirstProcess", "checker", "FOOD", "ConvenientFood").Return(&domain.ProcessPosition{
 		Code: "C1",
 	})
 
@@ -152,6 +205,13 @@ func TestGenerateIdleData(t *testing.T) {
 		t, _ := datetime_util.ParseDatetime("2025-06-13 19:00:00")
 		return &t
 	}()
+
+	ctx.TodayAttendance = &domain.Attendance{
+		Action: domain.Action{
+			StartTime: ctx.TodayAttendanceStartTime,
+			EndTime:   ctx.TodayAttendanceEndTime,
+		},
+	}
 
 	ctx.TodayRestList = []*domain.Rest{
 		{
@@ -178,6 +238,41 @@ func TestGenerateIdleData(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 18:30:00")
 					return &t
 				}(),
+			},
+		},
+	}
+
+	ctx.TodayWorkList = []domain.Actionable{
+		&domain.Rest{
+			Action: domain.Action{
+				ActionType: domain.REST,
+				ComputedStartTime: func() *time.Time {
+					t, _ := datetime_util.ParseDatetime("2025-06-13 12:00:00")
+					return &t
+				}(),
+				ComputedEndTime: func() *time.Time {
+					t, _ := datetime_util.ParseDatetime("2025-06-13 12:30:00")
+					return &t
+				}(),
+				Process: &domain.ProcessPosition{
+					Code: "DW1",
+				},
+			},
+		},
+		&domain.Rest{
+			Action: domain.Action{
+				ActionType: domain.REST,
+				ComputedStartTime: func() *time.Time {
+					t, _ := datetime_util.ParseDatetime("2025-06-13 17:50:00")
+					return &t
+				}(),
+				ComputedEndTime: func() *time.Time {
+					t, _ := datetime_util.ParseDatetime("2025-06-13 18:30:00")
+					return &t
+				}(),
+				Process: &domain.ProcessPosition{
+					Code: "DW1",
+				},
 			},
 		},
 	}

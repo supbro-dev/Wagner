@@ -41,6 +41,11 @@ func TestComputeAttendanceDefaultEndTime(t *testing.T) {
 	ctx = BuildTestCtx()
 	ctx.CalcStartTime = time.Date(2025, 6, 13, 8, 0, 0, 0, time.Local)
 	todayAttendanceStartTime = time.Date(2025, 6, 12, 8, 0, 0, 0, time.Local)
+	ctx.TodayAttendance = &domain.Attendance{
+		Action: domain.Action{
+			ComputedStartTime: &todayAttendanceStartTime,
+		},
+	}
 	ctx.TodayAttendanceStartTime = &todayAttendanceStartTime
 	ctx.TodayScheduling = &domain.Scheduling{
 		Action: domain.Action{
@@ -58,6 +63,11 @@ func TestComputeAttendanceDefaultEndTime(t *testing.T) {
 	ctx = BuildTestCtx()
 	ctx.CalcStartTime = time.Date(2025, 6, 13, 8, 0, 0, 0, time.Local)
 	todayAttendanceStartTime = time.Date(2025, 6, 12, 8, 0, 0, 0, time.Local)
+	ctx.TodayAttendance = &domain.Attendance{
+		Action: domain.Action{
+			ComputedStartTime: &todayAttendanceStartTime,
+		},
+	}
 	ctx.TodayAttendanceStartTime = &todayAttendanceStartTime
 	ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour = 20
 	ctxRes = golang_node.ComputeAttendanceDefaultEndTime(&ctx)
@@ -67,6 +77,11 @@ func TestComputeAttendanceDefaultEndTime(t *testing.T) {
 	ctx = BuildTestCtx()
 	ctx.CalcStartTime = time.Date(2025, 6, 13, 23, 0, 0, 0, time.Local)
 	todayAttendanceStartTime = time.Date(2025, 6, 12, 20, 0, 0, 0, time.Local)
+	ctx.TodayAttendance = &domain.Attendance{
+		Action: domain.Action{
+			ComputedStartTime: &todayAttendanceStartTime,
+		},
+	}
 	ctx.TodayAttendanceStartTime = &todayAttendanceStartTime
 	ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour = 20
 	ctxRes = golang_node.ComputeAttendanceDefaultEndTime(&ctx)
@@ -77,6 +92,11 @@ func TestComputeAttendanceDefaultEndTime(t *testing.T) {
 	ctx = BuildTestCtx()
 	ctx.CalcStartTime = time.Date(2025, 6, 13, 8, 0, 0, 0, time.Local)
 	yesterdayAttendanceStartTime := time.Date(2025, 6, 12, 8, 0, 0, 0, time.Local)
+	ctx.YesterdayAttendance = &domain.Attendance{
+		Action: domain.Action{
+			ComputedStartTime: &yesterdayAttendanceStartTime,
+		},
+	}
 	ctx.YesterdayAttendanceStartTime = &yesterdayAttendanceStartTime
 	ctx.CalcOtherParam.Attendance.AttendanceAbsencePenaltyHour = 20
 	ctxRes = golang_node.ComputeAttendanceDefaultEndTime(&ctx)

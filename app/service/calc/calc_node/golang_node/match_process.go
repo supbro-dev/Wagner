@@ -27,7 +27,7 @@ func MarchProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 }
 
 // 遍历所有环节节点，根据表达式匹配到第一个环节
-func findFirstProcess(work domain.Actionable, processList []*domain.StandardPosition) *domain.StandardPosition {
+func findFirstProcess(work domain.Actionable, processList []*domain.ProcessPosition) *domain.ProcessPosition {
 	for _, process := range processList {
 		if process.Script == "" {
 			continue

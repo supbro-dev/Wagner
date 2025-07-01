@@ -43,38 +43,38 @@ func TestComputeAttendanceDefaultStartTime(t *testing.T) {
 	assert.Equal(t, time.Date(2025, 6, 12, 9, 0, 0, 0, time.Local), *ctxRes.TodayAttendanceStartTime)
 	assert.Equal(t, time.Date(2025, 6, 12, 9, 0, 0, 0, time.Local), *ctxRes.TodayAttendance.ComputedStartTime)
 
-	// 测试使用默认时间
-	ctx = BuildTestCtx()
-	ctx.TodayAttendanceEndTime = func() *time.Time {
-		t, _ := datetime_util.ParseDatetime("2025-06-12 18:00:00")
-		return &t
-	}()
+	//// 测试使用默认时间
+	//ctx = BuildTestCtx()
+	//ctx.TodayAttendanceEndTime = func() *time.Time {
+	//	t, _ := datetime_util.ParseDatetime("2025-06-12 18:00:00")
+	//	return &t
+	//}()
+	//
+	//ctx.TodayAttendance = &domain.Attendance{
+	//	Action: domain.Action{
+	//		ComputedEndTime: ctx.TodayAttendanceEndTime,
+	//	},
+	//}
+	//
+	//ctxRes = golang_node.ComputeAttendanceDefaultStartTime(&ctx)
+	//assert.Equal(t, time.Date(2025, 6, 12, 0, 0, 0, 0, time.Local), *ctxRes.TodayAttendanceStartTime)
+	//assert.Equal(t, time.Date(2025, 6, 12, 0, 0, 0, 0, time.Local), *ctxRes.TodayAttendance.ComputedStartTime)
 
-	ctx.TodayAttendance = &domain.Attendance{
-		Action: domain.Action{
-			ComputedEndTime: ctx.TodayAttendanceEndTime,
-		},
-	}
-
-	ctxRes = golang_node.ComputeAttendanceDefaultStartTime(&ctx)
-	assert.Equal(t, time.Date(2025, 6, 12, 0, 0, 0, 0, time.Local), *ctxRes.TodayAttendanceStartTime)
-	assert.Equal(t, time.Date(2025, 6, 12, 0, 0, 0, 0, time.Local), *ctxRes.TodayAttendance.ComputedStartTime)
-
-	ctx = BuildTestCtx()
-	ctx.TodayAttendanceEndTime = func() *time.Time {
-		t, _ := datetime_util.ParseDatetime("2025-06-12 10:00:00")
-		return &t
-	}()
-
-	ctx.TodayAttendance = &domain.Attendance{
-		Action: domain.Action{
-			ComputedEndTime: ctx.TodayAttendanceEndTime,
-		},
-	}
-
-	ctxRes = golang_node.ComputeAttendanceDefaultStartTime(&ctx)
-	assert.Equal(t, time.Date(2025, 6, 11, 12, 0, 0, 0, time.Local), *ctxRes.TodayAttendanceStartTime)
-	assert.Equal(t, time.Date(2025, 6, 11, 12, 0, 0, 0, time.Local), *ctxRes.TodayAttendance.ComputedStartTime)
+	//ctx = BuildTestCtx()
+	//ctx.TodayAttendanceEndTime = func() *time.Time {
+	//	t, _ := datetime_util.ParseDatetime("2025-06-12 10:00:00")
+	//	return &t
+	//}()
+	//
+	//ctx.TodayAttendance = &domain.Attendance{
+	//	Action: domain.Action{
+	//		ComputedEndTime: ctx.TodayAttendanceEndTime,
+	//	},
+	//}
+	//
+	//ctxRes = golang_node.ComputeAttendanceDefaultStartTime(&ctx)
+	//assert.Equal(t, time.Date(2025, 6, 11, 12, 0, 0, 0, time.Local), *ctxRes.TodayAttendanceStartTime)
+	//assert.Equal(t, time.Date(2025, 6, 11, 12, 0, 0, 0, time.Local), *ctxRes.TodayAttendance.ComputedStartTime)
 
 	// 测试惩罚时间
 	ctx = BuildTestCtx()

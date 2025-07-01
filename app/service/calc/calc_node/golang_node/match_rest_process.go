@@ -53,7 +53,7 @@ func MatchRestProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 	return ctx
 }
 
-func findPreviousActionProcess(i int, actionList []domain.Actionable) *domain.StandardPosition {
+func findPreviousActionProcess(i int, actionList []domain.Actionable) *domain.ProcessPosition {
 	if i < 0 {
 		return nil
 	}
@@ -65,7 +65,7 @@ func findPreviousActionProcess(i int, actionList []domain.Actionable) *domain.St
 	}
 }
 
-func findNextActionProcess(i int, actionList []domain.Actionable) *domain.StandardPosition {
+func findNextActionProcess(i int, actionList []domain.Actionable) *domain.ProcessPosition {
 	if i > len(actionList)-1 {
 		return nil
 	}

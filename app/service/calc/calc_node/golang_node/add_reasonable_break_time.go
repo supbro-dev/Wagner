@@ -71,7 +71,10 @@ func AddReasonableBreakTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 
 const MinIdleTimeKey = "minIdleTimeInMinute"
 
-func getOrDefaultMinIdleTime(process *domain.StandardPosition, defaultMinIdleTime int) int {
+func getOrDefaultMinIdleTime(process *domain.ProcessPosition, defaultMinIdleTime int) int {
+	if process == nil {
+		return defaultMinIdleTime
+	}
 	if process.Properties != nil {
 		if value, exists := process.Properties[MinIdleTimeKey]; exists {
 			return value.(int)

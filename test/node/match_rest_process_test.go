@@ -34,7 +34,7 @@ func TestMatchRestProcess(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 09:00:00")
 					return &t
 				}(),
-				Process: &domain.StandardPosition{
+				Process: &domain.ProcessPosition{
 					Code: "P1",
 				},
 			},
@@ -64,7 +64,7 @@ func TestMatchRestProcess(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 09:00:00")
 					return &t
 				}(),
-				Process: &domain.StandardPosition{
+				Process: &domain.ProcessPosition{
 					Code: "P2",
 				},
 			},
@@ -102,7 +102,7 @@ func TestMatchRestProcess(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 09:00:00")
 					return &t
 				}(),
-				Process: &domain.StandardPosition{
+				Process: &domain.ProcessPosition{
 					Code: "P2",
 				},
 			},
@@ -135,7 +135,7 @@ func TestMatchRestProcess(t *testing.T) {
 	service.DomainHolder = service.DomainServiceHolder{
 		ProcessService: processServiceMock,
 	}
-	processServiceMock.On("FindProcessPositionFirstProcess", "checker", "FOOD", "ConvenientFood").Return(&domain.StandardPosition{
+	processServiceMock.On("FindProcessPositionFirstProcess", "checker", "FOOD", "ConvenientFood").Return(&domain.ProcessPosition{
 		Code: "C1",
 	})
 
@@ -144,26 +144,26 @@ func TestMatchRestProcess(t *testing.T) {
 }
 
 type StandardPositionInterface interface {
-	FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition
+	FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.ProcessPosition
 }
 
 type ProcessServiceMock struct {
 	mock.Mock
 }
 
-func (service *ProcessServiceMock) FindProcessPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
+func (service *ProcessServiceMock) FindProcessPositionListByIndustry(industryCode, subIndustryCode string) []*domain.ProcessPosition {
 	return nil
 }
 
-func (service *ProcessServiceMock) FindProcessPositionByWorkplace(workplaceCode string) []*domain.StandardPosition {
+func (service *ProcessServiceMock) FindProcessPositionByWorkplace(workplaceCode string) []*domain.ProcessPosition {
 	return nil
 }
 
-func (service *ProcessServiceMock) FindProcessPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
+func (service *ProcessServiceMock) FindProcessPositionByIndustry(industryCode, subIndustryCode string) []*domain.ProcessPosition {
 	return nil
 }
 
-func (service *ProcessServiceMock) FindProcessPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition {
+func (service *ProcessServiceMock) FindProcessPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.ProcessPosition {
 	args := service.Called(positionCode, industryCode, subIndustryCode) // 捕获调用参数
-	return args.Get(0).(*domain.StandardPosition)
+	return args.Get(0).(*domain.ProcessPosition)
 }

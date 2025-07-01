@@ -699,7 +699,7 @@ func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, 
 }
 
 func (service *EfficiencyComputeService) computeEachEmployee(employeeSnapshot *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time,
-	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.StandardPosition) (*domain.ComputeContext, *business_error.BusinessError) {
+	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.ProcessPosition) (*domain.ComputeContext, *business_error.BusinessError) {
 	// 根据计算粒度分布式加锁
 	if lockSuccess, err := lock.Lock(employeeSnapshot.Number, operateDay, 2); err != nil {
 		businessError := business_error.LockFailureBySystemError(err)
@@ -743,7 +743,7 @@ func (service *EfficiencyComputeService) computeEachEmployee(employeeSnapshot *d
 }
 
 func runComputeEmployee(service *EfficiencyComputeService, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time,
-	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.StandardPosition, wg *sync.WaitGroup, channel chan *ComputeResult) {
+	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.ProcessPosition, wg *sync.WaitGroup, channel chan *ComputeResult) {
 	// 协程结束时通知WaitGroup
 	defer wg.Done()
 	if eachCtx, err := service.computeEachEmployee(employee, workplace, operateDay, calcParam, standardPositionList); err == nil {

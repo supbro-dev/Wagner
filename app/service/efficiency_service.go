@@ -143,7 +143,7 @@ func (service *EfficiencyService) generateEmployeeColumns(workLoadUnits []calc_d
 	return columns
 }
 
-func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplace, dateRange []*time.Time, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, standardPositions []*domain.StandardPosition) *vo.WorkplaceEfficiencyVO {
+func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplace, dateRange []*time.Time, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, standardPositions []*domain.ProcessPosition) *vo.WorkplaceEfficiencyVO {
 	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplace.Code, DateRange: dateRange, IsCrossPosition: isCrossPosition, WorkLoadUnit: workLoadUnits}
 	processSummaries := service.hourSummaryResultDao.QueryWorkplaceEfficiency(resultQuery)
 
@@ -152,7 +152,7 @@ func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplac
 	return &vo.WorkplaceEfficiencyVO{treeRoot, columns}
 }
 
-func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.Workplace, standardPositions []*domain.StandardPosition, summaries []*entity.WorkLoadWithProcessSummary, workLoadUnits []calc_dynamic_param.WorkLoadUnit) *vo.WorkplaceStructureVO {
+func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.Workplace, standardPositions []*domain.ProcessPosition, summaries []*entity.WorkLoadWithProcessSummary, workLoadUnits []calc_dynamic_param.WorkLoadUnit) *vo.WorkplaceStructureVO {
 	if standardPositions == nil || len(standardPositions) == 0 {
 		return nil
 	}
@@ -163,7 +163,7 @@ func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.
 	}
 
 	// 1.构建树
-	root := service.convert2Structure(&domain.StandardPosition{
+	root := service.convert2Structure(&domain.ProcessPosition{
 		Name: workplace.Name,
 		Code: "-1",
 	})
@@ -230,7 +230,7 @@ func (service *EfficiencyService) iterateTreeRollUp(node *vo.WorkplaceStructureV
 
 var NeedRollUp = "workLoadRollUp"
 
-func (service *EfficiencyService) convert2Structure(position *domain.StandardPosition) *vo.WorkplaceStructureVO {
+func (service *EfficiencyService) convert2Structure(position *domain.ProcessPosition) *vo.WorkplaceStructureVO {
 	v := vo.WorkplaceStructureVO{}
 	v.Name = position.Name
 	v.Code = position.Code

@@ -26,7 +26,7 @@ type ComputeContext struct {
 	// 计算结束时间
 	CalcEndTime time.Time
 	// 环节列表
-	ProcessList []*StandardPosition
+	ProcessList []*ProcessPosition
 
 	// 最近三天工作列表
 	YesterdayWorkList []Actionable

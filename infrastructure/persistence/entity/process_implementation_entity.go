@@ -6,13 +6,14 @@
  */
 package entity
 
-type Implementation struct {
+type ProcessImplementationEntity struct {
 	BaseEntity
-	Name                   string               `gorm:"column:name" json:"name"`
-	TargetCode             string               `gorm:"column:target_code" json:"targetCode"`
-	TargetType             TargetType           `gorm:"column:target_type" json:"targetType"`
-	StandardPositionRootId int64                `gorm:"column:standard_position_root_id" json:"standardPositionRootId"`
-	Status                 ImplementationStatus `gorm:"column:status" json:"status"`
+	Name       string     `gorm:"column:name" json:"name"`
+	TargetCode string     `gorm:"column:target_code" json:"targetCode"`
+	TargetType TargetType `gorm:"column:target_type" json:"targetType"`
+	// rootId同时也是ProcessPosition的版本号
+	ProcessPositionRootId int64                `gorm:"column:process_position_root_id" json:"processPositionRootId"`
+	Status                ImplementationStatus `gorm:"column:status" json:"status"`
 }
 
 type TargetType string

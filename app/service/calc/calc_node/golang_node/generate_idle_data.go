@@ -75,7 +75,7 @@ func GenerateIdleData(ctx *domain.ComputeContext) *domain.ComputeContext {
 	return ctx
 }
 
-func generateIdle(startTime, endTime time.Time, process *domain.StandardPosition, action domain.Actionable) *domain.Idle {
+func generateIdle(startTime, endTime time.Time, process *domain.ProcessPosition, action domain.Actionable) *domain.Idle {
 	idle := &domain.Idle{
 		Action: domain.Action{
 			EmployeeNumber:    action.GetAction().EmployeeNumber,
