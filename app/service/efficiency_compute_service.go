@@ -11,8 +11,8 @@ import (
 	"wagner/app/global/business_error"
 	"wagner/app/global/error_handler"
 	"wagner/app/http/vo"
-	"wagner/app/service/calc_dynamic_param"
-	"wagner/app/service/calc_node"
+	"wagner/app/service/calc/calc_dynamic_param"
+	"wagner/app/service/calc/calc_node"
 	"wagner/app/utils/datetime_util"
 	"wagner/app/utils/lock"
 	"wagner/app/utils/log"
@@ -238,7 +238,7 @@ func (service *EfficiencyComputeService) buildWorkLoadDesc(current *vo.ProcessDu
 func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber string, operateDay time.Time) (*domain.ComputeContext, *calc_dynamic_param.CalcParam, *business_error.BusinessError) {
 	employeeSnapshotService := DomainHolder.EmployeeSnapshotService
 	calcDynamicParamService := DomainHolder.CalcDynamicParamService
-	standardPositionService := DomainHolder.StandardPositionService
+	processService := DomainHolder.ProcessService
 	workplaceService := DomainHolder.WorkplaceService
 
 	// 1.获取员工当天快照和工作点信息
@@ -253,13 +253,13 @@ func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber stri
 	}
 
 	// 3. 查询工序映射关系
-	standardPositionList := standardPositionService.FindStandardPositionByWorkplace(employee.WorkplaceCode)
+	processPositionList := processService.FindProcessPositionByWorkplace(employee.WorkplaceCode)
 
 	ctx := domain.ComputeContext{
 		Employee:       employee,
 		Workplace:      workplace,
 		OperateDay:     operateDay,
-		ProcessList:    standardPositionList,
+		ProcessList:    processPositionList,
 		CalcOtherParam: calcParam.CalcOtherParam,
 	}
 
@@ -626,7 +626,7 @@ func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, 
 	workplaceService := DomainHolder.WorkplaceService
 	employeeSnapshotService := DomainHolder.EmployeeSnapshotService
 	calcDynamicParamService := DomainHolder.CalcDynamicParamService
-	standardPositionService := DomainHolder.StandardPositionService
+	processPositionService := DomainHolder.ProcessService
 
 	workplace := workplaceService.FindByCode(workplaceCode)
 	if workplace == nil {
@@ -644,14 +644,14 @@ func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, 
 	}
 
 	// 3. 查询工序映射关系
-	standardPositionList := standardPositionService.FindStandardPositionByWorkplace(workplaceCode)
+	processPositionList := processPositionService.FindProcessPositionByWorkplace(workplaceCode)
 
 	var wg sync.WaitGroup
 	ctxChannel := make(chan *ComputeResult, len(employeeSnapshots))
 
 	for _, employeeSnapshot := range employeeSnapshots {
 		wg.Add(1)
-		go runComputeEmployee(service, employeeSnapshot, workplace, operateDay, calcParam, standardPositionList, &wg, ctxChannel)
+		go runComputeEmployee(service, employeeSnapshot, workplace, operateDay, calcParam, processPositionList, &wg, ctxChannel)
 	}
 
 	// 等待协程完成

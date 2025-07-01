@@ -8,7 +8,7 @@ package golang_node
 
 import (
 	"wagner/app/domain"
-	"wagner/app/service/standard_position"
+	"wagner/app/service/process"
 	"wagner/app/utils/script_util"
 )
 
@@ -39,5 +39,5 @@ func findFirstProcess(work domain.Actionable, processList []*domain.StandardPosi
 		}
 	}
 
-	return standard_position.OtherProcess
+	return process.OtherProcess
 }

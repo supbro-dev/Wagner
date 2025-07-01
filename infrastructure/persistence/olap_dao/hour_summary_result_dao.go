@@ -16,7 +16,7 @@ import (
 	"strings"
 	"wagner/app/domain"
 	"wagner/app/global/business_error"
-	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc/calc_dynamic_param"
 	"wagner/app/utils/log"
 	"wagner/infrastructure/persistence/common"
 	"wagner/infrastructure/persistence/entity"

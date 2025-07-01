@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 	"wagner/app/domain"
-	"wagner/app/service/calc_node/golang_node"
+	"wagner/app/service/calc/calc_node/golang_node"
 	"wagner/app/utils/datetime_util"
 )
 

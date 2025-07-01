@@ -12,7 +12,7 @@ import (
 	"time"
 	"wagner/app/domain"
 	"wagner/app/service"
-	"wagner/app/service/calc_node/golang_node"
+	"wagner/app/service/calc/calc_node/golang_node"
 	"wagner/app/utils/datetime_util"
 )
 
@@ -124,11 +124,11 @@ func TestGenerateIdleData(t *testing.T) {
 		return &t
 	}()
 
-	standardPositionMock := new(StandardPositionMock)
+	processServiceMock := new(ProcessServiceMock)
 	service.DomainHolder = service.DomainServiceHolder{
-		StandardPositionService: standardPositionMock,
+		ProcessService: processServiceMock,
 	}
-	standardPositionMock.On("FindPositionFirstProcess", "checker", "FOOD", "ConvenientFood").Return(&domain.StandardPosition{
+	processServiceMock.On("FindProcessPositionFirstProcess", "checker", "FOOD", "ConvenientFood").Return(&domain.StandardPosition{
 		Code: "C1",
 	})
 

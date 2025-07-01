@@ -8,7 +8,7 @@ package node
 
 import (
 	"wagner/app/domain"
-	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc/calc_dynamic_param"
 	"wagner/app/utils/datetime_util"
 )
 

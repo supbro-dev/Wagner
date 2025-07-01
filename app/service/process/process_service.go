@@ -1,4 +1,10 @@
-package standard_position
+/*
+* @Author: supbro
+* @Date:   2025/7/1 13:14
+* @Last Modified by:   supbro
+* @Last Modified time: 2025/7/1 13:14
+ */
+package process
 
 import (
 	"math"
@@ -8,20 +14,21 @@ import (
 	"wagner/infrastructure/persistence/entity"
 )
 
-type StandardPositionItf interface {
-	FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition
-	FindStandardPositionByWorkplace(workplaceCode string) []*domain.StandardPosition
-	FindStandardPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition
-	FindStandardPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition
+type ProcessService interface {
+	FindProcessPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition
+	FindProcessPositionByWorkplace(workplaceCode string) []*domain.StandardPosition
+	FindProcessPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition
+	FindProcessPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition
 }
 
-type StandardPositionService struct {
-	standardPositionDao *dao.StandardPositionDao
+type ProcessServiceImpl struct {
+	processPositionDao  *dao.ProcessPositionDao
+	processImplementDao *dao.ProcessImplementDao
 	workplaceDao        *dao.WorkplaceDao
 }
 
-func CreateStandardPositionService(standardPositionDao *dao.StandardPositionDao, workplaceDao *dao.WorkplaceDao) StandardPositionItf {
-	return &StandardPositionService{standardPositionDao, workplaceDao}
+func CreateProcessServiceImpl(processPositionDao *dao.ProcessPositionDao, processImplementDao *dao.ProcessImplementDao, workplaceDao *dao.WorkplaceDao) ProcessService {
+	return &ProcessServiceImpl{processPositionDao, processImplementDao, workplaceDao}
 }
 
 var OtherProcess = &domain.StandardPosition{
@@ -29,13 +36,12 @@ var OtherProcess = &domain.StandardPosition{
 	Code: "Others",
 }
 
-// todo 需要提供缓存
-func (service *StandardPositionService) FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition {
-	maxVersion := service.standardPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
-	positionList := service.standardPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)
+func (service *ProcessServiceImpl) FindProcessPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition {
+	maxVersion := service.processPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
+	positionList := service.processPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)
 
 	minOrder := math.MaxInt
-	var minProcess *entity.StandardPositionEntity
+	var minProcess *entity.ProcessPositionEntity
 	for _, positionEntity := range positionList {
 		if positionEntity.ParentCode == positionCode && positionEntity.Order < minOrder {
 			minOrder = positionEntity.Order
@@ -50,7 +56,7 @@ func (service *StandardPositionService) FindPositionFirstProcess(positionCode st
 }
 
 // 根据工作点编码获取标准岗位模型
-func (service *StandardPositionService) FindStandardPositionByWorkplace(workplaceCode string) []*domain.StandardPosition {
+func (service *ProcessServiceImpl) FindProcessPositionByWorkplace(workplaceCode string) []*domain.StandardPosition {
 	// todo 这里应该查找工序实施配置，在没有实施流程时，直接根据工作点查找行业的标准模型
 	positions := make([]*domain.StandardPosition, 0)
 
@@ -60,14 +66,14 @@ func (service *StandardPositionService) FindStandardPositionByWorkplace(workplac
 		return positions
 	}
 
-	positionList := service.FindStandardPositionByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
+	positionList := service.FindProcessPositionByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
 	return positionList
 }
 
 // 按从根至叶子节点的顺序查出来
-func (service *StandardPositionService) FindStandardPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
-	maxVersion := service.standardPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
-	positionList := service.standardPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)
+func (service *ProcessServiceImpl) FindProcessPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
+	maxVersion := service.processPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
+	positionList := service.processPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)
 
 	domainList := make([]*domain.StandardPosition, 0)
 	for _, positionEntity := range positionList {
@@ -78,18 +84,18 @@ func (service *StandardPositionService) FindStandardPositionListByIndustry(indus
 	return domainList
 }
 
-func (service *StandardPositionService) FindStandardPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
-	maxVersion := service.standardPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
-	positionList := service.standardPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)
+func (service *ProcessServiceImpl) FindProcessPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
+	maxVersion := service.processPositionDao.FindMaxVersionByIndustry(industryCode, subIndustryCode)
+	positionList := service.processPositionDao.FindByIndustry(industryCode, subIndustryCode, maxVersion)
 
 	return service.buildLeafNodePaths(positionList)
 }
 
-func (service *StandardPositionService) buildLeafNodePaths(positionEntities []*entity.StandardPositionEntity) []*domain.StandardPosition {
+func (service *ProcessServiceImpl) buildLeafNodePaths(positionEntities []*entity.ProcessPositionEntity) []*domain.StandardPosition {
 	// 创建三个核心映射
-	entityMap := make(map[string]*entity.StandardPositionEntity)     // code -> 实体指针
-	childrenMap := make(map[string][]*entity.StandardPositionEntity) // parentCode -> 子节点列表
-	parentMap := make(map[string]*entity.StandardPositionEntity)     // code -> 父节点指针
+	entityMap := make(map[string]*entity.ProcessPositionEntity)     // code -> 实体指针
+	childrenMap := make(map[string][]*entity.ProcessPositionEntity) // parentCode -> 子节点列表
+	parentMap := make(map[string]*entity.ProcessPositionEntity)     // code -> 父节点指针
 
 	// 最大部门层级
 	maxDeptLevel := 0
@@ -119,7 +125,7 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []*e
 	maxDeptLevel = maxDeptLevel - 2
 
 	// 收集所有叶子节点（没有子节点的节点）
-	var leafNodes []*entity.StandardPositionEntity
+	var leafNodes []*entity.ProcessPositionEntity
 	for code, e := range entityMap {
 		// 没有子节点即为叶子节点
 		if len(childrenMap[code]) == 0 {
@@ -144,7 +150,7 @@ func (service *StandardPositionService) buildLeafNodePaths(positionEntities []*e
 	return result
 }
 
-func (service *StandardPositionService) convertEntity2Domain(e *entity.StandardPositionEntity) *domain.StandardPosition {
+func (service *ProcessServiceImpl) convertEntity2Domain(e *entity.ProcessPositionEntity) *domain.StandardPosition {
 
 	d := domain.StandardPosition{
 		Name:       e.Name,
@@ -165,7 +171,7 @@ func (service *StandardPositionService) convertEntity2Domain(e *entity.StandardP
 }
 
 // 递归构建从叶子节点到根节点的路径
-func (service *StandardPositionService) buildParentPath(node *entity.StandardPositionEntity, parentMap map[string]*entity.StandardPositionEntity) []*domain.StandardPosition {
+func (service *ProcessServiceImpl) buildParentPath(node *entity.ProcessPositionEntity, parentMap map[string]*entity.ProcessPositionEntity) []*domain.StandardPosition {
 	var path []*domain.StandardPosition
 
 	// 从直接父节点开始

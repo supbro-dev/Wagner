@@ -222,7 +222,7 @@ func (p EfficiencyHandler) WorkplaceEfficiency(c *gin.Context) {
 
 	workplace := service.DomainHolder.WorkplaceService.FindByCode(workplaceCode)
 
-	standardPositions := service.DomainHolder.StandardPositionService.FindStandardPositionListByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
+	standardPositions := service.DomainHolder.ProcessService.FindProcessPositionListByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
 
 	workplaceEfficiencyVO := service.Holder.EfficiencyService.WorkplaceEfficiency(workplace, []*time.Time{&startDate, &endDate}, domain.IsCrossPosition(isCrossPosition), workLoadUnits, standardPositions)
 

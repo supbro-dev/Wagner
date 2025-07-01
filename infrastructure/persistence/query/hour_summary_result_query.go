@@ -9,7 +9,7 @@ package query
 import (
 	"time"
 	"wagner/app/domain"
-	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc/calc_dynamic_param"
 )
 
 type HourSummaryResultQuery struct {

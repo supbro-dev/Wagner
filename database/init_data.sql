@@ -39,44 +39,44 @@ INSERT INTO `employee`
 VALUES (10, now(), now(), '周杰', 'A1010', '1010', NULL, 'workplace1', 'batch-packer', 'WG2', 'WORKING');
 
 -- 初始化组织架构
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (1, '2025-06-05 11:14:31', '2025-06-14 17:12:15', 'outbound', '出库部', '-1', 'DEPT', '1', 1, 'FOOD', NULL,
         '{\"workLoadRollUp\": true}', NULL, 1);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (2, '2025-06-05 11:14:31', '2025-06-10 14:34:07', 'inbound', '入库部', '-1', 'DEPT', '1', 1, 'FOOD', NULL, NULL,
         NULL, 2);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (3, '2025-06-05 11:14:31', '2025-06-10 14:34:07', 'inventory', '库维部', '-1', 'DEPT', '1', 1, 'FOOD', NULL,
         NULL, NULL, 3)
 ;
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (4, '2025-06-05 11:24:35', '2025-06-14 17:12:15', 'picking', '拣选部', 'outbound', 'DEPT', '2', 1, 'FOOD', NULL,
         '{\"workLoadRollUp\": true}', NULL, 1);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (5, '2025-06-05 11:24:35', '2025-06-10 14:34:07', 'packaging', '包装部', 'outbound', 'DEPT', '2', 1, 'FOOD',
         NULL, NULL, NULL, 2);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (6, '2025-06-05 11:24:35', '2025-06-10 14:34:07', 'shipping', '包裹出库部', 'outbound', 'DEPT', '2', 1, 'FOOD',
         NULL, NULL, NULL, 3);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (7, '2025-06-05 11:24:35', '2025-06-20 10:30:47', 'picker', '拣选员', 'picking', 'POSITION', '3', 1, 'FOOD',
         NULL, '{\"workLoadRollUp\": true}', NULL, 1);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (8, '2025-06-05 11:24:35', '2025-06-20 10:30:47', 'packaging-operator', '包装员', 'packaging', 'POSITION', '3',
         1, 'FOOD', NULL, NULL, NULL, 2);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (9, '2025-06-05 11:24:35', '2025-06-14 17:30:50', 'batch-picking', '批量拣选', 'picker', 'DIRECT_PROCESS', '4',
         1, 'FOOD', NULL, NULL, 'taskType == \"T001\"? true : false', 1);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (10, '2025-06-05 11:24:35', '2025-06-14 17:12:15', 'single-item-picking', '单品拣选', 'picker', 'DIRECT_PROCESS',
         '4', 1, 'FOOD', NULL, '{\"workLoadRollUp\": true}', 'taskType == \"T002\"? true : false', 2);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (11, '2025-06-05 11:24:35', '2025-06-10 14:34:07', 'picking-support', '拣选辅助', 'picker', 'INDIRECT_PROCESS',
         '4', 1, 'FOOD', NULL, NULL, 'indirectWorkType == \"B2\"? true : false', 3);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (12, '2025-06-20 10:30:47', '2025-06-20 10:30:47', 'batch-packer', '秒杀员', 'packaging', 'POSITION', '3', 1,
         'FOOD', NULL, '{\"workLoadRollUp\": true}', NULL, 3);
-INSERT INTO `standard_position`
+INSERT INTO `process_position`
 VALUES (13, '2025-06-20 10:30:47', '2025-06-20 10:30:47', 'batch-packaging', '批量包装', 'batch-packer',
         'INDIRECT_PROCESS', '4', 1, 'FOOD', NULL, NULL, 'indirectWorkType == \"B3\"? true : false', 1);
 

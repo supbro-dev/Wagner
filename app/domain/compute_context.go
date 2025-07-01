@@ -8,7 +8,7 @@ package domain
 
 import (
 	"time"
-	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc/calc_dynamic_param"
 )
 
 // 加工节点上下文
