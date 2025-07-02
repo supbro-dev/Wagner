@@ -37,12 +37,11 @@ func (service *EfficiencyService) EmployeeEfficiency(workplaceCode, employeeNumb
 		WorkplaceCode:      workplaceCode,
 		EmployeeNumber:     employeeNumber,
 		DateRange:          dateRange,
-		AggregateDimension: aggregateDimension,
-		IsCrossPosition:    isCrossPosition,
-		WorkLoadUnit:       workLoadUnits,
+		AggregateDimension: string(aggregateDimension),
+		IsCrossPosition:    string(isCrossPosition),
 		CurrentPage:        currentPage,
 		PageSize:           pageSize}
-	employeeSummaryEntities := service.hourSummaryResultDao.QueryEmployeeEfficiency(resultQuery)
+	employeeSummaryEntities := service.hourSummaryResultDao.QueryEmployeeEfficiency(resultQuery, workLoadUnits)
 
 	total := service.hourSummaryResultDao.TotalEmployeeEfficiency(resultQuery)
 
@@ -144,8 +143,8 @@ func (service *EfficiencyService) generateEmployeeColumns(workLoadUnits []calc_d
 }
 
 func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplace, dateRange []*time.Time, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, standardPositions []*domain.ProcessPosition) *vo.WorkplaceEfficiencyVO {
-	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplace.Code, DateRange: dateRange, IsCrossPosition: isCrossPosition, WorkLoadUnit: workLoadUnits}
-	processSummaries := service.hourSummaryResultDao.QueryWorkplaceEfficiency(resultQuery)
+	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplace.Code, DateRange: dateRange, IsCrossPosition: string(isCrossPosition)}
+	processSummaries := service.hourSummaryResultDao.QueryWorkplaceEfficiency(resultQuery, workLoadUnits)
 
 	treeRoot := service.buildWorkplaceStructureTree(workplace, standardPositions, processSummaries, workLoadUnits)
 	columns := service.generateWorkplaceColumns(workLoadUnits)

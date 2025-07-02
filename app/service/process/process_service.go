@@ -12,12 +12,14 @@ import (
 	"wagner/app/utils/json_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
+	"wagner/infrastructure/persistence/query"
 )
 
 type ProcessService interface {
 	FindFirstProcess(positionCode string, workplace *domain.Workplace) *domain.ProcessPosition
 	FindProcessList(workplace *domain.Workplace) []*domain.ProcessPosition
 	FindProcessPositionList(workplace *domain.Workplace) []*domain.ProcessPosition
+	FindProcessImplementationListByPage(targetType string, workplaceCode string, industryCode string, subIndustryCode string, currentPage int, pageSize int) ([]*domain.ProcessImplementation, int)
 }
 
 type ProcessServiceImpl struct {
@@ -101,6 +103,46 @@ func (service *ProcessServiceImpl) FindProcessPositionList(workplace *domain.Wor
 	}
 
 	return domainList
+}
+
+func (service *ProcessServiceImpl) FindProcessImplementationListByPage(targetType string, workplaceCode string, industryCode string, subIndustryCode string, currentPage int, pageSize int) ([]*domain.ProcessImplementation, int) {
+	var targetCode string
+	switch entity.TargetType(targetType) {
+	case entity.Workplace:
+		targetCode = workplaceCode
+	case entity.Industry:
+		targetCode = industryCode
+	case entity.SubIndustry:
+		targetCode = subIndustryCode
+	}
+	processImplementationQuery := query.ProcessImplementationQuery{
+		targetType, targetCode, currentPage, pageSize,
+	}
+
+	implementationEntities := service.processImplementationDao.QueryProcessImplementation(processImplementationQuery)
+
+	implementationList := make([]*domain.ProcessImplementation, 0)
+	for _, e := range implementationEntities {
+		impl := &domain.ProcessImplementation{
+			Id:         e.Id,
+			Name:       e.Name,
+			TargetType: e.TargetType,
+			TargetCode: e.TargetCode,
+			Status:     e.Status,
+		}
+		switch e.TargetType {
+		case entity.Workplace:
+			workplace := service.workplaceDao.FindByCode(e.TargetCode)
+			impl.TargetName = workplace.Name
+		default:
+			impl.TargetName = e.TargetCode
+		}
+		implementationList = append(implementationList, impl)
+	}
+
+	total := service.processImplementationDao.CountProcessImplementation(processImplementationQuery)
+
+	return implementationList, total
 }
 
 func (service *ProcessServiceImpl) buildLeafNodePaths(positionEntities []*entity.ProcessPositionEntity) []*domain.ProcessPosition {

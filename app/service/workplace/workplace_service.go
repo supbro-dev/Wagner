@@ -34,6 +34,30 @@ func (service *WorkplaceService) FindAll() []*domain.Workplace {
 	return workplaces
 }
 
+// 暂时从工作点表里获取
+func (service *WorkplaceService) FindAllIndustry() []string {
+	workplaceList := service.workplaceDao.FindAll()
+
+	industries := make([]string, 0)
+	for _, workplaceEntity := range workplaceList {
+		industries = append(industries, workplaceEntity.IndustryCode)
+	}
+
+	return industries
+}
+
+// 暂时从工作点表里获取
+func (service *WorkplaceService) FindAllSubIndustry() []string {
+	workplaceList := service.workplaceDao.FindAll()
+
+	subIndustries := make([]string, 0)
+	for _, workplaceEntity := range workplaceList {
+		subIndustries = append(subIndustries, workplaceEntity.SubIndustryCode)
+	}
+
+	return subIndustries
+}
+
 func (service *WorkplaceService) FindByCode(code string) *domain.Workplace {
 	workplaceEntity := service.workplaceDao.FindByCode(code)
 

@@ -16,6 +16,10 @@ type ProcessImplementationEntity struct {
 	Status                ImplementationStatus `gorm:"column:status" json:"status"`
 }
 
+func (u *ProcessImplementationEntity) TableName() string {
+	return "process_implementation" // 自定义表名
+}
+
 type TargetType string
 
 var (
@@ -27,8 +31,6 @@ var (
 type ImplementationStatus string
 
 var (
-	// 准备中
-	Preparing ImplementationStatus = "preparing"
 	// 上线
 	Online ImplementationStatus = "online"
 	// 下线

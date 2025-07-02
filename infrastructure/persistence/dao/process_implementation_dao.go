@@ -9,6 +9,9 @@ package dao
 import (
 	"gorm.io/gorm"
 	"wagner/infrastructure/persistence/entity"
+	"wagner/infrastructure/persistence/query"
+	//"wagner/infrastructure/persistence/query"
+	//"wagner/infrastructure/persistence/query"
 )
 
 type ProcessImplementationDao struct {
@@ -35,4 +38,35 @@ func (d *ProcessImplementationDao) FindByWorkplaceCode(workplaceCode string) *en
 	processImplementation := &entity.ProcessImplementationEntity{}
 	d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'workplace' and target_code=? ", workplaceCode).First(processImplementation)
 	return processImplementation
+}
+
+func (d *ProcessImplementationDao) QueryProcessImplementation(query query.ProcessImplementationQuery) []*entity.ProcessImplementationEntity {
+	processImplementationList := make([]*entity.ProcessImplementationEntity, 0)
+	tx := d.db.Model(entity.ProcessImplementationEntity{}).
+		Limit(query.PageSize).
+		Offset((query.CurrentPage - 1) * query.PageSize)
+	if query.TargetCode != "" {
+		tx.Where("target_code = ? and target_type = ?", query.TargetCode, query.TargetType)
+	} else {
+		tx.Where("target_type = ?", query.TargetType)
+	}
+	tx.Find(&processImplementationList)
+
+	return processImplementationList
+}
+
+func (d *ProcessImplementationDao) CountProcessImplementation(query query.ProcessImplementationQuery) int {
+	var total int
+	tx := d.db.Model(entity.ProcessImplementationEntity{}).
+		Select("count(1)").
+		Limit(query.PageSize).
+		Offset((query.CurrentPage - 1) * query.PageSize)
+	if query.TargetCode != "" {
+		tx.Where("target_code = ? and target_type = ?", query.TargetCode, query.TargetType)
+	} else {
+		tx.Where("target_type = ?", query.TargetType)
+	}
+	tx.Find(&total)
+
+	return total
 }

@@ -39,8 +39,16 @@ func InitRouter() *gin.Engine {
 	vApi := router.Group("/api/v1/")
 	{
 		workplace := vApi.Group("workplace/")
+		workplaceHandler := controller.WorkplaceHandler{}
 		{
-			workplace.GET("all", controller.WorkplaceHandler{}.FindAll)
+			workplace.GET("all", workplaceHandler.FindAll)
+			workplace.GET("allIndustry", workplaceHandler.FindAllIndustry)
+			workplace.GET("allSubIndustry", workplaceHandler.FindAllSubIndustry)
+		}
+		process := vApi.Group("process/")
+		processHandler := controller.ProcessHandler{}
+		{
+			process.GET("implementation", processHandler.Implementation)
 		}
 		efficiency := vApi.Group("efficiency/")
 		efficiencyHandler := controller.EfficiencyHandler{}

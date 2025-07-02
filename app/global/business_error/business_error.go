@@ -13,16 +13,17 @@ type BusinessError struct {
 }
 
 var (
-	OsError         string = "操作系统异常"
-	ParamError      string = "传参异常"
-	HttpInvokeError string = "HTTP调用异常"
-	SystemError     string = "系统异常"
-	LockHandleError string = "锁异常"
-	ComputeError    string = "计算异常"
-	CacheError      string = "缓存异常"
-	BasicDataError  string = "基础数据异常"
-	MysqlError      string = "Mysql异常"
-	DaoError        string = "DAO异常"
+	OsError                    string = "操作系统异常"
+	ParamError                 string = "传参异常"
+	HttpInvokeError            string = "HTTP调用异常"
+	SystemError                string = "系统异常"
+	LockHandleError            string = "锁异常"
+	ComputeError               string = "计算异常"
+	CacheError                 string = "缓存异常"
+	BasicDataError             string = "基础数据异常"
+	MysqlError                 string = "Mysql异常"
+	DaoError                   string = "DAO异常"
+	ProcessImplementationError string = "环节实施异常"
 )
 
 // 实现 error 接口
@@ -129,4 +130,9 @@ func ReflectSetDataError(err error) *BusinessError {
 
 func UnsupportedFieldTypeError() *BusinessError {
 	return &BusinessError{DaoError, 9702, "不支持的属性类型", nil, nil}
+}
+
+// 环节
+func ProcessTargetTypeError() *BusinessError {
+	return &BusinessError{ProcessImplementationError, 9801, "环节实施类型异常", nil, nil}
 }
