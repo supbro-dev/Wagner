@@ -151,19 +151,15 @@ type ProcessServiceMock struct {
 	mock.Mock
 }
 
-func (service *ProcessServiceMock) FindProcessPositionListByIndustry(industryCode, subIndustryCode string) []*domain.ProcessPosition {
-	return nil
+func (service *ProcessServiceMock) FindProcessList(workplace *domain.Workplace) []*domain.ProcessPosition {
+	panic("implement me")
 }
 
-func (service *ProcessServiceMock) FindProcessPositionByWorkplace(workplaceCode string) []*domain.ProcessPosition {
-	return nil
+func (service *ProcessServiceMock) FindProcessPositionList(workplace *domain.Workplace) []*domain.ProcessPosition {
+	panic("implement me")
 }
 
-func (service *ProcessServiceMock) FindProcessPositionByIndustry(industryCode, subIndustryCode string) []*domain.ProcessPosition {
-	return nil
-}
-
-func (service *ProcessServiceMock) FindProcessPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.ProcessPosition {
-	args := service.Called(positionCode, industryCode, subIndustryCode) // 捕获调用参数
+func (service *ProcessServiceMock) FindFirstProcess(positionCode string, workplace *domain.Workplace) *domain.ProcessPosition {
+	args := service.Called(positionCode, workplace) // 捕获调用参数
 	return args.Get(0).(*domain.ProcessPosition)
 }

@@ -41,7 +41,7 @@ func MatchRestProcess(ctx *domain.ComputeContext) *domain.ComputeContext {
 			} else {
 				// 如果前后都没有环节，使用员工所属岗位下第一个环节
 				processService := service.DomainHolder.ProcessService
-				firstProcess := processService.FindProcessPositionFirstProcess(ctx.Employee.PositionCode, ctx.Workplace.IndustryCode, ctx.Workplace.SubIndustryCode)
+				firstProcess := processService.FindFirstProcess(ctx.Employee.PositionCode, ctx.Workplace)
 
 				rest.GetAction().Process = firstProcess
 			}

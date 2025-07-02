@@ -252,8 +252,8 @@ func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber stri
 		return nil, nil, err
 	}
 
-	// 3. 查询工序映射关系
-	processPositionList := processService.FindProcessPositionByWorkplace(employee.WorkplaceCode)
+	// 3. 查询环节映射关系
+	processPositionList := processService.FindProcessList(workplace)
 
 	ctx := domain.ComputeContext{
 		Employee:       employee,
@@ -643,8 +643,8 @@ func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, 
 		return false, err
 	}
 
-	// 3. 查询工序映射关系
-	processPositionList := processPositionService.FindProcessPositionByWorkplace(workplaceCode)
+	// 3. 查询环节映射关系
+	processPositionList := processPositionService.FindProcessList(workplace)
 
 	var wg sync.WaitGroup
 	ctxChannel := make(chan *ComputeResult, len(employeeSnapshots))
