@@ -142,17 +142,17 @@ func (service *EfficiencyService) generateEmployeeColumns(workLoadUnits []calc_d
 	return columns
 }
 
-func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplace, dateRange []*time.Time, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, standardPositions []*domain.ProcessPosition) *vo.WorkplaceEfficiencyVO {
+func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplace, dateRange []*time.Time, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, processPositions []*domain.ProcessPosition) *vo.WorkplaceEfficiencyVO {
 	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplace.Code, DateRange: dateRange, IsCrossPosition: string(isCrossPosition)}
 	processSummaries := service.hourSummaryResultDao.QueryWorkplaceEfficiency(resultQuery, workLoadUnits)
 
-	treeRoot := service.buildWorkplaceStructureTree(workplace, standardPositions, processSummaries, workLoadUnits)
+	treeRoot := service.buildWorkplaceStructureTree(workplace, processPositions, processSummaries, workLoadUnits)
 	columns := service.generateWorkplaceColumns(workLoadUnits)
 	return &vo.WorkplaceEfficiencyVO{treeRoot, columns}
 }
 
-func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.Workplace, standardPositions []*domain.ProcessPosition, summaries []*entity.WorkLoadWithProcessSummary, workLoadUnits []calc_dynamic_param.WorkLoadUnit) *vo.WorkplaceStructureVO {
-	if standardPositions == nil || len(standardPositions) == 0 {
+func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.Workplace, processPositions []*domain.ProcessPosition, summaries []*entity.WorkLoadWithProcessSummary, workLoadUnits []calc_dynamic_param.WorkLoadUnit) *vo.WorkplaceStructureVO {
+	if processPositions == nil || len(processPositions) == 0 {
 		return nil
 	}
 
@@ -169,7 +169,7 @@ func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.
 	code2Node := make(map[string]*vo.WorkplaceStructureVO, 0)
 	code2Node[root.Code] = root
 
-	for _, position := range standardPositions {
+	for _, position := range processPositions {
 		parentCode := position.ParentCode
 		parentNode := code2Node[parentCode]
 		node := service.convert2Structure(position)

@@ -7,8 +7,9 @@
 package query
 
 type ProcessImplementationQuery struct {
-	TargetType string
-	TargetCode string
+	TargetType  string
+	TargetCode  string
+	Code        string
 	CurrentPage int
-	PageSize int
+	PageSize    int
 }

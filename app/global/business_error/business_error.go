@@ -66,6 +66,10 @@ func ParamIsWrong(paramNames ...interface{}) *BusinessError {
 	return &BusinessError{ParamError, 9104, "参数错误:%v", paramNames, nil}
 }
 
+func SubmitDataIsWrong(err error) *BusinessError {
+	return &BusinessError{ParamError, 9105, "参数提交有误", nil, err}
+}
+
 // LOCK_ERROR
 func LockFailureBySystemError(err error) *BusinessError {
 	return &BusinessError{LockHandleError, 9201, "加锁异常", nil, err}
@@ -135,4 +139,8 @@ func UnsupportedFieldTypeError() *BusinessError {
 // 环节
 func ProcessTargetTypeError() *BusinessError {
 	return &BusinessError{ProcessImplementationError, 9801, "环节实施类型异常", nil, nil}
+}
+
+func ExistSameCodeProcessImpl(code ...interface{}) *BusinessError {
+	return &BusinessError{ProcessImplementationError, 9802, "环节实施已存在:%v", code, nil}
 }

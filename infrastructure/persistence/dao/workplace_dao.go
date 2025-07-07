@@ -27,6 +27,14 @@ func (dao *WorkplaceDao) FindAll() []*entity.WorkplaceEntity {
 	return workplaceList
 }
 
+// 暂时先这么使用，实际需要有单独的行业元数据管理
+func (dao *WorkplaceDao) FindSubIndustryBySubindustryCode(subIndustryCode string) string {
+	var industryCode string
+	dao.db.Table("workplace").Where("sub_industry_code = ?", subIndustryCode).Select("industry_code").First(&industryCode)
+
+	return industryCode
+}
+
 func CreateWorkplaceDao(client *gorm.DB) *WorkplaceDao {
 	return &WorkplaceDao{client}
 }

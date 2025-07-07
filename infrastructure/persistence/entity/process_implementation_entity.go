@@ -8,6 +8,7 @@ package entity
 
 type ProcessImplementationEntity struct {
 	BaseEntity
+	Code       string     `gorm:"column:code" json:"code"`
 	Name       string     `gorm:"column:name" json:"name"`
 	TargetCode string     `gorm:"column:target_code" json:"targetCode"`
 	TargetType TargetType `gorm:"column:target_type" json:"targetType"`

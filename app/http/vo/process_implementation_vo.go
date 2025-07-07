@@ -14,8 +14,11 @@ type ProcessImplementationPageVO struct {
 type ProcessImplementationVO struct {
 	Key            string `json:"key"`
 	Id             int64  `json:"id"`
+	Code           string `json:"code"`
 	Name           string `json:"name"`
+	TargetType     string `json:"targetType"`
 	TargetTypeDesc string `json:"targetTypeDesc"`
+	TargetCode     string `json:"targetCode"`
 	TargetName     string `json:"targetName"`
 	Status         string `json:"status"`
 	StatusDesc     string `json:"statusDesc"`

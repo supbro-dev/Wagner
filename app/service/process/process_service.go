@@ -9,6 +9,7 @@ package process
 import (
 	"math"
 	"wagner/app/domain"
+	"wagner/app/global/business_error"
 	"wagner/app/utils/json_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
@@ -20,6 +21,9 @@ type ProcessService interface {
 	FindProcessList(workplace *domain.Workplace) []*domain.ProcessPosition
 	FindProcessPositionList(workplace *domain.Workplace) []*domain.ProcessPosition
 	FindProcessImplementationListByPage(targetType string, workplaceCode string, industryCode string, subIndustryCode string, currentPage int, pageSize int) ([]*domain.ProcessImplementation, int)
+	Save(processImpl *domain.ProcessImplementation) (int64, *business_error.BusinessError)
+	GetImplementationById(id int64) *domain.ProcessImplementation
+	GetProcessPositionTree(id int64) *domain.ProcessPositionTreeNode
 }
 
 type ProcessServiceImpl struct {
@@ -35,6 +39,56 @@ func CreateProcessServiceImpl(processPositionDao *dao.ProcessPositionDao, proces
 var OtherProcess = &domain.ProcessPosition{
 	Name: "其他",
 	Code: "Others",
+}
+
+func (service *ProcessServiceImpl) GetProcessPositionTree(id int64) *domain.ProcessPositionTreeNode {
+	implementationEntity := service.processImplementationDao.FindById(id)
+
+	var positionList []*entity.ProcessPositionEntity
+
+	version := implementationEntity.ProcessPositionRootId
+	switch implementationEntity.TargetType {
+	case entity.Workplace:
+		workplace := service.workplaceDao.FindByCode(implementationEntity.TargetCode)
+		positionList = service.processPositionDao.FindByIndustry(workplace.IndustryCode, workplace.SubIndustryCode, version)
+	case entity.Industry:
+		positionList = service.processPositionDao.FindByIndustry(implementationEntity.TargetCode, "", version)
+	case entity.SubIndustry:
+		subIndustryCode := implementationEntity.TargetCode
+		industryCode := service.workplaceDao.FindSubIndustryBySubindustryCode(subIndustryCode)
+		positionList = service.processPositionDao.FindByIndustry(industryCode, subIndustryCode, version)
+	}
+
+	code2Node := make(map[string]*domain.ProcessPositionTreeNode)
+
+	for _, position := range positionList {
+		if position.Type == entity.DIRECT_PROCESS || position.Type == entity.INDIRECT_PROCESS {
+			continue
+		}
+		node := domain.ProcessPositionTreeNode{
+			Name: position.Name,
+			Code: position.Code,
+			Type: position.Type,
+		}
+
+		parentCode := position.ParentCode
+		if parentCode != "-1" {
+			parentNode := code2Node[parentCode]
+			parentNode.Children = append(parentNode.Children, &node)
+		}
+
+		code2Node[node.Code] = &node
+	}
+
+	return code2Node[implementationEntity.Code]
+}
+
+// 根据id查找环节实施信息
+func (service *ProcessServiceImpl) GetImplementationById(id int64) *domain.ProcessImplementation {
+	e := service.processImplementationDao.FindById(id)
+	impl := service.convertImplEntity2Domain(e)
+
+	return impl
 }
 
 // 查找岗位下的第一个环节
@@ -63,7 +117,7 @@ func (service *ProcessServiceImpl) FindFirstProcess(positionCode string, workpla
 		return nil
 	}
 
-	return service.convertEntity2Domain(minProcess)
+	return service.convertPositionEntity2Domain(minProcess)
 }
 
 // 根据工作点查找所有环节
@@ -98,7 +152,7 @@ func (service *ProcessServiceImpl) FindProcessPositionList(workplace *domain.Wor
 
 	domainList := make([]*domain.ProcessPosition, 0)
 	for _, positionEntity := range positionList {
-		domain := service.convertEntity2Domain(positionEntity)
+		domain := service.convertPositionEntity2Domain(positionEntity)
 		domainList = append(domainList, domain)
 	}
 
@@ -116,33 +170,73 @@ func (service *ProcessServiceImpl) FindProcessImplementationListByPage(targetTyp
 		targetCode = subIndustryCode
 	}
 	processImplementationQuery := query.ProcessImplementationQuery{
-		targetType, targetCode, currentPage, pageSize,
+		TargetType:  targetType,
+		TargetCode:  targetCode,
+		CurrentPage: currentPage,
+		PageSize:    pageSize,
 	}
 
 	implementationEntities := service.processImplementationDao.QueryProcessImplementation(processImplementationQuery)
 
 	implementationList := make([]*domain.ProcessImplementation, 0)
 	for _, e := range implementationEntities {
-		impl := &domain.ProcessImplementation{
-			Id:         e.Id,
-			Name:       e.Name,
-			TargetType: e.TargetType,
-			TargetCode: e.TargetCode,
-			Status:     e.Status,
-		}
-		switch e.TargetType {
-		case entity.Workplace:
-			workplace := service.workplaceDao.FindByCode(e.TargetCode)
-			impl.TargetName = workplace.Name
-		default:
-			impl.TargetName = e.TargetCode
-		}
+		impl := service.convertImplEntity2Domain(e)
 		implementationList = append(implementationList, impl)
 	}
 
 	total := service.processImplementationDao.CountProcessImplementation(processImplementationQuery)
 
 	return implementationList, total
+}
+
+func (service *ProcessServiceImpl) convertImplEntity2Domain(e *entity.ProcessImplementationEntity) *domain.ProcessImplementation {
+	impl := &domain.ProcessImplementation{
+		Id:         e.Id,
+		Code:       e.Code,
+		Name:       e.Name,
+		TargetType: e.TargetType,
+		TargetCode: e.TargetCode,
+		Status:     e.Status,
+	}
+	switch e.TargetType {
+	case entity.Workplace:
+		workplace := service.workplaceDao.FindByCode(e.TargetCode)
+		impl.TargetName = workplace.Name
+	default:
+		impl.TargetName = e.TargetCode
+	}
+
+	return impl
+}
+
+func (service *ProcessServiceImpl) Save(processImpl *domain.ProcessImplementation) (int64, *business_error.BusinessError) {
+	existed := service.processImplementationDao.FindOne(&query.ProcessImplementationQuery{
+		TargetType: string(processImpl.TargetType),
+		TargetCode: processImpl.TargetCode,
+		Code:       processImpl.Code,
+	})
+
+	if existed != nil && existed.Id != processImpl.Id {
+		return 0, business_error.ExistSameCodeProcessImpl(processImpl.Code)
+	}
+
+	e := entity.ProcessImplementationEntity{
+		Code:       processImpl.Code,
+		Name:       processImpl.Name,
+		TargetType: processImpl.TargetType,
+		TargetCode: processImpl.TargetCode,
+		Status:     processImpl.Status,
+	}
+
+	service.processImplementationDao.Save(&e)
+
+	// 如果没有进行更新，gorm不会回填id
+	if e.Id == 0 {
+		return processImpl.Id, nil
+	} else {
+		return e.Id, nil
+	}
+
 }
 
 func (service *ProcessServiceImpl) buildLeafNodePaths(positionEntities []*entity.ProcessPositionEntity) []*domain.ProcessPosition {
@@ -191,7 +285,7 @@ func (service *ProcessServiceImpl) buildLeafNodePaths(positionEntities []*entity
 	result := make([]*domain.ProcessPosition, 0, len(leafNodes))
 	for _, leaf := range leafNodes {
 		path := service.buildParentPath(leaf, parentMap)
-		d := service.convertEntity2Domain(leaf)
+		d := service.convertPositionEntity2Domain(leaf)
 		d.Path = path
 		// 记录最大部门层级
 		d.MaxDeptLevel = maxDeptLevel
@@ -204,7 +298,7 @@ func (service *ProcessServiceImpl) buildLeafNodePaths(positionEntities []*entity
 	return result
 }
 
-func (service *ProcessServiceImpl) convertEntity2Domain(e *entity.ProcessPositionEntity) *domain.ProcessPosition {
+func (service *ProcessServiceImpl) convertPositionEntity2Domain(e *entity.ProcessPositionEntity) *domain.ProcessPosition {
 
 	d := domain.ProcessPosition{
 		Name:       e.Name,
@@ -233,7 +327,7 @@ func (service *ProcessServiceImpl) buildParentPath(node *entity.ProcessPositionE
 
 	// 递归向上遍历父节点
 	for current != nil {
-		path = append(path, service.convertEntity2Domain(current))
+		path = append(path, service.convertPositionEntity2Domain(current))
 
 		// 移动到上一级父节点
 		current = parentMap[current.Code]

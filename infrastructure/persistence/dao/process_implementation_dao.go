@@ -7,11 +7,11 @@
 package dao
 
 import (
+	"errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"wagner/infrastructure/persistence/entity"
 	"wagner/infrastructure/persistence/query"
-	//"wagner/infrastructure/persistence/query"
-	//"wagner/infrastructure/persistence/query"
 )
 
 type ProcessImplementationDao struct {
@@ -69,4 +69,33 @@ func (d *ProcessImplementationDao) CountProcessImplementation(query query.Proces
 	tx.Find(&total)
 
 	return total
+}
+
+// 根据targetType,targetCode,code查找相同的环节实施
+func (d *ProcessImplementationDao) FindOne(q *query.ProcessImplementationQuery) *entity.ProcessImplementationEntity {
+	var processImplementation entity.ProcessImplementationEntity
+	tx := d.db.Model(entity.ProcessImplementationEntity{}).Where("target_type = ? and target_code = ? and code = ?", q.TargetType, q.TargetCode, q.Code).First(&processImplementation)
+
+	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+		return nil // 记录不存在时返回 nil
+	}
+
+	return &processImplementation
+}
+
+// 保存或更新基础信息
+func (d *ProcessImplementationDao) Save(impl *entity.ProcessImplementationEntity) int64 {
+	d.db.Model(entity.ProcessImplementationEntity{}).Omit("gmt_create", "gmt_modified").Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "target_code, target_type, code"}}, // 冲突检测列（唯一索引或主键）
+		DoUpdates: clause.AssignmentColumns([]string{"name", "status"}),      // 更新字段
+	}).Create(impl)
+
+	return impl.Id
+}
+
+// 根据id查找环节实施信息
+func (d *ProcessImplementationDao) FindById(id int64) *entity.ProcessImplementationEntity {
+	processImplementation := entity.ProcessImplementationEntity{}
+	d.db.Model(entity.ProcessImplementationEntity{}).Where("id = ?", id).First(&processImplementation)
+	return &processImplementation
 }

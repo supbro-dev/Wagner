@@ -23,6 +23,7 @@ func (u *ProcessPositionEntity) TableName() string {
 type ProcessPositionType string
 
 var (
+	ROOT ProcessPositionType = "ROOT"
 	// 部门
 	DEPT ProcessPositionType = "DEPT"
 	// 岗位
