@@ -227,8 +227,6 @@ func (service *EfficiencyService) iterateTreeRollUp(node *vo.WorkplaceStructureV
 	}
 }
 
-var NeedRollUp = "workLoadRollUp"
-
 func (service *EfficiencyService) convert2Structure(position *domain.ProcessPosition) *vo.WorkplaceStructureVO {
 	v := vo.WorkplaceStructureVO{}
 	v.Name = position.Name
@@ -236,7 +234,7 @@ func (service *EfficiencyService) convert2Structure(position *domain.ProcessPosi
 	v.Level = position.Level
 	v.Children = make([]*vo.WorkplaceStructureVO, 0)
 	if position.Properties != nil {
-		if needRollUp, exists := position.Properties[NeedRollUp]; exists {
+		if needRollUp, exists := position.Properties[entity.WorkLoadRollUpKey]; exists {
 			v.WorkLoadRollUp = needRollUp.(bool)
 		}
 	}

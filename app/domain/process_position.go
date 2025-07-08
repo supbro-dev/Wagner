@@ -9,6 +9,7 @@ package domain
 import "wagner/infrastructure/persistence/entity"
 
 type ProcessPosition struct {
+	Id         int64
 	Name       string
 	Code       string
 	ParentCode string

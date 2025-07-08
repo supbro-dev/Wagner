@@ -86,7 +86,7 @@ CREATE TABLE `process_position`
     `sub_industry_code` varchar(45)          DEFAULT NULL COMMENT '子行业编码',
     `properties`        json                 DEFAULT NULL COMMENT '其他属性',
     `script`            text COMMENT '环节匹配脚本(EL表达式)',
-    `order`             int                  DEFAULT NULL COMMENT '顺序',
+    `sort_index`             int                  DEFAULT NULL COMMENT '顺序',
     PRIMARY KEY (`id`),
     KEY                 `idx_version` (`version`),
     KEY                 `idx_ic_sic` (`industry_code`,`sub_industry_code`)

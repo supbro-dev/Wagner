@@ -13,7 +13,7 @@ type ProcessPositionEntity struct {
 	SubIndustryCode string              `gorm:"column:sub_industry_code" json:"sub_industry_code"`
 	Script          string              `gorm:"column:script" json:"script"`
 	Properties      string              `gorm:"column:properties" json:"properties"`
-	Order           int                 `gorm:"column:order" json:"order"`
+	SortIndex       int                 `gorm:"column:sort_index" json:"sortIndex"`
 }
 
 func (u *ProcessPositionEntity) TableName() string {
@@ -32,4 +32,27 @@ var (
 	DIRECT_PROCESS ProcessPositionType = "DIRECT_PROCESS"
 	// 间接环节
 	INDIRECT_PROCESS ProcessPositionType = "INDIRECT_PROCESS"
+)
+
+func ProcessPositionType2Desc(processPositionType ProcessPositionType) string {
+	switch processPositionType {
+	case ROOT:
+		return "根节点"
+	case DEPT:
+		return "部门"
+	case POSITION:
+		return "岗位"
+	case DIRECT_PROCESS:
+		return "直接环节"
+	case INDIRECT_PROCESS:
+		return "间接环节"
+	default:
+		return "未知"
+	}
+}
+
+var (
+	MaxTimeInMinuteKey = "maxTimeInMinute"
+	MinIdleTimeKey     = "minIdleTimeInMinute"
+	WorkLoadRollUpKey  = "workLoadRollUp"
 )

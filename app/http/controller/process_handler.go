@@ -7,6 +7,7 @@
 package controller
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/copier"
 	"strconv"
@@ -109,6 +110,7 @@ func (p ProcessHandler) GetImplementationById(c *gin.Context) {
 
 	if err != nil {
 		response.ReturnError(c, business_error.ParamIsWrong("id"))
+		return
 	}
 
 	impl := service.DomainHolder.ProcessService.GetImplementationById(int64(id))
@@ -122,6 +124,7 @@ func (p ProcessHandler) GetProcessPositionTree(c *gin.Context) {
 
 	if err != nil {
 		response.ReturnError(c, business_error.ParamIsWrong("id"))
+		return
 	}
 
 	tree := service.DomainHolder.ProcessService.GetProcessPositionTree(int64(id))
@@ -129,6 +132,63 @@ func (p ProcessHandler) GetProcessPositionTree(c *gin.Context) {
 	treeNodeVo := p.iterateConvert2Vo(tree)
 
 	response.ReturnSuccessJson(c, treeNodeVo)
+}
+
+func (p ProcessHandler) FindProcessByParentProcessCode(c *gin.Context) {
+	processCode := c.Query("processCode")
+	processImplId := c.Query("processImplId")
+
+	id, err := strconv.Atoi(processImplId)
+	if err != nil {
+		response.ReturnError(c, business_error.ParamIsWrong("processImplId"))
+		return
+	}
+
+	if processCode == "" {
+		response.ReturnError(c, business_error.ParamIsNil("processCode"))
+		return
+	}
+
+	impl := service.DomainHolder.ProcessService.GetImplementationById(int64(id))
+	version := impl.ProcessPositionRootId
+
+	processPositionList := service.DomainHolder.ProcessService.FindProcessByParentCode(processCode, version)
+
+	detailList := p.convertProcessDomainList2Detail(processPositionList)
+
+	response.ReturnSuccessJson(c, detailList)
+}
+
+func (p ProcessHandler) convertProcessDomainList2Detail(processPositionList []*domain.ProcessPosition) []*vo.ProcessDetailVo {
+	detailList := make([]*vo.ProcessDetailVo, 0)
+	for _, process := range processPositionList {
+		detail := vo.ProcessDetailVo{
+			Id:          process.Id,
+			ProcessName: process.Name,
+			ProcessCode: process.Code,
+			TypeDesc:    entity.ProcessPositionType2Desc(process.Type),
+			Script:      process.Script,
+		}
+
+		if maxTimeInMinute, exists := process.Properties[entity.MaxTimeInMinuteKey]; exists {
+			detail.MaxTimeInMinute = fmt.Sprintf("%v", maxTimeInMinute)
+		} else {
+			detail.MaxTimeInMinute = "默认"
+		}
+		if minIdleTimeInMinute, exists := process.Properties[entity.MinIdleTimeKey]; exists {
+			detail.MinIdleTimeInMinute = fmt.Sprintf("%v", minIdleTimeInMinute)
+		} else {
+			detail.MinIdleTimeInMinute = "默认"
+		}
+		if workLoadRollUp, exists := process.Properties[entity.WorkLoadRollUpKey]; exists {
+			if parseBool, err := strconv.ParseBool(fmt.Sprintf("%v", workLoadRollUp)); err == nil && parseBool {
+				detail.WorkLoadRollUpDesc = "是"
+			}
+		}
+		detailList = append(detailList, &detail)
+	}
+
+	return detailList
 }
 
 func (p ProcessHandler) iterateConvert2Vo(node *domain.ProcessPositionTreeNode) *vo.ProcessPositionTreeNodeVo {

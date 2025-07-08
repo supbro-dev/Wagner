@@ -9,11 +9,12 @@ package domain
 import "wagner/infrastructure/persistence/entity"
 
 type ProcessImplementation struct {
-	Id         int64
-	Code       string
-	Name       string
-	TargetType entity.TargetType
-	TargetCode string
-	TargetName string
-	Status     entity.ImplementationStatus
+	Id                    int64
+	Code                  string
+	Name                  string
+	TargetType            entity.TargetType
+	TargetCode            string
+	TargetName            string
+	Status                entity.ImplementationStatus
+	ProcessPositionRootId int64
 }

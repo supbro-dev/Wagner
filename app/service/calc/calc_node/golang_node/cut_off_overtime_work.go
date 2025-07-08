@@ -11,6 +11,7 @@ import (
 	"time"
 	"wagner/app/domain"
 	"wagner/app/utils/datetime_util"
+	"wagner/infrastructure/persistence/entity"
 )
 
 // 超长的作业进行截断
@@ -48,14 +49,12 @@ func CutOffOvertimeWork(ctx *domain.ComputeContext) *domain.ComputeContext {
 	return ctx
 }
 
-const MaxTimeKey = "maxTimeInMinute"
-
 func getOrDefaultMaxTime(process *domain.ProcessPosition, defaultMaxTime int) int {
 	if process == nil {
 		return defaultMaxTime
 	}
 	if process.Properties != nil {
-		if value, exists := process.Properties[MaxTimeKey]; exists {
+		if value, exists := process.Properties[entity.MaxTimeInMinuteKey]; exists {
 			return value.(int)
 		}
 	}

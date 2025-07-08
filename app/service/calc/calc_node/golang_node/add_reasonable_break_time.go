@@ -11,6 +11,7 @@ import (
 	"sort"
 	"wagner/app/domain"
 	"wagner/app/utils/datetime_util"
+	"wagner/infrastructure/persistence/entity"
 )
 
 // 在作业之间添加合理休息
@@ -69,14 +70,12 @@ func AddReasonableBreakTime(ctx *domain.ComputeContext) *domain.ComputeContext {
 	return ctx
 }
 
-const MinIdleTimeKey = "minIdleTimeInMinute"
-
 func getOrDefaultMinIdleTime(process *domain.ProcessPosition, defaultMinIdleTime int) int {
 	if process == nil {
 		return defaultMinIdleTime
 	}
 	if process.Properties != nil {
-		if value, exists := process.Properties[MinIdleTimeKey]; exists {
+		if value, exists := process.Properties[entity.MinIdleTimeKey]; exists {
 			return value.(int)
 		}
 	}

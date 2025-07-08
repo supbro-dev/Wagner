@@ -39,3 +39,13 @@ func (dao *ProcessPositionDao) FindByIndustry(industryCode string, subIndustryCo
 		return array
 	}
 }
+
+// 根据父编码和版本号查找
+func (dao *ProcessPositionDao) FindByParentCodeAndVersion(parentCode string, version int64) []*entity.ProcessPositionEntity {
+	array := make([]*entity.ProcessPositionEntity, 0)
+	dao.db.Where("parent_code = ? and version = ?", parentCode, version).
+		Order("sort_index").
+		Find(&array)
+
+	return array
+}

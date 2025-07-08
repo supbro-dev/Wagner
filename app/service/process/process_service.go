@@ -24,6 +24,7 @@ type ProcessService interface {
 	Save(processImpl *domain.ProcessImplementation) (int64, *business_error.BusinessError)
 	GetImplementationById(id int64) *domain.ProcessImplementation
 	GetProcessPositionTree(id int64) *domain.ProcessPositionTreeNode
+	FindProcessByParentCode(parentCode string, version int64) []*domain.ProcessPosition
 }
 
 type ProcessServiceImpl struct {
@@ -39,6 +40,39 @@ func CreateProcessServiceImpl(processPositionDao *dao.ProcessPositionDao, proces
 var OtherProcess = &domain.ProcessPosition{
 	Name: "其他",
 	Code: "Others",
+}
+
+func (service *ProcessServiceImpl) FindProcessByParentCode(parentCode string, version int64) []*domain.ProcessPosition {
+	result := service.iterateFindProcessByParentCode(parentCode, version)
+
+	domainList := make([]*domain.ProcessPosition, 0)
+	for _, positionEntity := range result {
+		d := service.convertPositionEntity2Domain(positionEntity)
+		domainList = append(domainList, d)
+	}
+
+	return domainList
+}
+
+// 数据量可控，采用递归查询
+func (service *ProcessServiceImpl) iterateFindProcessByParentCode(parentCode string, version int64) []*entity.ProcessPositionEntity {
+	list := service.processPositionDao.FindByParentCodeAndVersion(parentCode, version)
+	result := make([]*entity.ProcessPositionEntity, 0)
+	for _, positionEntity := range list {
+		if positionEntity.Type == entity.INDIRECT_PROCESS || positionEntity.Type == entity.DIRECT_PROCESS {
+			result = append(result, positionEntity)
+		}
+	}
+	if len(list) > 0 {
+		for _, child := range list {
+			if child.Type != entity.INDIRECT_PROCESS && child.Type != entity.DIRECT_PROCESS {
+				childResult := service.iterateFindProcessByParentCode(child.Code, version)
+				result = append(result, childResult...)
+			}
+		}
+	}
+
+	return result
 }
 
 func (service *ProcessServiceImpl) GetProcessPositionTree(id int64) *domain.ProcessPositionTreeNode {
@@ -108,8 +142,8 @@ func (service *ProcessServiceImpl) FindFirstProcess(positionCode string, workpla
 	minOrder := math.MaxInt
 	var minProcess *entity.ProcessPositionEntity
 	for _, positionEntity := range positionList {
-		if positionEntity.ParentCode == positionCode && positionEntity.Order < minOrder {
-			minOrder = positionEntity.Order
+		if positionEntity.ParentCode == positionCode && positionEntity.SortIndex < minOrder {
+			minOrder = positionEntity.SortIndex
 			minProcess = positionEntity
 		}
 	}
@@ -191,12 +225,13 @@ func (service *ProcessServiceImpl) FindProcessImplementationListByPage(targetTyp
 
 func (service *ProcessServiceImpl) convertImplEntity2Domain(e *entity.ProcessImplementationEntity) *domain.ProcessImplementation {
 	impl := &domain.ProcessImplementation{
-		Id:         e.Id,
-		Code:       e.Code,
-		Name:       e.Name,
-		TargetType: e.TargetType,
-		TargetCode: e.TargetCode,
-		Status:     e.Status,
+		Id:                    e.Id,
+		Code:                  e.Code,
+		Name:                  e.Name,
+		TargetType:            e.TargetType,
+		TargetCode:            e.TargetCode,
+		Status:                e.Status,
+		ProcessPositionRootId: e.ProcessPositionRootId,
 	}
 	switch e.TargetType {
 	case entity.Workplace:
@@ -301,6 +336,7 @@ func (service *ProcessServiceImpl) buildLeafNodePaths(positionEntities []*entity
 func (service *ProcessServiceImpl) convertPositionEntity2Domain(e *entity.ProcessPositionEntity) *domain.ProcessPosition {
 
 	d := domain.ProcessPosition{
+		Id:         e.Id,
 		Name:       e.Name,
 		Code:       e.Code,
 		Level:      e.Level,
