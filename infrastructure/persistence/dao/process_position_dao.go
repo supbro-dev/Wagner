@@ -13,10 +13,15 @@ func CreateProcessPositionDao(client *gorm.DB) *ProcessPositionDao {
 	return &ProcessPositionDao{client}
 }
 
-func (dao *ProcessPositionDao) FindByCode(code string) entity.ProcessPositionEntity {
-	standardPosition := entity.ProcessPositionEntity{}
-	dao.db.Where("code = ?", code).Find(&standardPosition)
-	return standardPosition
+func (dao *ProcessPositionDao) FindByCode(code string, version int64) *entity.ProcessPositionEntity {
+	array := make([]*entity.ProcessPositionEntity, 0)
+	dao.db.Where("code = ? and version = ?", code, version).Find(&array)
+
+	if len(array) > 0 {
+		return array[0]
+	} else {
+		return nil
+	}
 }
 
 func (dao *ProcessPositionDao) FindByIndustry(industryCode string, subIndustryCode string, version int64) []*entity.ProcessPositionEntity {
@@ -48,4 +53,8 @@ func (dao *ProcessPositionDao) FindByParentCodeAndVersion(parentCode string, ver
 		Find(&array)
 
 	return array
+}
+
+func (dao *ProcessPositionDao) Insert(e *entity.ProcessPositionEntity) {
+	dao.db.Omit("gmt_create", "gmt_modified").Create(e)
 }

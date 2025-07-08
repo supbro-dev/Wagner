@@ -8,9 +8,11 @@ package process
 
 import (
 	"math"
+	"strconv"
 	"wagner/app/domain"
 	"wagner/app/global/business_error"
 	"wagner/app/utils/json_util"
+	"wagner/app/utils/pinyin_util"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
 	"wagner/infrastructure/persistence/query"
@@ -25,6 +27,9 @@ type ProcessService interface {
 	GetImplementationById(id int64) *domain.ProcessImplementation
 	GetProcessPositionTree(id int64) *domain.ProcessPositionTreeNode
 	FindProcessByParentCode(parentCode string, version int64) []*domain.ProcessPosition
+	GenerateProcessCode(processName string, version int64) string
+	SaveProcessPosition(processPosition *domain.ProcessPosition)
+	FindProcessByCode(code string, version int64) *domain.ProcessPosition
 }
 
 type ProcessServiceImpl struct {
@@ -40,6 +45,33 @@ func CreateProcessServiceImpl(processPositionDao *dao.ProcessPositionDao, proces
 var OtherProcess = &domain.ProcessPosition{
 	Name: "其他",
 	Code: "Others",
+}
+
+func (service *ProcessServiceImpl) FindProcessByCode(code string, version int64) *domain.ProcessPosition {
+	e := service.processPositionDao.FindByCode(code, version)
+	return service.convertPositionEntity2Domain(e)
+}
+
+func (service *ProcessServiceImpl) SaveProcessPosition(processPosition *domain.ProcessPosition) {
+	e := service.convertPositionDomain2Entity(processPosition)
+	service.processPositionDao.Insert(e)
+}
+
+func (service *ProcessServiceImpl) GenerateProcessCode(processName string, version int64) string {
+	processCode := pinyin_util.ConvertMixedString(processName)
+
+	// 查找是否有同名code
+	var existedPosition *entity.ProcessPositionEntity
+	for i := 1; i < 100; i++ {
+		existedPosition = service.processPositionDao.FindByCode(processCode, version)
+		if existedPosition == nil {
+			break
+		} else {
+			processCode = processCode + strconv.Itoa(i)
+		}
+	}
+
+	return processCode
 }
 
 func (service *ProcessServiceImpl) FindProcessByParentCode(parentCode string, version int64) []*domain.ProcessPosition {
@@ -371,4 +403,20 @@ func (service *ProcessServiceImpl) buildParentPath(node *entity.ProcessPositionE
 
 	// 返回从父节点到根节点的路径
 	return path
+}
+
+func (service *ProcessServiceImpl) convertPositionDomain2Entity(position *domain.ProcessPosition) *entity.ProcessPositionEntity {
+	parent := service.processPositionDao.FindByCode(position.ParentCode, int64(position.Version))
+
+	return &entity.ProcessPositionEntity{
+		Code:            position.Code,
+		Name:            position.Name,
+		ParentCode:      position.ParentCode,
+		Type:            position.Type,
+		Level:           parent.Level + 1,
+		Version:         position.Version,
+		IndustryCode:    parent.IndustryCode,
+		SubIndustryCode: parent.SubIndustryCode,
+		Properties:      json_util.ToJsonString(position.Properties),
+	}
 }

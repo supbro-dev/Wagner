@@ -158,6 +158,64 @@ func (p ProcessHandler) FindProcessByParentProcessCode(c *gin.Context) {
 
 	response.ReturnSuccessJson(c, detailList)
 }
+func (p ProcessHandler) GenerateProcessCode(c *gin.Context) {
+	processName := c.Query("processName")
+	processImplId := c.Query("processImplId")
+
+	id, err := strconv.Atoi(processImplId)
+	if err != nil {
+		response.ReturnError(c, business_error.ParamIsWrong("processImplId"))
+		return
+	}
+
+	impl := service.DomainHolder.ProcessService.GetImplementationById(int64(id))
+	version := impl.ProcessPositionRootId
+
+	code := service.DomainHolder.ProcessService.GenerateProcessCode(processName, version)
+
+	response.ReturnSuccessJson(c, code)
+}
+
+func (p ProcessHandler) AddProcessPosition(c *gin.Context) {
+	var req qo.ProcessPositionSaveQo
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ReturnError(c, business_error.SubmitDataIsWrong(err))
+		return
+	}
+
+	id, err := strconv.Atoi(req.ProcessImplId)
+	if err != nil {
+		response.ReturnError(c, business_error.ParamIsWrong("processImplId"))
+		return
+	}
+
+	impl := service.DomainHolder.ProcessService.GetImplementationById(int64(id))
+
+	var parentCode string
+	if qo.AddLevelType(req.AddLevelType) == qo.NextLevel {
+		parentCode = req.ParentProcessCode
+	} else {
+		sameLevelPosition := service.DomainHolder.ProcessService.FindProcessByCode(parentCode, impl.ProcessPositionRootId)
+		parentCode = sameLevelPosition.ParentCode
+	}
+
+	d := domain.ProcessPosition{
+		Name:       req.ProcessName,
+		Code:       req.ProcessCode,
+		ParentCode: parentCode,
+		Type:       entity.ProcessPositionType(req.Type),
+		Version:    int(impl.ProcessPositionRootId),
+	}
+
+	if req.WorkLoadRollUp != "" {
+		if workLoadRollUpBool, err := strconv.ParseBool(req.WorkLoadRollUp); err == nil {
+			d.Properties = map[string]interface{}{"workLoadRollUp": workLoadRollUpBool}
+		}
+	}
+
+	service.DomainHolder.ProcessService.SaveProcessPosition(&d)
+	response.ReturnSuccessEmptyJson(c)
+}
 
 func (p ProcessHandler) convertProcessDomainList2Detail(processPositionList []*domain.ProcessPosition) []*vo.ProcessDetailVo {
 	detailList := make([]*vo.ProcessDetailVo, 0)

@@ -53,6 +53,8 @@ func InitRouter() *gin.Engine {
 			process.GET("getImplementationById", processHandler.GetImplementationById)
 			process.GET("getProcessPositionTree", processHandler.GetProcessPositionTree)
 			process.GET("findProcessByParentProcessCode", processHandler.FindProcessByParentProcessCode)
+			process.GET("generateProcessCode", processHandler.GenerateProcessCode)
+			process.POST("addProcessPosition", processHandler.AddProcessPosition)
 		}
 		efficiency := vApi.Group("efficiency/")
 		efficiencyHandler := controller.EfficiencyHandler{}
