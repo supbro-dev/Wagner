@@ -25,5 +25,6 @@ type ProcessPosition struct {
 	// 环节匹配执行脚本
 	Script string
 	// 标识一套StandardPosition的唯一版本
-	Version int
+	Version   int
+	SortIndex int
 }

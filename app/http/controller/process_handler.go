@@ -176,26 +176,20 @@ func (p ProcessHandler) GenerateProcessCode(c *gin.Context) {
 	response.ReturnSuccessJson(c, code)
 }
 
-func (p ProcessHandler) AddProcessPosition(c *gin.Context) {
+func (p ProcessHandler) SaveProcessPosition(c *gin.Context) {
 	var req qo.ProcessPositionSaveQo
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ReturnError(c, business_error.SubmitDataIsWrong(err))
 		return
 	}
 
-	id, err := strconv.Atoi(req.ProcessImplId)
-	if err != nil {
-		response.ReturnError(c, business_error.ParamIsWrong("processImplId"))
-		return
-	}
-
-	impl := service.DomainHolder.ProcessService.GetImplementationById(int64(id))
+	impl := service.DomainHolder.ProcessService.GetImplementationById(req.ProcessImplId)
 
 	var parentCode string
 	if qo.AddLevelType(req.AddLevelType) == qo.NextLevel {
 		parentCode = req.ParentProcessCode
 	} else {
-		sameLevelPosition := service.DomainHolder.ProcessService.FindProcessByCode(parentCode, impl.ProcessPositionRootId)
+		sameLevelPosition := service.DomainHolder.ProcessService.FindProcessByCode(req.ParentProcessCode, impl.ProcessPositionRootId)
 		parentCode = sameLevelPosition.ParentCode
 	}
 
@@ -205,6 +199,10 @@ func (p ProcessHandler) AddProcessPosition(c *gin.Context) {
 		ParentCode: parentCode,
 		Type:       entity.ProcessPositionType(req.Type),
 		Version:    int(impl.ProcessPositionRootId),
+		SortIndex:  req.SortIndex,
+	}
+	if req.Id != 0 {
+		d.Id = req.Id
 	}
 
 	if req.WorkLoadRollUp != "" {
@@ -251,10 +249,15 @@ func (p ProcessHandler) convertProcessDomainList2Detail(processPositionList []*d
 
 func (p ProcessHandler) iterateConvert2Vo(node *domain.ProcessPositionTreeNode) *vo.ProcessPositionTreeNodeVo {
 	v := vo.ProcessPositionTreeNodeVo{
-		Title:    node.Name,
-		Key:      node.Code,
-		Type:     string(node.Type),
-		Children: make([]*vo.ProcessPositionTreeNodeVo, 0),
+		Id:             node.Id,
+		Title:          node.Name,
+		Key:            node.Code,
+		Type:           string(node.Type),
+		ParentName:     node.ParentName,
+		ParentCode:     node.ParentCode,
+		SortIndex:      node.SortIndex,
+		WorkLoadRollUp: node.WorkLoadRollUp,
+		Children:       make([]*vo.ProcessPositionTreeNodeVo, 0),
 	}
 
 	if node.Children != nil && len(node.Children) > 0 {

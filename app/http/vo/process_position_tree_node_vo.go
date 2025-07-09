@@ -7,8 +7,13 @@
 package vo
 
 type ProcessPositionTreeNodeVo struct {
-	Title    string                       `json:"title"`
-	Key      string                       `json:"key"`
-	Type     string                       `json:"type"`
-	Children []*ProcessPositionTreeNodeVo `json:"children"`
+	Id             int64                        `json:"id"`
+	Title          string                       `json:"title"`
+	Key            string                       `json:"key"`
+	Type           string                       `json:"type"`
+	ParentName     string                       `json:"parentName"`
+	ParentCode     string                       `json:"parentCode"`
+	WorkLoadRollUp string                       `json:"workLoadRollUp"`
+	SortIndex      int                          `json:"sortIndex"`
+	Children       []*ProcessPositionTreeNodeVo `json:"children"`
 }

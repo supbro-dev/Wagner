@@ -7,6 +7,7 @@
 package process
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"wagner/app/domain"
@@ -54,7 +55,11 @@ func (service *ProcessServiceImpl) FindProcessByCode(code string, version int64)
 
 func (service *ProcessServiceImpl) SaveProcessPosition(processPosition *domain.ProcessPosition) {
 	e := service.convertPositionDomain2Entity(processPosition)
-	service.processPositionDao.Insert(e)
+	if e.Id != 0 {
+		service.processPositionDao.Update(e)
+	} else {
+		service.processPositionDao.Insert(e)
+	}
 }
 
 func (service *ProcessServiceImpl) GenerateProcessCode(processName string, version int64) string {
@@ -132,15 +137,28 @@ func (service *ProcessServiceImpl) GetProcessPositionTree(id int64) *domain.Proc
 			continue
 		}
 		node := domain.ProcessPositionTreeNode{
-			Name: position.Name,
-			Code: position.Code,
-			Type: position.Type,
+			Id:        position.Id,
+			Name:      position.Name,
+			Code:      position.Code,
+			Type:      position.Type,
+			SortIndex: position.SortIndex,
+		}
+
+		if position.Properties != "" {
+			if propertyMap, err := json_util.Parse2Map(position.Properties); err == nil {
+				node.WorkLoadRollUp = fmt.Sprintf("%v", propertyMap[entity.WorkLoadRollUpKey])
+			}
 		}
 
 		parentCode := position.ParentCode
 		if parentCode != "-1" {
 			parentNode := code2Node[parentCode]
+			node.ParentCode = parentNode.Code
+			node.ParentName = parentNode.Name
 			parentNode.Children = append(parentNode.Children, &node)
+		} else {
+			node.ParentCode = implementationEntity.Code
+			node.ParentName = implementationEntity.Name
 		}
 
 		code2Node[node.Code] = &node
@@ -408,7 +426,7 @@ func (service *ProcessServiceImpl) buildParentPath(node *entity.ProcessPositionE
 func (service *ProcessServiceImpl) convertPositionDomain2Entity(position *domain.ProcessPosition) *entity.ProcessPositionEntity {
 	parent := service.processPositionDao.FindByCode(position.ParentCode, int64(position.Version))
 
-	return &entity.ProcessPositionEntity{
+	e := entity.ProcessPositionEntity{
 		Code:            position.Code,
 		Name:            position.Name,
 		ParentCode:      position.ParentCode,
@@ -417,6 +435,16 @@ func (service *ProcessServiceImpl) convertPositionDomain2Entity(position *domain
 		Version:         position.Version,
 		IndustryCode:    parent.IndustryCode,
 		SubIndustryCode: parent.SubIndustryCode,
-		Properties:      json_util.ToJsonString(position.Properties),
+		SortIndex:       position.SortIndex,
 	}
+
+	if position.Id != 0 {
+		e.Id = position.Id
+	}
+
+	if position.Properties != nil {
+		e.Properties = json_util.ToJsonString(position.Properties)
+	}
+
+	return &e
 }

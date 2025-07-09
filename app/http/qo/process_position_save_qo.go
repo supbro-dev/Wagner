@@ -7,13 +7,15 @@
 package qo
 
 type ProcessPositionSaveQo struct {
-	ProcessImplId     string `json:"processImplId"`
+	Id                int64  `json:"id"`
+	ProcessImplId     int64  `json:"processImplId"`
 	ParentProcessCode string `json:"parentProcessCode"`
 	AddLevelType      string `json:"addLevelType"`
 	ProcessName       string `json:"processName"`
 	ProcessCode       string `json:"processCode"`
 	Type              string `json:"type"`
 	WorkLoadRollUp    string `json:"workLoadRollUp"`
+	SortIndex         int    `json:"sortIndex"`
 }
 
 type AddLevelType string

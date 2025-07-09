@@ -28,18 +28,18 @@ func (dao *ProcessPositionDao) FindByIndustry(industryCode string, subIndustryCo
 	array := make([]*entity.ProcessPositionEntity, 0)
 	if subIndustryCode != "" {
 		dao.db.Where("industry_code = ? and sub_industry_code = ? and version = ?", industryCode, subIndustryCode, version).
-			Order("level").
+			Order("level, sort_index").
 			Find(&array)
 		if len(array) > 0 {
 			return array
 		}
 		dao.db.Where("industry_code = ? and version = ?", industryCode, version).
-			Order("level").
+			Order("level, sort_index").
 			Find(&array)
 		return array
 	} else {
 		dao.db.Where("industry_code = ? and version = ?", industryCode, version).
-			Order("level").
+			Order("level, sort_index").
 			Find(&array)
 		return array
 	}
@@ -57,4 +57,8 @@ func (dao *ProcessPositionDao) FindByParentCodeAndVersion(parentCode string, ver
 
 func (dao *ProcessPositionDao) Insert(e *entity.ProcessPositionEntity) {
 	dao.db.Omit("gmt_create", "gmt_modified").Create(e)
+}
+
+func (dao *ProcessPositionDao) Update(e *entity.ProcessPositionEntity) {
+	dao.db.Omit("gmt_create", "gmt_modified").Save(e)
 }

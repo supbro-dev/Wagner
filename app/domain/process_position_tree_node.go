@@ -9,8 +9,13 @@ package domain
 import "wagner/infrastructure/persistence/entity"
 
 type ProcessPositionTreeNode struct {
-	Name     string
-	Code     string
-	Type     entity.ProcessPositionType
-	Children []*ProcessPositionTreeNode
+	Id             int64
+	Name           string
+	Code           string
+	ParentName     string
+	ParentCode     string
+	Type           entity.ProcessPositionType
+	Children       []*ProcessPositionTreeNode
+	WorkLoadRollUp string
+	SortIndex      int
 }
