@@ -11,6 +11,7 @@ import (
 	"wagner/app/service/calc/calc_node"
 	golang_node2 "wagner/app/service/calc/calc_node/golang_node"
 	"wagner/app/service/employee_snapshot"
+	"wagner/app/service/position"
 	"wagner/app/service/process"
 	"wagner/app/service/sink"
 	"wagner/app/service/workplace"
@@ -78,12 +79,15 @@ func init() {
 
 	employeeStatusSinkService := sink.CreateEmployeeStatusSinkService(employeeStatusDao)
 
+	positionService := position.CreatePositionService(dao.CreatePositionDao(client))
+
 	domainServiceHolder := service.DomainServiceHolder{
 		EmployeeSnapshotService: employeeSnapshotService,
 		ActionService:           actionService,
 		ProcessService:          processService,
 		CalcDynamicParamService: calcDynamicParamService,
 		WorkplaceService:        workplaceService,
+		PositionService:         positionService,
 	}
 
 	service.DomainHolder = domainServiceHolder

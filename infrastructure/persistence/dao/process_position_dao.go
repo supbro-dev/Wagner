@@ -60,5 +60,9 @@ func (dao *ProcessPositionDao) Insert(e *entity.ProcessPositionEntity) {
 }
 
 func (dao *ProcessPositionDao) Update(e *entity.ProcessPositionEntity) {
-	dao.db.Omit("gmt_create", "gmt_modified").Save(e)
+	dao.db.Omit("gmt_create", "gmt_modified").Model(entity.ProcessPositionEntity{}).Where("id = ?", e.Id).Updates(e)
+}
+
+func (dao *ProcessPositionDao) DeleteById(id int64) {
+	dao.db.Model(entity.ProcessPositionEntity{}).Where("id = ?", id).Delete(id)
 }

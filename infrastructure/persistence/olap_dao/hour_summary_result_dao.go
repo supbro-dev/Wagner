@@ -83,11 +83,11 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 		mainSelect += fmt.Sprintf(", sum(%s) %s", workLoadUnit.Code, workLoadUnit.Code)
 	}
 
-	if domain.AggregateDimension(query.AggregateDimension) == domain.Process {
+	if domain.AggregateDimension(query.AggregateDimension) == domain.PROCESS {
 		groupBy += " ,process_code, position_code"
 		mainSelect += ", process_code, max(position_code) position_code"
 		orderBy += ", process_code"
-	} else if domain.AggregateDimension(query.AggregateDimension) == domain.Position {
+	} else if domain.AggregateDimension(query.AggregateDimension) == domain.POSITION {
 		groupBy += " ,position_code"
 		mainSelect += ", position_code"
 		orderBy += ", position_code"
@@ -338,11 +338,11 @@ func (dao *HourSummaryResultDao) TotalEmployeeEfficiency(query query.HourSummary
 	groupBy := "employee_number, employee_name, operate_day, workplace_code, workplace_name"
 	orderBy := "operate_day, employee_number"
 
-	if domain.AggregateDimension(query.AggregateDimension) == domain.Process {
+	if domain.AggregateDimension(query.AggregateDimension) == domain.PROCESS {
 		groupBy += " ,process_code, position_code"
 		mainSelect += ", process_code, max(position_code) position_code"
 		orderBy += ", process_code"
-	} else if domain.AggregateDimension(query.AggregateDimension) == domain.Position {
+	} else if domain.AggregateDimension(query.AggregateDimension) == domain.POSITION {
 		groupBy += " ,position_code"
 		mainSelect += ", position_code"
 		orderBy += ", position_code"

@@ -7,15 +7,18 @@
 package qo
 
 type ProcessPositionSaveQo struct {
-	Id                int64  `json:"id"`
-	ProcessImplId     int64  `json:"processImplId"`
-	ParentProcessCode string `json:"parentProcessCode"`
-	AddLevelType      string `json:"addLevelType"`
-	ProcessName       string `json:"processName"`
-	ProcessCode       string `json:"processCode"`
-	Type              string `json:"type"`
-	WorkLoadRollUp    string `json:"workLoadRollUp"`
-	SortIndex         int    `json:"sortIndex"`
+	Id                  int64  `json:"id"`
+	ProcessImplId       int64  `json:"processImplId"`
+	ParentPositionCode  string `json:"parentPositionCode"`
+	AddLevelType        string `json:"addLevelType"`
+	Name                string `json:"name"`
+	Code                string `json:"code"`
+	Type                string `json:"type"`
+	WorkLoadRollUp      string `json:"workLoadRollUp"`
+	MaxTimeInMinute     string `json:"maxTimeInMinute"`
+	MinIdleTimeInMinute string `json:"minIdleTimeInMinute"`
+	SortIndex           int    `json:"sortIndex"`
+	Script              string `json:"script"`
 }
 
 type AddLevelType string

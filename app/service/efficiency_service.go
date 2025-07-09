@@ -115,7 +115,7 @@ func (service *EfficiencyService) generateEmployeeColumns(workLoadUnits []calc_d
 		{"工作点", "workplaceName", "workplaceName"},
 	}
 
-	if dimension == domain.Process {
+	if dimension == domain.PROCESS {
 		columns = append(columns, &vo.TableColumnVO{"作业环节", "processName", "processName"})
 	}
 

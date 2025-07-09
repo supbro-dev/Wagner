@@ -176,6 +176,7 @@ func (p ProcessHandler) GenerateProcessCode(c *gin.Context) {
 	response.ReturnSuccessJson(c, code)
 }
 
+// 保存岗位/部门
 func (p ProcessHandler) SaveProcessPosition(c *gin.Context) {
 	var req qo.ProcessPositionSaveQo
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -184,18 +185,25 @@ func (p ProcessHandler) SaveProcessPosition(c *gin.Context) {
 	}
 
 	impl := service.DomainHolder.ProcessService.GetImplementationById(req.ProcessImplId)
+	// 确认是否添加重复
+	exist := service.DomainHolder.ProcessService.FindProcessByCode(req.Code, impl.ProcessPositionRootId)
+	if exist != nil && exist.Id != req.Id {
+		response.ReturnError(c, business_error.ExistSameCodeProcessPosition(req.Code))
+		return
+	}
 
+	// 确定parentCode
 	var parentCode string
 	if qo.AddLevelType(req.AddLevelType) == qo.NextLevel {
-		parentCode = req.ParentProcessCode
+		parentCode = req.ParentPositionCode
 	} else {
-		sameLevelPosition := service.DomainHolder.ProcessService.FindProcessByCode(req.ParentProcessCode, impl.ProcessPositionRootId)
+		sameLevelPosition := service.DomainHolder.ProcessService.FindProcessByCode(req.ParentPositionCode, impl.ProcessPositionRootId)
 		parentCode = sameLevelPosition.ParentCode
 	}
 
 	d := domain.ProcessPosition{
-		Name:       req.ProcessName,
-		Code:       req.ProcessCode,
+		Name:       req.Name,
+		Code:       req.Code,
 		ParentCode: parentCode,
 		Type:       entity.ProcessPositionType(req.Type),
 		Version:    int(impl.ProcessPositionRootId),
@@ -207,7 +215,7 @@ func (p ProcessHandler) SaveProcessPosition(c *gin.Context) {
 
 	if req.WorkLoadRollUp != "" {
 		if workLoadRollUpBool, err := strconv.ParseBool(req.WorkLoadRollUp); err == nil {
-			d.Properties = map[string]interface{}{"workLoadRollUp": workLoadRollUpBool}
+			d.Properties = map[string]interface{}{entity.WorkLoadRollUpKey: workLoadRollUpBool}
 		}
 	}
 
@@ -215,30 +223,117 @@ func (p ProcessHandler) SaveProcessPosition(c *gin.Context) {
 	response.ReturnSuccessEmptyJson(c)
 }
 
+// 保存环节
+func (p ProcessHandler) SaveProcess(c *gin.Context) {
+	var req qo.ProcessPositionSaveQo
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ReturnError(c, business_error.SubmitDataIsWrong(err))
+		return
+	}
+
+	impl := service.DomainHolder.ProcessService.GetImplementationById(req.ProcessImplId)
+
+	// 确认是否添加重复
+	exist := service.DomainHolder.ProcessService.FindProcessByCode(req.Code, impl.ProcessPositionRootId)
+	if exist != nil && exist.Id != req.Id {
+		response.ReturnError(c, business_error.ExistSameCodeProcessPosition(req.Code))
+		return
+	}
+
+	// 获取父节点
+	parent := service.DomainHolder.ProcessService.FindProcessByCode(req.ParentPositionCode, impl.ProcessPositionRootId)
+
+	d := domain.ProcessPosition{
+		Name:       req.Name,
+		Code:       req.Code,
+		ParentCode: req.ParentPositionCode,
+		Type:       entity.ProcessPositionType(req.Type),
+		Version:    int(impl.ProcessPositionRootId),
+		SortIndex:  req.SortIndex,
+		Script:     req.Script,
+		Level:      parent.Level + 1,
+	}
+	if req.Id != 0 {
+		d.Id = req.Id
+	}
+
+	if req.WorkLoadRollUp != "" {
+		if workLoadRollUpBool, err := strconv.ParseBool(req.WorkLoadRollUp); err == nil {
+			if d.Properties == nil {
+				d.Properties = make(map[string]interface{})
+			}
+			d.Properties[entity.WorkLoadRollUpKey] = workLoadRollUpBool
+		}
+	}
+
+	if req.MaxTimeInMinute != "" {
+		if maxTimeInMinute, err := strconv.Atoi(req.MaxTimeInMinute); err == nil {
+			if d.Properties == nil {
+				d.Properties = make(map[string]interface{})
+			}
+			d.Properties[entity.MaxTimeInMinuteKey] = maxTimeInMinute
+		}
+	}
+
+	if req.MinIdleTimeInMinute != "" {
+		if minIdleTimeInMinute, err := strconv.Atoi(req.MinIdleTimeInMinute); err == nil {
+			if d.Properties == nil {
+				d.Properties = make(map[string]interface{})
+			}
+			d.Properties[entity.MinIdleTimeKey] = minIdleTimeInMinute
+		}
+	}
+
+	service.DomainHolder.ProcessService.SaveProcessPosition(&d)
+	response.ReturnSuccessEmptyJson(c)
+}
+
+func (p ProcessHandler) DeleteProcessPosition(c *gin.Context) {
+	var req qo.ProcessPositionDeleteQo
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ReturnError(c, business_error.SubmitDataIsWrong(err))
+		return
+	}
+
+	service.DomainHolder.ProcessService.DeleteProcessPosition(req.Id)
+
+	response.ReturnSuccessEmptyJson(c)
+}
+
 func (p ProcessHandler) convertProcessDomainList2Detail(processPositionList []*domain.ProcessPosition) []*vo.ProcessDetailVo {
 	detailList := make([]*vo.ProcessDetailVo, 0)
 	for _, process := range processPositionList {
 		detail := vo.ProcessDetailVo{
-			Id:          process.Id,
-			ProcessName: process.Name,
-			ProcessCode: process.Code,
-			TypeDesc:    entity.ProcessPositionType2Desc(process.Type),
-			Script:      process.Script,
+			Id:         process.Id,
+			ParentCode: process.ParentCode,
+			Name:       process.Name,
+			Code:       process.Code,
+			Type:       string(process.Type),
+			TypeDesc:   entity.ProcessPositionType2Desc(process.Type),
+			Script:     process.Script,
+			SortIndex:  process.SortIndex,
 		}
 
 		if maxTimeInMinute, exists := process.Properties[entity.MaxTimeInMinuteKey]; exists {
-			detail.MaxTimeInMinute = fmt.Sprintf("%v", maxTimeInMinute)
+			detail.MaxTimeInMinuteDesc = fmt.Sprintf("%v", maxTimeInMinute)
+			detail.MaxTimeInMinute = detail.MaxTimeInMinuteDesc
 		} else {
-			detail.MaxTimeInMinute = "默认"
+			detail.MaxTimeInMinuteDesc = "默认"
 		}
 		if minIdleTimeInMinute, exists := process.Properties[entity.MinIdleTimeKey]; exists {
-			detail.MinIdleTimeInMinute = fmt.Sprintf("%v", minIdleTimeInMinute)
+			detail.MinIdleTimeInMinuteDesc = fmt.Sprintf("%v", minIdleTimeInMinute)
+			detail.MinIdleTimeInMinute = detail.MinIdleTimeInMinuteDesc
 		} else {
-			detail.MinIdleTimeInMinute = "默认"
+			detail.MinIdleTimeInMinuteDesc = "默认"
 		}
 		if workLoadRollUp, exists := process.Properties[entity.WorkLoadRollUpKey]; exists {
-			if parseBool, err := strconv.ParseBool(fmt.Sprintf("%v", workLoadRollUp)); err == nil && parseBool {
-				detail.WorkLoadRollUpDesc = "是"
+			if parseBool, err := strconv.ParseBool(fmt.Sprintf("%v", workLoadRollUp)); err == nil {
+				if parseBool {
+					detail.WorkLoadRollUp = "true"
+					detail.WorkLoadRollUpDesc = "是"
+				} else {
+					detail.WorkLoadRollUp = "false"
+				}
 			}
 		}
 		detailList = append(detailList, &detail)

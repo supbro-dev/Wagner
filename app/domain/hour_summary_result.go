@@ -42,8 +42,8 @@ type HourSummaryAggregateKey struct {
 type AggregateDimension string
 
 var (
-	Process  AggregateDimension = "process"  //员工+作业环节聚合
-	Position AggregateDimension = "position" //员工+作业岗位
+	PROCESS  AggregateDimension = "process"  //员工+作业环节聚合
+	POSITION AggregateDimension = "position" //员工+作业岗位
 )
 
 type IsCrossPosition string

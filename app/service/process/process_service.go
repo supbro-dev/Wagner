@@ -31,6 +31,7 @@ type ProcessService interface {
 	GenerateProcessCode(processName string, version int64) string
 	SaveProcessPosition(processPosition *domain.ProcessPosition)
 	FindProcessByCode(code string, version int64) *domain.ProcessPosition
+	DeleteProcessPosition(id int64)
 }
 
 type ProcessServiceImpl struct {
@@ -48,8 +49,15 @@ var OtherProcess = &domain.ProcessPosition{
 	Code: "Others",
 }
 
+func (service *ProcessServiceImpl) DeleteProcessPosition(id int64) {
+	service.processPositionDao.DeleteById(id)
+}
+
 func (service *ProcessServiceImpl) FindProcessByCode(code string, version int64) *domain.ProcessPosition {
 	e := service.processPositionDao.FindByCode(code, version)
+	if e == nil {
+		return nil
+	}
 	return service.convertPositionEntity2Domain(e)
 }
 
@@ -394,6 +402,7 @@ func (service *ProcessServiceImpl) convertPositionEntity2Domain(e *entity.Proces
 		Version:    e.Version,
 		ParentCode: e.ParentCode,
 		Type:       e.Type,
+		SortIndex:  e.SortIndex,
 	}
 
 	if e.Properties != "" {
@@ -436,6 +445,7 @@ func (service *ProcessServiceImpl) convertPositionDomain2Entity(position *domain
 		IndustryCode:    parent.IndustryCode,
 		SubIndustryCode: parent.SubIndustryCode,
 		SortIndex:       position.SortIndex,
+		Script:          position.Script,
 	}
 
 	if position.Id != 0 {

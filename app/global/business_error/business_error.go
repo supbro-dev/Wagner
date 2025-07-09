@@ -144,3 +144,7 @@ func ProcessTargetTypeError() *BusinessError {
 func ExistSameCodeProcessImpl(code ...interface{}) *BusinessError {
 	return &BusinessError{ProcessImplementationError, 9802, "环节实施已存在:%v", code, nil}
 }
+
+func ExistSameCodeProcessPosition(code ...interface{}) *BusinessError {
+	return &BusinessError{ProcessImplementationError, 9803, "不能添加相同的环节:%v", code, nil}
+}
