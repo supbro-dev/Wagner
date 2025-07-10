@@ -13,7 +13,7 @@ import (
 	"time"
 	"wagner/app/domain"
 	"wagner/app/service"
-	"wagner/app/service/calc_node/golang_node"
+	"wagner/app/service/calc/calc_node/golang_node"
 	"wagner/app/utils/datetime_util"
 )
 
@@ -34,7 +34,7 @@ func TestMatchRestProcess(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 09:00:00")
 					return &t
 				}(),
-				Process: &domain.StandardPosition{
+				Process: &domain.ProcessPosition{
 					Code: "P1",
 				},
 			},
@@ -64,7 +64,7 @@ func TestMatchRestProcess(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 09:00:00")
 					return &t
 				}(),
-				Process: &domain.StandardPosition{
+				Process: &domain.ProcessPosition{
 					Code: "P2",
 				},
 			},
@@ -102,7 +102,7 @@ func TestMatchRestProcess(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 09:00:00")
 					return &t
 				}(),
-				Process: &domain.StandardPosition{
+				Process: &domain.ProcessPosition{
 					Code: "P2",
 				},
 			},
@@ -131,11 +131,11 @@ func TestMatchRestProcess(t *testing.T) {
 		},
 	}
 
-	standardPositionMock := new(StandardPositionMock)
+	processServiceMock := new(ProcessServiceMock)
 	service.DomainHolder = service.DomainServiceHolder{
-		StandardPositionService: standardPositionMock,
+		ProcessService: processServiceMock,
 	}
-	standardPositionMock.On("FindPositionFirstProcess", "checker", "FOOD", "ConvenientFood").Return(&domain.StandardPosition{
+	processServiceMock.On("FindProcessPositionFirstProcess", "checker", "FOOD", "ConvenientFood").Return(&domain.ProcessPosition{
 		Code: "C1",
 	})
 
@@ -144,26 +144,22 @@ func TestMatchRestProcess(t *testing.T) {
 }
 
 type StandardPositionInterface interface {
-	FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition
+	FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.ProcessPosition
 }
 
-type StandardPositionMock struct {
+type ProcessServiceMock struct {
 	mock.Mock
 }
 
-func (service *StandardPositionMock) FindStandardPositionListByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
-	return nil
+func (service *ProcessServiceMock) FindProcessList(workplace *domain.Workplace) []*domain.ProcessPosition {
+	panic("implement me")
 }
 
-func (service *StandardPositionMock) FindStandardPositionByWorkplace(workplaceCode string) []*domain.StandardPosition {
-	return nil
+func (service *ProcessServiceMock) FindProcessPositionList(workplace *domain.Workplace) []*domain.ProcessPosition {
+	panic("implement me")
 }
 
-func (service *StandardPositionMock) FindStandardPositionByIndustry(industryCode, subIndustryCode string) []*domain.StandardPosition {
-	return nil
-}
-
-func (service *StandardPositionMock) FindPositionFirstProcess(positionCode string, industryCode, subIndustryCode string) *domain.StandardPosition {
-	args := service.Called(positionCode, industryCode, subIndustryCode) // 捕获调用参数
-	return args.Get(0).(*domain.StandardPosition)
+func (service *ProcessServiceMock) FindFirstProcess(positionCode string, workplace *domain.Workplace) *domain.ProcessPosition {
+	args := service.Called(positionCode, workplace) // 捕获调用参数
+	return args.Get(0).(*domain.ProcessPosition)
 }

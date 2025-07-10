@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 	"wagner/app/domain"
-	"wagner/app/service/calc_node/golang_node"
+	"wagner/app/service/calc/calc_node/golang_node"
 	"wagner/app/utils/datetime_util"
 )
 
@@ -32,7 +32,7 @@ func TestCutOffOvertimeWork(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 20:00:00")
 					return &t
 				}(),
-				Process: &domain.StandardPosition{
+				Process: &domain.ProcessPosition{
 					Properties: map[string]interface{}{
 						"maxTimeInMinute": 60,
 					},

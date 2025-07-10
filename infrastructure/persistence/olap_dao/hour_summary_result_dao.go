@@ -16,7 +16,7 @@ import (
 	"strings"
 	"wagner/app/domain"
 	"wagner/app/global/business_error"
-	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc/calc_dynamic_param"
 	"wagner/app/utils/log"
 	"wagner/infrastructure/persistence/common"
 	"wagner/infrastructure/persistence/entity"
@@ -51,19 +51,19 @@ func buildDynamicWorkLoadSelect(workLoadUnit []calc_dynamic_param.WorkLoadUnit) 
 	return strings.Join(selects, ", ")
 }
 
-func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummaryResultQuery) []*entity.WorkLoadWithEmployeeSummary {
+func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummaryResultQuery, workLoadUnits []calc_dynamic_param.WorkLoadUnit) []*entity.WorkLoadWithEmployeeSummary {
 	fixedSelect := "employee_number, employee_name, operate_day, workplace_code, workplace_name, process_code, position_code, " +
 		"employee_position_code, work_group_code, region_code, industry_code, sub_industry_code, process_property, " +
 		" direct_work_time, indirect_work_time, idle_time, rest_time, attendance_time, unique_key"
-	workLoadSelect := buildDynamicWorkLoadSelect(query.WorkLoadUnit)
+	workLoadSelect := buildDynamicWorkLoadSelect(workLoadUnits)
 
 	where := "operate_day >= ? and operate_day <= ? and workplace_code = ? and is_deleted = 0 "
 	if query.EmployeeNumber != "" {
 		where += " and employee_number = " + query.EmployeeNumber
 	}
-	if query.IsCrossPosition == domain.Cross {
+	if domain.IsCrossPosition(query.IsCrossPosition) == domain.Cross {
 		where += " and position_code = employee_position_code"
-	} else if query.IsCrossPosition == domain.NoCross {
+	} else if domain.IsCrossPosition(query.IsCrossPosition) == domain.NoCross {
 		where += " and position_code != employee_position_code"
 	}
 
@@ -79,15 +79,15 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 	groupBy := "employee_number, employee_name, operate_day, workplace_code, workplace_name"
 	orderBy := "operate_day, employee_number"
 
-	for _, workLoadUnit := range query.WorkLoadUnit {
+	for _, workLoadUnit := range workLoadUnits {
 		mainSelect += fmt.Sprintf(", sum(%s) %s", workLoadUnit.Code, workLoadUnit.Code)
 	}
 
-	if query.AggregateDimension == domain.Process {
+	if domain.AggregateDimension(query.AggregateDimension) == domain.PROCESS {
 		groupBy += " ,process_code, position_code"
 		mainSelect += ", process_code, max(position_code) position_code"
 		orderBy += ", process_code"
-	} else if query.AggregateDimension == domain.Position {
+	} else if domain.AggregateDimension(query.AggregateDimension) == domain.POSITION {
 		groupBy += " ,position_code"
 		mainSelect += ", position_code"
 		orderBy += ", position_code"
@@ -269,16 +269,16 @@ func (dao *HourSummaryResultDao) UpdateDeletedByUniqueKeyList(delete *query.Hour
 
 }
 
-func (dao *HourSummaryResultDao) QueryWorkplaceEfficiency(query query.HourSummaryResultQuery) []*entity.WorkLoadWithProcessSummary {
+func (dao *HourSummaryResultDao) QueryWorkplaceEfficiency(query query.HourSummaryResultQuery, workLoadUnits []calc_dynamic_param.WorkLoadUnit) []*entity.WorkLoadWithProcessSummary {
 	fixedSelect := "operate_day, workplace_code, workplace_name, process_code, position_code, " +
 		"employee_position_code, work_group_code, region_code, industry_code, sub_industry_code, process_property, " +
 		" direct_work_time, indirect_work_time, idle_time, rest_time, attendance_time"
-	workLoadSelect := buildDynamicWorkLoadSelect(query.WorkLoadUnit)
+	workLoadSelect := buildDynamicWorkLoadSelect(workLoadUnits)
 
 	where := "operate_day >= ? and operate_day <= ? and workplace_code = ? and is_deleted = 0 "
-	if query.IsCrossPosition == domain.Cross {
+	if domain.IsCrossPosition(query.IsCrossPosition) == domain.Cross {
 		where += " and position_code = employee_position_code"
-	} else if query.IsCrossPosition == domain.NoCross {
+	} else if domain.IsCrossPosition(query.IsCrossPosition) == domain.NoCross {
 		where += " and position_code != employee_position_code"
 	}
 
@@ -293,7 +293,7 @@ func (dao *HourSummaryResultDao) QueryWorkplaceEfficiency(query query.HourSummar
 	groupBy := "process_code, position_code, operate_day, workplace_code, workplace_name"
 	orderBy := "operate_day"
 
-	for _, workLoadUnit := range query.WorkLoadUnit {
+	for _, workLoadUnit := range workLoadUnits {
 		mainSelect += fmt.Sprintf(", sum(%s) %s", workLoadUnit.Code, workLoadUnit.Code)
 	}
 
@@ -321,9 +321,9 @@ func (dao *HourSummaryResultDao) TotalEmployeeEfficiency(query query.HourSummary
 	if query.EmployeeNumber != "" {
 		where += " and employee_number = " + query.EmployeeNumber
 	}
-	if query.IsCrossPosition == domain.Cross {
+	if domain.IsCrossPosition(query.IsCrossPosition) == domain.Cross {
 		where += " and position_code = employee_position_code"
-	} else if query.IsCrossPosition == domain.NoCross {
+	} else if domain.IsCrossPosition(query.IsCrossPosition) == domain.NoCross {
 		where += " and position_code != employee_position_code"
 	}
 
@@ -338,11 +338,11 @@ func (dao *HourSummaryResultDao) TotalEmployeeEfficiency(query query.HourSummary
 	groupBy := "employee_number, employee_name, operate_day, workplace_code, workplace_name"
 	orderBy := "operate_day, employee_number"
 
-	if query.AggregateDimension == domain.Process {
+	if domain.AggregateDimension(query.AggregateDimension) == domain.PROCESS {
 		groupBy += " ,process_code, position_code"
 		mainSelect += ", process_code, max(position_code) position_code"
 		orderBy += ", process_code"
-	} else if query.AggregateDimension == domain.Position {
+	} else if domain.AggregateDimension(query.AggregateDimension) == domain.POSITION {
 		groupBy += " ,position_code"
 		mainSelect += ", position_code"
 		orderBy += ", position_code"

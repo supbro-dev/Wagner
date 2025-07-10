@@ -15,20 +15,34 @@ type CalcDynamicParamDao struct {
 	db *gorm.DB
 }
 
-// 根据行业/子行业查询计算参数（如果查到了子行业，优先选取子行业的计算参数，如果查不到，选用主行业的计算参数）
-// Parameters: 行业、子行业
-// Returns: 参数列表
-func (dao CalcDynamicParamDao) FindByIndustry(industryCode string, subIndustryCode string) []entity.CalcDynamicParamEntity {
-	paramList := make([]entity.CalcDynamicParamEntity, 0)
-	if subIndustryCode != "" {
-		dao.db.Where("industry_code = ? and sub_industry_code = ?", industryCode, subIndustryCode).Find(&paramList)
-		if len(paramList) > 0 {
-			return paramList
-		}
+func (dao CalcDynamicParamDao) FindByMode(industryCode string, subIndustryCode string, workplaceCode string, mode entity.ParamMode) []*entity.CalcDynamicParamEntity {
+	paramList := make([]*entity.CalcDynamicParamEntity, 0)
+	switch mode {
+	case entity.IndustryMode:
+		dao.db.Where("industry_code = ? and mode = ?", industryCode, mode).Find(&paramList)
+	case entity.SubIndustryMode:
+		dao.db.Where("industry_code = ? and sub_industry_code = ? and mode = ?", industryCode, subIndustryCode, mode).Find(&paramList)
+	case entity.WorkplaceMode:
+		dao.db.Where("workplace_code = ? and mode = ? ", workplaceCode, mode).Find(&paramList)
 	}
-
-	dao.db.Where("industry_code = ?", industryCode).Find(&paramList)
 	return paramList
+}
+
+func (dao CalcDynamicParamDao) UpdateContentById(content string, id int64) {
+	dao.db.Model(&entity.CalcDynamicParamEntity{}).Where("id = ?", id).UpdateColumn("content", content)
+}
+
+func (dao CalcDynamicParamDao) FindFirstByModeAndType(mode entity.ParamMode, paramType entity.ParamType) *entity.CalcDynamicParamEntity {
+	result := make([]*entity.CalcDynamicParamEntity, 0)
+	dao.db.Model(entity.CalcDynamicParamEntity{}).Where("mode = ? and type = ?", mode, paramType).Limit(1).Find(&result)
+	if len(result) == 0 {
+		return nil
+	}
+	return result[0]
+}
+
+func (dao CalcDynamicParamDao) Save(param *entity.CalcDynamicParamEntity) {
+	dao.db.Model(entity.CalcDynamicParamEntity{}).Omit("gmt_create", "gmt_modified").Save(param)
 }
 
 func CreateCalcDynamicParamDao(client *gorm.DB) *CalcDynamicParamDao {

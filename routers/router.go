@@ -39,8 +39,29 @@ func InitRouter() *gin.Engine {
 	vApi := router.Group("/api/v1/")
 	{
 		workplace := vApi.Group("workplace/")
+		workplaceHandler := controller.WorkplaceHandler{}
 		{
-			workplace.GET("all", controller.WorkplaceHandler{}.FindAll)
+			workplace.GET("all", workplaceHandler.FindAll)
+			workplace.GET("allIndustry", workplaceHandler.FindAllIndustry)
+			workplace.GET("allSubIndustry", workplaceHandler.FindAllSubIndustry)
+		}
+		process := vApi.Group("process/")
+		processHandler := controller.ProcessHandler{}
+		{
+			process.GET("implementation", processHandler.Implementation)
+			process.POST("saveImplementation", processHandler.SaveImplementation)
+			process.GET("getImplementationById", processHandler.GetImplementationById)
+			process.GET("getProcessPositionTree", processHandler.GetProcessPositionTree)
+			process.GET("findProcessByParentProcessCode", processHandler.FindProcessByParentProcessCode)
+			process.GET("generateProcessCode", processHandler.GenerateProcessCode)
+			process.POST("saveProcessPosition", processHandler.SaveProcessPosition)
+			process.POST("saveProcess", processHandler.SaveProcess)
+			process.POST("deleteProcessPosition", processHandler.DeleteProcessPosition)
+			process.POST("changeImplStatus", processHandler.ChangeImplStatus)
+		}
+		position := vApi.Group("position/")
+		{
+			position.GET("findAll", controller.PositionHandler{}.FindAll)
 		}
 		efficiency := vApi.Group("efficiency/")
 		efficiencyHandler := controller.EfficiencyHandler{}
@@ -51,6 +72,8 @@ func InitRouter() *gin.Engine {
 			efficiency.GET("timeOnTask", efficiencyHandler.TimeOnTask)
 			efficiency.GET("workplace", efficiencyHandler.WorkplaceEfficiency)
 			efficiency.GET("employeeStatus", efficiencyHandler.EmployeeStatus)
+			efficiency.POST("saveOtherParams", efficiencyHandler.SaveOtherParams)
+			efficiency.GET("findCalcParamByImplementationId", efficiencyHandler.FindCalcParamByImplementationId)
 		}
 	}
 

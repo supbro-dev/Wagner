@@ -8,7 +8,7 @@ package domain
 
 import (
 	"time"
-	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc/calc_dynamic_param"
 )
 
 // 加工节点上下文
@@ -26,7 +26,7 @@ type ComputeContext struct {
 	// 计算结束时间
 	CalcEndTime time.Time
 	// 环节列表
-	ProcessList []*StandardPosition
+	ProcessList []*ProcessPosition
 
 	// 最近三天工作列表
 	YesterdayWorkList []Actionable

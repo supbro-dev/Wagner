@@ -105,12 +105,12 @@ func (service *SummarySinkService) convertDomain2Entity(resultList []*domain.Hou
 	return list
 }
 
-func (service *SummarySinkService) getPositionCode(process *domain.StandardPosition) string {
+func (service *SummarySinkService) getPositionCode(process *domain.ProcessPosition) string {
 	position := process.Path[0]
 	return position.Code
 }
 
-func (service *SummarySinkService) convert2ProcessProperty(process *domain.StandardPosition) string {
+func (service *SummarySinkService) convert2ProcessProperty(process *domain.ProcessPosition) string {
 	json := json_util.NewJson()
 	json.Set("name", process.Name)
 

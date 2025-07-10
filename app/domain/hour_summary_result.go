@@ -8,7 +8,7 @@ package domain
 
 import (
 	"time"
-	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc/calc_dynamic_param"
 )
 
 type HourSummaryResult struct {
@@ -26,7 +26,7 @@ type HourSummaryResult struct {
 	Properties map[string]interface{}
 
 	// 环节信息
-	Process *StandardPosition
+	Process *ProcessPosition
 }
 
 // 聚合key
@@ -42,8 +42,8 @@ type HourSummaryAggregateKey struct {
 type AggregateDimension string
 
 var (
-	Process  AggregateDimension = "process"  //员工+作业环节聚合
-	Position AggregateDimension = "position" //员工+作业岗位
+	PROCESS  AggregateDimension = "process"  //员工+作业环节聚合
+	POSITION AggregateDimension = "position" //员工+作业岗位
 )
 
 type IsCrossPosition string

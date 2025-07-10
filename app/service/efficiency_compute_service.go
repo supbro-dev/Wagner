@@ -11,8 +11,8 @@ import (
 	"wagner/app/global/business_error"
 	"wagner/app/global/error_handler"
 	"wagner/app/http/vo"
-	"wagner/app/service/calc_dynamic_param"
-	"wagner/app/service/calc_node"
+	"wagner/app/service/calc/calc_dynamic_param"
+	"wagner/app/service/calc/calc_node"
 	"wagner/app/utils/datetime_util"
 	"wagner/app/utils/lock"
 	"wagner/app/utils/log"
@@ -29,6 +29,24 @@ type ComputeParams struct {
 
 func CreateEfficiencyComputeService() *EfficiencyComputeService {
 	return &EfficiencyComputeService{}
+}
+
+func (service *EfficiencyComputeService) GetCalcOtherParam(impl *domain.ProcessImplementation) *calc_dynamic_param.CalcOtherParam {
+	var industryCode string
+	var subIndustryCode string
+	var workplaceCode string
+	switch impl.TargetType {
+	case entity.Industry:
+		industryCode = impl.TargetCode
+	case entity.SubIndustry:
+		subIndustryCode = impl.TargetCode
+		industryCode = DomainHolder.WorkplaceService.FindIndustryBySubIndustry(subIndustryCode)
+	case entity.Workplace:
+		workplaceCode = impl.TargetCode
+	}
+	param := DomainHolder.CalcDynamicParamService.FindCalcOtherParam(industryCode, subIndustryCode, workplaceCode, impl.TargetType)
+
+	return param
 }
 
 func (service *EfficiencyComputeService) TimeOnTask(employeeNumber string, operateDay time.Time) (*vo.TimeOnTaskVO, *business_error.BusinessError) {
@@ -238,7 +256,7 @@ func (service *EfficiencyComputeService) buildWorkLoadDesc(current *vo.ProcessDu
 func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber string, operateDay time.Time) (*domain.ComputeContext, *calc_dynamic_param.CalcParam, *business_error.BusinessError) {
 	employeeSnapshotService := DomainHolder.EmployeeSnapshotService
 	calcDynamicParamService := DomainHolder.CalcDynamicParamService
-	standardPositionService := DomainHolder.StandardPositionService
+	processService := DomainHolder.ProcessService
 	workplaceService := DomainHolder.WorkplaceService
 
 	// 1.获取员工当天快照和工作点信息
@@ -252,14 +270,14 @@ func (service *EfficiencyComputeService) createAndComputeCtx(employeeNumber stri
 		return nil, nil, err
 	}
 
-	// 3. 查询工序映射关系
-	standardPositionList := standardPositionService.FindStandardPositionByWorkplace(employee.WorkplaceCode)
+	// 3. 查询环节映射关系
+	processPositionList := processService.FindProcessList(workplace)
 
 	ctx := domain.ComputeContext{
 		Employee:       employee,
 		Workplace:      workplace,
 		OperateDay:     operateDay,
-		ProcessList:    standardPositionList,
+		ProcessList:    processPositionList,
 		CalcOtherParam: calcParam.CalcOtherParam,
 	}
 
@@ -626,7 +644,7 @@ func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, 
 	workplaceService := DomainHolder.WorkplaceService
 	employeeSnapshotService := DomainHolder.EmployeeSnapshotService
 	calcDynamicParamService := DomainHolder.CalcDynamicParamService
-	standardPositionService := DomainHolder.StandardPositionService
+	processPositionService := DomainHolder.ProcessService
 
 	workplace := workplaceService.FindByCode(workplaceCode)
 	if workplace == nil {
@@ -643,15 +661,15 @@ func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, 
 		return false, err
 	}
 
-	// 3. 查询工序映射关系
-	standardPositionList := standardPositionService.FindStandardPositionByWorkplace(workplaceCode)
+	// 3. 查询环节映射关系
+	processPositionList := processPositionService.FindProcessList(workplace)
 
 	var wg sync.WaitGroup
 	ctxChannel := make(chan *ComputeResult, len(employeeSnapshots))
 
 	for _, employeeSnapshot := range employeeSnapshots {
 		wg.Add(1)
-		go runComputeEmployee(service, employeeSnapshot, workplace, operateDay, calcParam, standardPositionList, &wg, ctxChannel)
+		go runComputeEmployee(service, employeeSnapshot, workplace, operateDay, calcParam, processPositionList, &wg, ctxChannel)
 	}
 
 	// 等待协程完成
@@ -699,7 +717,7 @@ func (service *EfficiencyComputeService) ComputeWorkplace(workplaceCode string, 
 }
 
 func (service *EfficiencyComputeService) computeEachEmployee(employeeSnapshot *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time,
-	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.StandardPosition) (*domain.ComputeContext, *business_error.BusinessError) {
+	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.ProcessPosition) (*domain.ComputeContext, *business_error.BusinessError) {
 	// 根据计算粒度分布式加锁
 	if lockSuccess, err := lock.Lock(employeeSnapshot.Number, operateDay, 2); err != nil {
 		businessError := business_error.LockFailureBySystemError(err)
@@ -742,8 +760,52 @@ func (service *EfficiencyComputeService) computeEachEmployee(employeeSnapshot *d
 	return &ctx, nil
 }
 
+// 保存计算默认参数
+func (service *EfficiencyComputeService) SaveCalcOtherParam(implementation *domain.ProcessImplementation, param calc_dynamic_param.CalcOtherParam) {
+	var industryCode string
+	var subIndustryCode string
+	var workplaceCode string
+	switch implementation.TargetType {
+	case entity.Industry:
+		industryCode = implementation.TargetCode
+	case entity.SubIndustry:
+		subIndustryCode = implementation.TargetCode
+		industryCode = DomainHolder.WorkplaceService.FindIndustryBySubIndustry(subIndustryCode)
+	case entity.Workplace:
+		workplaceCode = implementation.TargetCode
+	}
+
+	DomainHolder.CalcDynamicParamService.Save(param, industryCode, subIndustryCode, workplaceCode, implementation.TargetType)
+}
+
+func (service *EfficiencyComputeService) CopyCalcDynamicParam(impl *domain.ProcessImplementation) {
+	params := DomainHolder.CalcDynamicParamService.FindParamsBySameParamMode(entity.ParamMode(impl.TargetType))
+	newParams := make([]*entity.CalcDynamicParamEntity, 0)
+	for _, param := range params {
+		e := entity.CalcDynamicParamEntity{
+			Type:    param.Type,
+			Content: param.Content,
+		}
+		switch impl.TargetType {
+		case entity.Industry:
+			e.IndustryCode = &impl.TargetCode
+			e.Mode = entity.IndustryMode
+		case entity.SubIndustry:
+			e.SubIndustryCode = &impl.TargetCode
+			e.Mode = entity.SubIndustryMode
+		case entity.Workplace:
+			e.WorkplaceCode = &impl.TargetCode
+			e.Mode = entity.WorkplaceMode
+		}
+
+		newParams = append(newParams, &e)
+	}
+
+	DomainHolder.CalcDynamicParamService.SaveParams(newParams)
+}
+
 func runComputeEmployee(service *EfficiencyComputeService, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time,
-	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.StandardPosition, wg *sync.WaitGroup, channel chan *ComputeResult) {
+	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.ProcessPosition, wg *sync.WaitGroup, channel chan *ComputeResult) {
 	// 协程结束时通知WaitGroup
 	defer wg.Done()
 	if eachCtx, err := service.computeEachEmployee(employee, workplace, operateDay, calcParam, standardPositionList); err == nil {

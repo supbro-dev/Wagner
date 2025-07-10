@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 	"wagner/app/domain"
-	"wagner/app/service/calc_node/golang_node"
+	"wagner/app/service/calc/calc_node/golang_node"
 	"wagner/app/utils/datetime_util"
 )
 
@@ -87,7 +87,7 @@ func TestAddReasonableBreakTime(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 06:00:00")
 					return &t
 				}(),
-				Process: &domain.StandardPosition{
+				Process: &domain.ProcessPosition{
 					Properties: map[string]interface{}{
 						"minIdleTimeInMinute": 30,
 					},
@@ -145,7 +145,7 @@ func TestAddReasonableBreakTime(t *testing.T) {
 					t, _ := datetime_util.ParseDatetime("2025-06-13 06:00:00")
 					return &t
 				}(),
-				Process: &domain.StandardPosition{
+				Process: &domain.ProcessPosition{
 					Properties: map[string]interface{}{
 						"minIdleTimeInMinute": 30,
 					},

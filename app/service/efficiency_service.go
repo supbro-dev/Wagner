@@ -14,7 +14,7 @@ import (
 	"time"
 	"wagner/app/domain"
 	"wagner/app/http/vo"
-	"wagner/app/service/calc_dynamic_param"
+	"wagner/app/service/calc/calc_dynamic_param"
 	"wagner/app/utils/datetime_util"
 	"wagner/app/utils/json_util"
 	"wagner/infrastructure/persistence/dao"
@@ -37,12 +37,11 @@ func (service *EfficiencyService) EmployeeEfficiency(workplaceCode, employeeNumb
 		WorkplaceCode:      workplaceCode,
 		EmployeeNumber:     employeeNumber,
 		DateRange:          dateRange,
-		AggregateDimension: aggregateDimension,
-		IsCrossPosition:    isCrossPosition,
-		WorkLoadUnit:       workLoadUnits,
+		AggregateDimension: string(aggregateDimension),
+		IsCrossPosition:    string(isCrossPosition),
 		CurrentPage:        currentPage,
 		PageSize:           pageSize}
-	employeeSummaryEntities := service.hourSummaryResultDao.QueryEmployeeEfficiency(resultQuery)
+	employeeSummaryEntities := service.hourSummaryResultDao.QueryEmployeeEfficiency(resultQuery, workLoadUnits)
 
 	total := service.hourSummaryResultDao.TotalEmployeeEfficiency(resultQuery)
 
@@ -116,7 +115,7 @@ func (service *EfficiencyService) generateEmployeeColumns(workLoadUnits []calc_d
 		{"工作点", "workplaceName", "workplaceName"},
 	}
 
-	if dimension == domain.Process {
+	if dimension == domain.PROCESS {
 		columns = append(columns, &vo.TableColumnVO{"作业环节", "processName", "processName"})
 	}
 
@@ -143,17 +142,17 @@ func (service *EfficiencyService) generateEmployeeColumns(workLoadUnits []calc_d
 	return columns
 }
 
-func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplace, dateRange []*time.Time, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, standardPositions []*domain.StandardPosition) *vo.WorkplaceEfficiencyVO {
-	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplace.Code, DateRange: dateRange, IsCrossPosition: isCrossPosition, WorkLoadUnit: workLoadUnits}
-	processSummaries := service.hourSummaryResultDao.QueryWorkplaceEfficiency(resultQuery)
+func (service *EfficiencyService) WorkplaceEfficiency(workplace *domain.Workplace, dateRange []*time.Time, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, processPositions []*domain.ProcessPosition) *vo.WorkplaceEfficiencyVO {
+	resultQuery := query.HourSummaryResultQuery{WorkplaceCode: workplace.Code, DateRange: dateRange, IsCrossPosition: string(isCrossPosition)}
+	processSummaries := service.hourSummaryResultDao.QueryWorkplaceEfficiency(resultQuery, workLoadUnits)
 
-	treeRoot := service.buildWorkplaceStructureTree(workplace, standardPositions, processSummaries, workLoadUnits)
+	treeRoot := service.buildWorkplaceStructureTree(workplace, processPositions, processSummaries, workLoadUnits)
 	columns := service.generateWorkplaceColumns(workLoadUnits)
 	return &vo.WorkplaceEfficiencyVO{treeRoot, columns}
 }
 
-func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.Workplace, standardPositions []*domain.StandardPosition, summaries []*entity.WorkLoadWithProcessSummary, workLoadUnits []calc_dynamic_param.WorkLoadUnit) *vo.WorkplaceStructureVO {
-	if standardPositions == nil || len(standardPositions) == 0 {
+func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.Workplace, processPositions []*domain.ProcessPosition, summaries []*entity.WorkLoadWithProcessSummary, workLoadUnits []calc_dynamic_param.WorkLoadUnit) *vo.WorkplaceStructureVO {
+	if processPositions == nil || len(processPositions) == 0 {
 		return nil
 	}
 
@@ -163,14 +162,14 @@ func (service *EfficiencyService) buildWorkplaceStructureTree(workplace *domain.
 	}
 
 	// 1.构建树
-	root := service.convert2Structure(&domain.StandardPosition{
+	root := service.convert2Structure(&domain.ProcessPosition{
 		Name: workplace.Name,
 		Code: "-1",
 	})
 	code2Node := make(map[string]*vo.WorkplaceStructureVO, 0)
 	code2Node[root.Code] = root
 
-	for _, position := range standardPositions {
+	for _, position := range processPositions {
 		parentCode := position.ParentCode
 		parentNode := code2Node[parentCode]
 		node := service.convert2Structure(position)
@@ -228,16 +227,14 @@ func (service *EfficiencyService) iterateTreeRollUp(node *vo.WorkplaceStructureV
 	}
 }
 
-var NeedRollUp = "workLoadRollUp"
-
-func (service *EfficiencyService) convert2Structure(position *domain.StandardPosition) *vo.WorkplaceStructureVO {
+func (service *EfficiencyService) convert2Structure(position *domain.ProcessPosition) *vo.WorkplaceStructureVO {
 	v := vo.WorkplaceStructureVO{}
 	v.Name = position.Name
 	v.Code = position.Code
 	v.Level = position.Level
 	v.Children = make([]*vo.WorkplaceStructureVO, 0)
 	if position.Properties != nil {
-		if needRollUp, exists := position.Properties[NeedRollUp]; exists {
+		if needRollUp, exists := position.Properties[entity.WorkLoadRollUpKey]; exists {
 			v.WorkLoadRollUp = needRollUp.(bool)
 		}
 	}

@@ -1,6 +1,7 @@
 package response
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"wagner/app/global/business_error"
@@ -29,6 +30,12 @@ func ReturnJson(context *gin.Context, httpCode int, dataCode int, msg string, da
 
 // ErrorSystem 系统执行代码错误
 func ReturnError(c *gin.Context, error *business_error.BusinessError) {
-	ReturnJson(c, http.StatusInternalServerError, error.Code, error.Message, error.Args)
+	var msg string
+	if error.Args != nil && len(error.Args) > 0 {
+		msg = fmt.Sprintf(error.Message, error.Args)
+	} else {
+		msg = error.Message
+	}
+	ReturnJson(c, http.StatusInternalServerError, error.Code, msg, nil)
 	c.Abort()
 }

@@ -28,3 +28,29 @@ func (p WorkplaceHandler) FindAll(c *gin.Context) {
 	}
 	response.ReturnSuccessJson(c, selectList)
 }
+
+func (p WorkplaceHandler) FindAllIndustry(c *gin.Context) {
+	industries := service.DomainHolder.WorkplaceService.FindAllIndustry()
+
+	selectList := make([]vo.SelectVO, 0)
+	for _, s := range industries {
+		selectList = append(selectList, vo.SelectVO{
+			Value: s,
+			Label: s,
+		})
+	}
+	response.ReturnSuccessJson(c, selectList)
+}
+
+func (p WorkplaceHandler) FindAllSubIndustry(c *gin.Context) {
+	subIndustries := service.DomainHolder.WorkplaceService.FindAllSubIndustry()
+
+	selectList := make([]vo.SelectVO, 0)
+	for _, s := range subIndustries {
+		selectList = append(selectList, vo.SelectVO{
+			Value: s,
+			Label: s,
+		})
+	}
+	response.ReturnSuccessJson(c, selectList)
+}
