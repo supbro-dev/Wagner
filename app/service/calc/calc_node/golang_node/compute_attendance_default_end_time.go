@@ -38,7 +38,7 @@ func ComputeAttendanceDefaultEndTime(ctx *domain.ComputeContext) *domain.Compute
 // 计算缺卡情况下的考勤下班时间
 // Parameters: now 当前时间, todayAttendanceStartTime 当天考勤上班还见, tomorrowAttendanceStartTime 第二天考勤上班时间，todayScheduling 排班信息， attendanceAbsencePenaltyHour 考勤缺卡惩罚时间(H)
 // Returns:
-func computeAttendanceEndTime(now, todayAttendanceStartTime time.Time, todayScheduling *domain.Scheduling, attendanceAbsencePenaltyHour int) time.Time {
+func computeAttendanceEndTime(now, todayAttendanceStartTime time.Time, todayScheduling *domain.Scheduling, attendanceAbsencePenaltyHour float32) time.Time {
 	// 计算下班缺卡惩罚时间
 	penaltyDefaultAttendanceEndTime := todayAttendanceStartTime.Add(time.Duration(attendanceAbsencePenaltyHour) * time.Hour)
 

@@ -14,6 +14,7 @@ import (
 	"wagner/app/global/container"
 	"wagner/app/global/error_handler"
 	"wagner/app/utils/json_util"
+	"wagner/app/utils/log"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
 )
@@ -64,7 +65,7 @@ type CalcOtherParam struct {
 
 type AttendanceParam struct {
 	// 考勤缺卡惩罚时长（H）
-	AttendanceAbsencePenaltyHour int
+	AttendanceAbsencePenaltyHour float32
 	// 最大开班时间（即上班打卡到第一次作业开始允许的最长时间）
 	MaxRunUpTimeInMinute int
 }
@@ -72,8 +73,8 @@ type AttendanceParam struct {
 type WorkLoadAggregateType string
 
 var (
-	AggregateEndHour    WorkLoadAggregateType = "end"        // 物品数量记录到结束小时
-	AggregateProportion WorkLoadAggregateType = "proportion" // 物品数量按比例分摊
+	AggregateEndHour    WorkLoadAggregateType = "end"        // 工作量记录到结束小时
+	AggregateProportion WorkLoadAggregateType = "proportion" // 作业量按比例分摊
 )
 
 type SinkType string
@@ -121,12 +122,10 @@ func CreateCalcDynamicParamService(calcDynamicParamDao *dao.CalcDynamicParamDao,
 // Parameters: 工作点编码
 // Returns: 计算参数配置列表
 func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode string) (*CalcParam, *business_error.BusinessError) {
-	workplaceEntity := service.workplaceDao.FindByCode(workplaceCode)
-	if &workplaceEntity == nil {
-		return nil, business_error.WorkplaceDoseNotExist(workplaceCode)
+	paramList, err := service.findCalcDynamicParam(workplaceCode)
+	if err != nil {
+		return nil, err
 	}
-
-	paramList := service.calcDynamicParamDao.FindByIndustry(workplaceEntity.IndustryCode, workplaceEntity.SubIndustryCode)
 
 	calcParam := CalcParam{}
 
@@ -161,7 +160,28 @@ func (service CalcDynamicParamService) FindParamsByWorkplace(workplaceCode strin
 	return &calcParam, nil
 }
 
-func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynamicParamEntity) ([]SinkStorage, *business_error.BusinessError) {
+func (service CalcDynamicParamService) findCalcDynamicParam(workplaceCode string) ([]*entity.CalcDynamicParamEntity, *business_error.BusinessError) {
+	workplaceEntity := service.workplaceDao.FindByCode(workplaceCode)
+	if &workplaceEntity == nil {
+		return nil, business_error.WorkplaceDoseNotExist(workplaceCode)
+	}
+
+	paramList := service.calcDynamicParamDao.FindByMode(workplaceEntity.IndustryCode, workplaceEntity.SubIndustryCode, workplaceEntity.Code, entity.WorkplaceMode)
+	if paramList == nil || len(paramList) == 0 {
+		paramList = service.calcDynamicParamDao.FindByMode(workplaceEntity.IndustryCode, workplaceEntity.SubIndustryCode, workplaceEntity.Code, entity.SubIndustryMode)
+	}
+	if paramList == nil || len(paramList) == 0 {
+		paramList = service.calcDynamicParamDao.FindByMode(workplaceEntity.IndustryCode, workplaceEntity.SubIndustryCode, workplaceEntity.Code, entity.IndustryMode)
+	}
+
+	if paramList == nil || len(paramList) == 0 {
+		return nil, business_error.CannotFindCalcParamByWorkplace(workplaceCode)
+	} else {
+		return paramList, nil
+	}
+}
+
+func (service CalcDynamicParamService) buildSinkStorages(param *entity.CalcDynamicParamEntity) ([]SinkStorage, *business_error.BusinessError) {
 	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
 		return nil, business_error.ParseCalcParamError(err)
@@ -203,7 +223,7 @@ func (service CalcDynamicParamService) buildSinkStorages(param entity.CalcDynami
 	return fields, nil
 }
 
-func (service CalcDynamicParamService) buildInjectSources(param entity.CalcDynamicParamEntity) (*InjectSource, *business_error.BusinessError) {
+func (service CalcDynamicParamService) buildInjectSources(param *entity.CalcDynamicParamEntity) (*InjectSource, *business_error.BusinessError) {
 	array, err := json_util.Parse2JsonArray(param.Content)
 	if err != nil {
 		return nil, business_error.ParseCalcParamError(err)
@@ -226,7 +246,7 @@ func (service CalcDynamicParamService) buildInjectSources(param entity.CalcDynam
 	return &originalField, nil
 }
 
-func (service CalcDynamicParamService) buildCalcNodeList(param entity.CalcDynamicParamEntity) (*CalcNodeList, *business_error.BusinessError) {
+func (service CalcDynamicParamService) buildCalcNodeList(param *entity.CalcDynamicParamEntity) (*CalcNodeList, *business_error.BusinessError) {
 	json, err := json_util.Parse2Json(param.Content)
 	if err != nil {
 		return nil, business_error.ParseCalcParamError(err)
@@ -275,7 +295,7 @@ var DefaultCalcOtherParam = CalcOtherParam{
 	},
 }
 
-func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDynamicParamEntity) (*CalcOtherParam, *business_error.BusinessError) {
+func (service CalcDynamicParamService) buildCalcOtherParam(param *entity.CalcDynamicParamEntity) (*CalcOtherParam, *business_error.BusinessError) {
 	otherParam := CalcOtherParam{}
 	copier.Copy(&otherParam, &DefaultCalcOtherParam)
 
@@ -284,4 +304,42 @@ func (service CalcDynamicParamService) buildCalcOtherParam(param entity.CalcDyna
 		return nil, business_error.ParseCalcParamError(err)
 	}
 	return &otherParam, nil
+}
+
+// 保存参数
+func (service CalcDynamicParamService) Save(param CalcOtherParam, industryCode string, subIndustryCode string, workplaceCode string, targetType entity.TargetType) {
+	params := service.calcDynamicParamDao.FindByMode(industryCode, subIndustryCode, workplaceCode, entity.ParamMode(targetType))
+
+	var id int64
+	for _, p := range params {
+		if p.Type == entity.CALC_PARAM {
+			id = p.Id
+			break
+		}
+	}
+	service.calcDynamicParamDao.UpdateContentById(json_util.ToJsonString(param), id)
+}
+
+func (service CalcDynamicParamService) FindCalcOtherParam(industryCode string, subIndustryCode string, workplaceCode string, targetType entity.TargetType) *CalcOtherParam {
+	params := service.calcDynamicParamDao.FindByMode(industryCode, subIndustryCode, workplaceCode, entity.ParamMode(targetType))
+
+	var calcOtherParamEntity *entity.CalcDynamicParamEntity
+	for _, p := range params {
+		if p.Type == entity.CALC_PARAM {
+			calcOtherParamEntity = p
+		}
+	}
+	if calcOtherParamEntity == nil {
+		return nil
+	}
+
+	calcOtherParam := CalcOtherParam{}
+	err := json_util.Parse2Object(calcOtherParamEntity.Content, &calcOtherParam)
+
+	if err != nil {
+		log.LogBusinessError(business_error.ParseCalcParamError(err))
+		return nil
+	} else {
+		return &calcOtherParam
+	}
 }

@@ -24,7 +24,7 @@ func ComputeAttendanceDefaultStartTime(ctx *domain.ComputeContext) *domain.Compu
 	return ctx
 }
 
-func computeAttendanceStartTime(todayAttendanceEndTime *time.Time, todayScheduling *domain.Scheduling, attendanceAbsencePenaltyHour int) time.Time {
+func computeAttendanceStartTime(todayAttendanceEndTime *time.Time, todayScheduling *domain.Scheduling, attendanceAbsencePenaltyHour float32) time.Time {
 	var defaultAttendanceStartTime time.Time
 	if todayScheduling != nil {
 		defaultAttendanceStartTime = *todayScheduling.StartTime

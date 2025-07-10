@@ -71,6 +71,8 @@ func InitRouter() *gin.Engine {
 			efficiency.GET("timeOnTask", efficiencyHandler.TimeOnTask)
 			efficiency.GET("workplace", efficiencyHandler.WorkplaceEfficiency)
 			efficiency.GET("employeeStatus", efficiencyHandler.EmployeeStatus)
+			efficiency.POST("saveOtherParams", efficiencyHandler.SaveOtherParams)
+			efficiency.GET("findCalcParamByImplementationId", efficiencyHandler.FindCalcParamByImplementationId)
 		}
 	}
 

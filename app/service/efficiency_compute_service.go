@@ -31,6 +31,24 @@ func CreateEfficiencyComputeService() *EfficiencyComputeService {
 	return &EfficiencyComputeService{}
 }
 
+func (service *EfficiencyComputeService) GetCalcOtherParam(impl *domain.ProcessImplementation) *calc_dynamic_param.CalcOtherParam {
+	var industryCode string
+	var subIndustryCode string
+	var workplaceCode string
+	switch impl.TargetType {
+	case entity.Industry:
+		industryCode = impl.TargetCode
+	case entity.SubIndustry:
+		subIndustryCode = impl.TargetCode
+		industryCode = DomainHolder.WorkplaceService.FindIndustryBySubIndustry(subIndustryCode)
+	case entity.Workplace:
+		workplaceCode = impl.TargetCode
+	}
+	param := DomainHolder.CalcDynamicParamService.FindCalcOtherParam(industryCode, subIndustryCode, workplaceCode, impl.TargetType)
+
+	return param
+}
+
 func (service *EfficiencyComputeService) TimeOnTask(employeeNumber string, operateDay time.Time) (*vo.TimeOnTaskVO, *business_error.BusinessError) {
 	ctx, calcParam, err := service.createAndComputeCtx(employeeNumber, operateDay)
 	if err != nil {
@@ -740,6 +758,24 @@ func (service *EfficiencyComputeService) computeEachEmployee(employeeSnapshot *d
 	log.ComputeLogger.Info("员工人效数据计算完成", "number", employeeSnapshot.Number, "耗时(ms)", ctx.CalcEndTime.Sub(ctx.CalcStartTime).Milliseconds())
 
 	return &ctx, nil
+}
+
+// 保存计算默认参数
+func (service *EfficiencyComputeService) SaveCalcOtherParam(implementation *domain.ProcessImplementation, param calc_dynamic_param.CalcOtherParam) {
+	var industryCode string
+	var subIndustryCode string
+	var workplaceCode string
+	switch implementation.TargetType {
+	case entity.Industry:
+		industryCode = implementation.TargetCode
+	case entity.SubIndustry:
+		subIndustryCode = implementation.TargetCode
+		industryCode = DomainHolder.WorkplaceService.FindIndustryBySubIndustry(subIndustryCode)
+	case entity.Workplace:
+		workplaceCode = implementation.TargetCode
+	}
+
+	DomainHolder.CalcDynamicParamService.Save(param, industryCode, subIndustryCode, workplaceCode, implementation.TargetType)
 }
 
 func runComputeEmployee(service *EfficiencyComputeService, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time,

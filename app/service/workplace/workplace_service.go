@@ -71,3 +71,8 @@ func (service *WorkplaceService) FindByCode(code string) *domain.Workplace {
 
 	return &workplace
 }
+
+// 暂时通过工作点获取，实际应该有元数据表
+func (service *WorkplaceService) FindIndustryBySubIndustry(subIndustry string) string {
+	return service.workplaceDao.FindSubIndustryBySubindustryCode(subIndustry)
+}
