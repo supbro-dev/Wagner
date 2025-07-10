@@ -4,7 +4,8 @@ INSERT INTO workplace (`code`,
                        `region_code`,
                        `industry_code`,
                        `sub_industry_code`)
-VALUES ('workplace1', '1号工作点', 'NORTH', 'FOOD', null);
+VALUES ('workplace1', '1号工作点', 'NORTH', 'FOOD', null),
+       ('workplace2','2号工作点','SOUTH','ELECTRICAL_EQUIPMENT','SMALL_3C');
 
 -- 初始化员工信息
 INSERT INTO `employee` (`id`,
@@ -89,4 +90,4 @@ VALUES (1, '2025-06-03 14:07:55', '2025-06-19 21:59:23', 'SINK_STORAGE', 'FOOD',
        (4, '2025-06-03 14:58:38', '2025-06-12 20:57:14', 'DYNAMIC_CALC_NODE', 'FOOD', NULL,
         '{\"nodeNames\": \"SetCrossDayAttendance,ComputeAttendanceDefaultEndTime,ComputeAttendanceDefaultStartTime,CutOffAttendanceTime,AddCrossDayData,FilterOtherDaysData,FilterExpiredData,MarchProcess,PaddingUnfinishedWorkEndTime,CutOffOvertimeWork,CutOffCrossWork,AddReasonableBreakTime,CutOffWorkByRest,CalcWorkTransitionTime,MatchRestProcess,GenerateIdleData\"}'),
        (5, '2025-06-05 17:50:14', '2025-06-05 17:50:14', 'CALC_PARAM', 'FOOD', NULL,
-        '{\"AttendanceParam\": {\"AttendanceAbsencePenaltyHour\": 8}}');
+        '{"Work": {"LookBackDays": 3, "WorkLoadUnits": [{"Code": "itemNum", "Name": "件数"}, {"Code": "packageNum", "Name": "包裹数"}, {"Code": "skuNum", "Name": "SKU数"}], "DefaultMaxTimeInMinute": 30, "DefaultMinIdleTimeInMinute": 5}, "Attendance": {"MaxRunUpTimeInMinute": 15, "AttendanceAbsencePenaltyHour": 8.5}, "HourSummary": {"WorkLoadAggregateType": "end"}}');

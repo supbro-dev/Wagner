@@ -57,18 +57,20 @@ CREATE TABLE `workplace`
 
 -- 动态计算配置表
 
-CREATE TABLE `calc_dynamic_param`
-(
-    `id`                bigint      NOT NULL AUTO_INCREMENT,
-    `gmt_create`        datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-    `gmt_modified`      datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
-    `type`              varchar(45) NOT NULL COMMENT '参数类型',
-    `industry_code`     varchar(45) NOT NULL COMMENT '行业编码',
-    `sub_industry_code` varchar(45)          DEFAULT NULL COMMENT '子行业编码',
-    `content`           json        NOT NULL COMMENT '配置内容',
-    PRIMARY KEY (`id`),
-    KEY                 `idx_ic_sic` (`industry_code`,`sub_industry_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='动态计算配置';
+CREATE TABLE `calc_dynamic_param` (
+      `id` bigint NOT NULL AUTO_INCREMENT,
+      `gmt_create` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+      `gmt_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
+      `type` varchar(45) NOT NULL COMMENT '参数类型',
+      `industry_code` varchar(45) DEFAULT NULL COMMENT '行业编码',
+      `sub_industry_code` varchar(45) DEFAULT NULL COMMENT '子行业编码',
+      `content` json NOT NULL COMMENT '配置内容',
+      `workplace_code` varchar(45) DEFAULT NULL COMMENT '工作点编码',
+      `mode` varchar(45) DEFAULT NULL COMMENT '按workplace/industry/subIndustry来设置计算参数',
+      PRIMARY KEY (`id`),
+      KEY `idx_ic_sic` (`industry_code`,`sub_industry_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='动态计算配置';
+
 
 -- 人效环节
 CREATE TABLE `process_position`
