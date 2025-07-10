@@ -49,7 +49,7 @@ func InitRouter() *gin.Engine {
 		processHandler := controller.ProcessHandler{}
 		{
 			process.GET("implementation", processHandler.Implementation)
-			process.POST("save", processHandler.Save)
+			process.POST("saveImplementation", processHandler.SaveImplementation)
 			process.GET("getImplementationById", processHandler.GetImplementationById)
 			process.GET("getProcessPositionTree", processHandler.GetProcessPositionTree)
 			process.GET("findProcessByParentProcessCode", processHandler.FindProcessByParentProcessCode)
@@ -57,6 +57,7 @@ func InitRouter() *gin.Engine {
 			process.POST("saveProcessPosition", processHandler.SaveProcessPosition)
 			process.POST("saveProcess", processHandler.SaveProcess)
 			process.POST("deleteProcessPosition", processHandler.DeleteProcessPosition)
+			process.POST("changeImplStatus", processHandler.ChangeImplStatus)
 		}
 		position := vApi.Group("position/")
 		{

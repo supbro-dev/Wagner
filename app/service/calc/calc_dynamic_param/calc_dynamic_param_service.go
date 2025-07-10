@@ -343,3 +343,27 @@ func (service CalcDynamicParamService) FindCalcOtherParam(industryCode string, s
 		return &calcOtherParam
 	}
 }
+
+func (service CalcDynamicParamService) FindParamsBySameParamMode(mode entity.ParamMode) []*entity.CalcDynamicParamEntity {
+	params := make([]*entity.CalcDynamicParamEntity, 0)
+	injectSourceParam := service.calcDynamicParamDao.FindFirstByModeAndType(mode, entity.INJECT_SOURCE)
+	if injectSourceParam != nil {
+		params = append(params, injectSourceParam)
+	}
+	sinkStorageParam := service.calcDynamicParamDao.FindFirstByModeAndType(mode, entity.SINK_STORAGE)
+	if sinkStorageParam != nil {
+		params = append(params, sinkStorageParam)
+	}
+	dynamicNodeParam := service.calcDynamicParamDao.FindFirstByModeAndType(mode, entity.DYNAMIC_CALC_NODE)
+	if dynamicNodeParam != nil {
+		params = append(params, dynamicNodeParam)
+	}
+
+	return params
+}
+
+func (service CalcDynamicParamService) SaveParams(params []*entity.CalcDynamicParamEntity) {
+	for _, param := range params {
+		service.calcDynamicParamDao.Save(param)
+	}
+}

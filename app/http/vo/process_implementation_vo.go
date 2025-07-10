@@ -22,4 +22,5 @@ type ProcessImplementationVO struct {
 	TargetName     string `json:"targetName"`
 	Status         string `json:"status"`
 	StatusDesc     string `json:"statusDesc"`
+	IndustryCode   string `json:"industryCode"`
 }

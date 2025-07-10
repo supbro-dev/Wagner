@@ -12,7 +12,7 @@ type ProcessPositionEntity struct {
 	IndustryCode    string              `gorm:"column:industry_code" json:"industry_code"`
 	SubIndustryCode string              `gorm:"column:sub_industry_code" json:"sub_industry_code"`
 	Script          string              `gorm:"column:script" json:"script"`
-	Properties      string              `gorm:"column:properties" json:"properties"`
+	Properties      *string             `gorm:"column:properties" json:"properties"`
 	SortIndex       int                 `gorm:"column:sort_index" json:"sortIndex"`
 }
 

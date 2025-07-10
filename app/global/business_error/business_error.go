@@ -148,3 +148,7 @@ func ExistSameCodeProcessImpl(code ...interface{}) *BusinessError {
 func ExistSameCodeProcessPosition(code ...interface{}) *BusinessError {
 	return &BusinessError{ProcessImplementationError, 9803, "不能添加相同的环节:%v", code, nil}
 }
+
+func SameTargetOnlyAllowedOneOnline(name ...interface{}) *BusinessError {
+	return &BusinessError{ProcessImplementationError, 9804, "当前类型已经有上线的环节实施数据:%v", name, nil}
+}

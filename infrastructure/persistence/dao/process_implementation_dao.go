@@ -25,18 +25,18 @@ func CreateProcessImplementationDao(client *gorm.DB) *ProcessImplementationDao {
 func (d *ProcessImplementationDao) FindByIndustry(industryCode string, subIndustryCode string) *entity.ProcessImplementationEntity {
 	processImplementation := &entity.ProcessImplementationEntity{}
 	if subIndustryCode != "" {
-		d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'subIndustry' and target_code=?", subIndustryCode).First(processImplementation)
+		d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'subIndustry' and target_code=? and status = 'online'", subIndustryCode).First(processImplementation)
 		if processImplementation != nil {
 			return processImplementation
 		}
 	}
-	d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'industry' and target_code=?", industryCode).First(processImplementation)
+	d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'industry' and target_code=? and status = 'online'", industryCode).First(processImplementation)
 	return processImplementation
 }
 
 func (d *ProcessImplementationDao) FindByWorkplaceCode(workplaceCode string) *entity.ProcessImplementationEntity {
 	processImplementation := &entity.ProcessImplementationEntity{}
-	d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'workplace' and target_code=? ", workplaceCode).First(processImplementation)
+	d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'workplace' and target_code=? and status = 'online'", workplaceCode).First(processImplementation)
 	return processImplementation
 }
 
@@ -70,6 +70,11 @@ func (d *ProcessImplementationDao) CountProcessImplementation(query query.Proces
 
 	return total
 }
+func (d *ProcessImplementationDao) FindByTarget(targetType entity.TargetType, targetCode string) []*entity.ProcessImplementationEntity {
+	processImplementation := make([]*entity.ProcessImplementationEntity, 0)
+	d.db.Model(entity.ProcessImplementationEntity{}).Where("target_type = ? and target_code=?", targetType, targetCode).Find(&processImplementation)
+	return processImplementation
+}
 
 // 根据targetType,targetCode,code查找相同的环节实施
 func (d *ProcessImplementationDao) FindOne(q *query.ProcessImplementationQuery) *entity.ProcessImplementationEntity {
@@ -98,4 +103,8 @@ func (d *ProcessImplementationDao) FindById(id int64) *entity.ProcessImplementat
 	processImplementation := entity.ProcessImplementationEntity{}
 	d.db.Model(entity.ProcessImplementationEntity{}).Where("id = ?", id).First(&processImplementation)
 	return &processImplementation
+}
+
+func (d *ProcessImplementationDao) ChangeStatusById(id int64, status entity.ImplementationStatus) {
+	d.db.Model(entity.ProcessImplementationEntity{}).Where("id = ?", id).Update("status", status)
 }

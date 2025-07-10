@@ -7,6 +7,7 @@
 package dao
 
 import (
+	"errors"
 	"gorm.io/gorm"
 	"wagner/infrastructure/persistence/entity"
 )
@@ -29,10 +30,14 @@ func (dao *WorkplaceDao) FindAll() []*entity.WorkplaceEntity {
 
 // 暂时先这么使用，实际需要有单独的行业元数据管理
 func (dao *WorkplaceDao) FindSubIndustryBySubindustryCode(subIndustryCode string) string {
-	var industryCode string
-	dao.db.Table("workplace").Where("sub_industry_code = ?", subIndustryCode).Select("industry_code").First(&industryCode)
+	workplace := &entity.WorkplaceEntity{}
+	tx := dao.db.Model(entity.WorkplaceEntity{}).Where("sub_industry_code = ?", subIndustryCode).Select("industry_code").First(workplace)
 
-	return industryCode
+	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+		return "" // 记录不存在时返回 nil
+	}
+
+	return workplace.IndustryCode
 }
 
 func CreateWorkplaceDao(client *gorm.DB) *WorkplaceDao {

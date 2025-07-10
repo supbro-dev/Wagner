@@ -80,22 +80,61 @@ func (p ProcessHandler) convertDomain2Vo(d *domain.ProcessImplementation) *vo.Pr
 	v.TargetTypeDesc = targetTypeDesc
 	v.StatusDesc = statusDesc
 
+	if d.TargetType == entity.SubIndustry {
+		v.IndustryCode = service.DomainHolder.WorkplaceService.FindIndustryBySubIndustry(d.TargetCode)
+	}
+
 	return &v
 }
 
-func (p ProcessHandler) Save(c *gin.Context) {
+func (p ProcessHandler) SaveImplementation(c *gin.Context) {
 	var req qo.ProcessImplementationSaveQo
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ReturnError(c, business_error.SubmitDataIsWrong(err))
 		return
 	}
 
-	d := domain.ProcessImplementation{}
-	copier.Copy(&d, &req)
-	if i, err := strconv.Atoi(req.Id); err == nil {
-		d.Id = int64(i)
+	impl := domain.ProcessImplementation{}
+	copier.Copy(&impl, &req)
+	// 新增默认下线状态
+	isNew := req.Id == ""
+	if isNew {
+		impl.Status = entity.Offline
+	} else {
+		if i, err := strconv.Atoi(req.Id); err == nil {
+			impl.Id = int64(i)
+		}
 	}
-	id, businessError := service.DomainHolder.ProcessService.Save(&d)
+
+	id, businessError := service.DomainHolder.ProcessService.SaveImplementation(&impl)
+
+	if isNew {
+		//新增场景下创建根节点
+		root := domain.ProcessPosition{
+			Name:       impl.Name,
+			Code:       impl.Code,
+			ParentCode: "-1",
+			Type:       entity.ROOT,
+			Version:    0,
+			SortIndex:  1,
+		}
+		switch impl.TargetType {
+		case entity.Workplace:
+			workplace := service.DomainHolder.WorkplaceService.FindByCode(impl.TargetCode)
+			root.IndustryCode = workplace.IndustryCode
+			root.SubIndustryCode = workplace.SubIndustryCode
+		case entity.Industry:
+			root.IndustryCode = impl.TargetCode
+		case entity.SubIndustry:
+			root.SubIndustryCode = impl.TargetCode
+			root.IndustryCode = service.DomainHolder.WorkplaceService.FindIndustryBySubIndustry(impl.TargetCode)
+		}
+		service.DomainHolder.ProcessService.SaveProcessPosition(&root)
+		rootId := root.Id
+		service.DomainHolder.ProcessService.UpdateVersionById(rootId, rootId)
+		// 创建必要的计算参数
+		service.Holder.EfficiencyComputeService.CopyCalcDynamicParam(&impl)
+	}
 
 	if businessError != nil {
 		response.ReturnError(c, businessError)
@@ -297,6 +336,22 @@ func (p ProcessHandler) DeleteProcessPosition(c *gin.Context) {
 
 	service.DomainHolder.ProcessService.DeleteProcessPosition(req.Id)
 
+	response.ReturnSuccessEmptyJson(c)
+}
+
+func (p ProcessHandler) ChangeImplStatus(c *gin.Context) {
+	var req qo.ChangeImplementationStatusQO
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ReturnError(c, business_error.SubmitDataIsWrong(err))
+		return
+	}
+
+	err := service.DomainHolder.ProcessService.ChangeImplStatus(req.Id, entity.ImplementationStatus(req.Status))
+
+	if err != nil {
+		response.ReturnError(c, err)
+		return
+	}
 	response.ReturnSuccessEmptyJson(c)
 }
 

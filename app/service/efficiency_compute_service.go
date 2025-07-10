@@ -778,6 +778,32 @@ func (service *EfficiencyComputeService) SaveCalcOtherParam(implementation *doma
 	DomainHolder.CalcDynamicParamService.Save(param, industryCode, subIndustryCode, workplaceCode, implementation.TargetType)
 }
 
+func (service *EfficiencyComputeService) CopyCalcDynamicParam(impl *domain.ProcessImplementation) {
+	params := DomainHolder.CalcDynamicParamService.FindParamsBySameParamMode(entity.ParamMode(impl.TargetType))
+	newParams := make([]*entity.CalcDynamicParamEntity, 0)
+	for _, param := range params {
+		e := entity.CalcDynamicParamEntity{
+			Type:    param.Type,
+			Content: param.Content,
+		}
+		switch impl.TargetType {
+		case entity.Industry:
+			e.IndustryCode = impl.TargetCode
+			e.Mode = entity.IndustryMode
+		case entity.SubIndustry:
+			e.SubIndustryCode = impl.TargetCode
+			e.Mode = entity.SubIndustryMode
+		case entity.Workplace:
+			e.WorkplaceCode = impl.TargetCode
+			e.Mode = entity.WorkplaceMode
+		}
+
+		newParams = append(newParams, &e)
+	}
+
+	DomainHolder.CalcDynamicParamService.SaveParams(newParams)
+}
+
 func runComputeEmployee(service *EfficiencyComputeService, employee *domain.EmployeeSnapshot, workplace *domain.Workplace, operateDay time.Time,
 	calcParam *calc_dynamic_param.CalcParam, standardPositionList []*domain.ProcessPosition, wg *sync.WaitGroup, channel chan *ComputeResult) {
 	// 协程结束时通知WaitGroup

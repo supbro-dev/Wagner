@@ -32,6 +32,19 @@ func (dao CalcDynamicParamDao) UpdateContentById(content string, id int64) {
 	dao.db.Model(&entity.CalcDynamicParamEntity{}).Where("id = ?", id).UpdateColumn("content", content)
 }
 
+func (dao CalcDynamicParamDao) FindFirstByModeAndType(mode entity.ParamMode, paramType entity.ParamType) *entity.CalcDynamicParamEntity {
+	result := make([]*entity.CalcDynamicParamEntity, 0)
+	dao.db.Model(entity.CalcDynamicParamEntity{}).Where("mode = ? and type = ?", mode, paramType).Limit(1).Find(&result)
+	if len(result) == 0 {
+		return nil
+	}
+	return result[0]
+}
+
+func (dao CalcDynamicParamDao) Save(param *entity.CalcDynamicParamEntity) {
+	dao.db.Model(entity.CalcDynamicParamEntity{}).Save(param)
+}
+
 func CreateCalcDynamicParamDao(client *gorm.DB) *CalcDynamicParamDao {
 	return &CalcDynamicParamDao{client}
 }

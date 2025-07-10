@@ -24,14 +24,16 @@ type ProcessService interface {
 	FindProcessList(workplace *domain.Workplace) []*domain.ProcessPosition
 	FindProcessPositionList(workplace *domain.Workplace) []*domain.ProcessPosition
 	FindProcessImplementationListByPage(targetType string, workplaceCode string, industryCode string, subIndustryCode string, currentPage int, pageSize int) ([]*domain.ProcessImplementation, int)
-	Save(processImpl *domain.ProcessImplementation) (int64, *business_error.BusinessError)
+	SaveImplementation(processImpl *domain.ProcessImplementation) (int64, *business_error.BusinessError)
 	GetImplementationById(id int64) *domain.ProcessImplementation
 	GetProcessPositionTree(id int64) *domain.ProcessPositionTreeNode
 	FindProcessByParentCode(parentCode string, version int64) []*domain.ProcessPosition
 	GenerateProcessCode(processName string, version int64) string
 	SaveProcessPosition(processPosition *domain.ProcessPosition)
+	UpdateVersionById(id int64, version int64)
 	FindProcessByCode(code string, version int64) *domain.ProcessPosition
 	DeleteProcessPosition(id int64)
+	ChangeImplStatus(id int64, status entity.ImplementationStatus) *business_error.BusinessError
 }
 
 type ProcessServiceImpl struct {
@@ -47,6 +49,28 @@ func CreateProcessServiceImpl(processPositionDao *dao.ProcessPositionDao, proces
 var OtherProcess = &domain.ProcessPosition{
 	Name: "其他",
 	Code: "Others",
+}
+
+func (service *ProcessServiceImpl) UpdateVersionById(id int64, version int64) {
+	service.processPositionDao.Update(&entity.ProcessPositionEntity{
+		BaseEntity: entity.BaseEntity{
+			Id: id,
+		},
+		Version: int(version),
+	})
+}
+func (service *ProcessServiceImpl) ChangeImplStatus(id int64, status entity.ImplementationStatus) *business_error.BusinessError {
+	impl := service.processImplementationDao.FindById(id)
+	implList := service.processImplementationDao.FindByTarget(impl.TargetType, impl.TargetCode)
+
+	for _, existed := range implList {
+		// 同一种target类型只能有一个online
+		if existed.Id != id && status == entity.Online && existed.Status == entity.Online {
+			return business_error.SameTargetOnlyAllowedOneOnline(existed.Name)
+		}
+	}
+	service.processImplementationDao.ChangeStatusById(id, status)
+	return nil
 }
 
 func (service *ProcessServiceImpl) DeleteProcessPosition(id int64) {
@@ -152,8 +176,8 @@ func (service *ProcessServiceImpl) GetProcessPositionTree(id int64) *domain.Proc
 			SortIndex: position.SortIndex,
 		}
 
-		if position.Properties != "" {
-			if propertyMap, err := json_util.Parse2Map(position.Properties); err == nil {
+		if position.Properties != nil {
+			if propertyMap, err := json_util.Parse2Map(*position.Properties); err == nil {
 				node.WorkLoadRollUp = fmt.Sprintf("%v", propertyMap[entity.WorkLoadRollUpKey])
 			}
 		}
@@ -302,7 +326,7 @@ func (service *ProcessServiceImpl) convertImplEntity2Domain(e *entity.ProcessImp
 	return impl
 }
 
-func (service *ProcessServiceImpl) Save(processImpl *domain.ProcessImplementation) (int64, *business_error.BusinessError) {
+func (service *ProcessServiceImpl) SaveImplementation(processImpl *domain.ProcessImplementation) (int64, *business_error.BusinessError) {
 	existed := service.processImplementationDao.FindOne(&query.ProcessImplementationQuery{
 		TargetType: string(processImpl.TargetType),
 		TargetCode: processImpl.TargetCode,
@@ -433,7 +457,16 @@ func (service *ProcessServiceImpl) buildParentPath(node *entity.ProcessPositionE
 }
 
 func (service *ProcessServiceImpl) convertPositionDomain2Entity(position *domain.ProcessPosition) *entity.ProcessPositionEntity {
-	parent := service.processPositionDao.FindByCode(position.ParentCode, int64(position.Version))
+	var parent *entity.ProcessPositionEntity
+	if position.ParentCode != "-1" {
+		parent = service.processPositionDao.FindByCode(position.ParentCode, int64(position.Version))
+	} else {
+		parent = &entity.ProcessPositionEntity{
+			Level:           0,
+			IndustryCode:    position.IndustryCode,
+			SubIndustryCode: position.SubIndustryCode,
+		}
+	}
 
 	e := entity.ProcessPositionEntity{
 		Code:            position.Code,
@@ -453,7 +486,8 @@ func (service *ProcessServiceImpl) convertPositionDomain2Entity(position *domain
 	}
 
 	if position.Properties != nil {
-		e.Properties = json_util.ToJsonString(position.Properties)
+		propertiesJson := json_util.ToJsonString(position.Properties)
+		e.Properties = &propertiesJson
 	}
 
 	return &e
