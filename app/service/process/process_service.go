@@ -429,8 +429,8 @@ func (service *ProcessServiceImpl) convertPositionEntity2Domain(e *entity.Proces
 		SortIndex:  e.SortIndex,
 	}
 
-	if e.Properties != "" {
-		if propertyMap, err := json_util.Parse2Map(e.Properties); err == nil {
+	if e.Properties != nil {
+		if propertyMap, err := json_util.Parse2Map(*e.Properties); err == nil {
 			d.Properties = propertyMap
 		}
 	}

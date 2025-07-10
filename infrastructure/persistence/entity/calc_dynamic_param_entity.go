@@ -9,9 +9,9 @@ package entity
 type CalcDynamicParamEntity struct {
 	BaseEntity
 	Type            ParamType `gorm:"column:type" json:"type"`
-	IndustryCode    string    `gorm:"column:industry_code" json:"industry_code"`
-	SubIndustryCode string    `gorm:"column:sub_industry_code" json:"sub_industry_code"`
-	WorkplaceCode   string    `gorm:"column:workplace_code" json:"workplace_code"`
+	IndustryCode    *string   `gorm:"column:industry_code" json:"industry_code"`
+	SubIndustryCode *string   `gorm:"column:sub_industry_code" json:"sub_industry_code"`
+	WorkplaceCode   *string   `gorm:"column:workplace_code" json:"workplace_code"`
 	Mode            ParamMode `gorm:"column:mode" json:"mode"`
 	Content         string    `gorm:"column:content" json:"content"`
 }

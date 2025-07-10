@@ -788,13 +788,13 @@ func (service *EfficiencyComputeService) CopyCalcDynamicParam(impl *domain.Proce
 		}
 		switch impl.TargetType {
 		case entity.Industry:
-			e.IndustryCode = impl.TargetCode
+			e.IndustryCode = &impl.TargetCode
 			e.Mode = entity.IndustryMode
 		case entity.SubIndustry:
-			e.SubIndustryCode = impl.TargetCode
+			e.SubIndustryCode = &impl.TargetCode
 			e.Mode = entity.SubIndustryMode
 		case entity.Workplace:
-			e.WorkplaceCode = impl.TargetCode
+			e.WorkplaceCode = &impl.TargetCode
 			e.Mode = entity.WorkplaceMode
 		}
 

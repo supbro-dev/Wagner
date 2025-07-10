@@ -42,7 +42,7 @@ func (dao CalcDynamicParamDao) FindFirstByModeAndType(mode entity.ParamMode, par
 }
 
 func (dao CalcDynamicParamDao) Save(param *entity.CalcDynamicParamEntity) {
-	dao.db.Model(entity.CalcDynamicParamEntity{}).Save(param)
+	dao.db.Model(entity.CalcDynamicParamEntity{}).Omit("gmt_create", "gmt_modified").Save(param)
 }
 
 func CreateCalcDynamicParamDao(client *gorm.DB) *CalcDynamicParamDao {
