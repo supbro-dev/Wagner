@@ -28,6 +28,8 @@ var (
 	DEPT ProcessPositionType = "DEPT"
 	// 岗位
 	POSITION ProcessPositionType = "POSITION"
+	// 工作组
+	WORK_GROUP ProcessPositionType = "WORK_GROUP"
 	// 直接环节
 	DIRECT_PROCESS ProcessPositionType = "DIRECT_PROCESS"
 	// 间接环节

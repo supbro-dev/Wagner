@@ -41,13 +41,13 @@ VALUES (10, now(), now(), '周杰', 'A1010', '1010', NULL, 'workplace1', 'batch-
 
 -- 初始化组织架构
 INSERT INTO `process_position`
-VALUES (1, '2025-06-05 11:14:31', '2025-06-14 17:12:15', 'outbound', '出库部', '-1', 'DEPT', '1', 1, 'FOOD', NULL,
+VALUES (1, '2025-06-05 11:14:31', '2025-06-14 17:12:15', 'outbound', '出库部', 'hyss1', 'DEPT', '1', 1, 'FOOD', NULL,
         '{\"workLoadRollUp\": true}', NULL, 1);
 INSERT INTO `process_position`
-VALUES (2, '2025-06-05 11:14:31', '2025-06-10 14:34:07', 'inbound', '入库部', '-1', 'DEPT', '1', 1, 'FOOD', NULL, NULL,
+VALUES (2, '2025-06-05 11:14:31', '2025-06-10 14:34:07', 'inbound', '入库部', 'hyss1', 'DEPT', '1', 1, 'FOOD', NULL, NULL,
         NULL, 2);
 INSERT INTO `process_position`
-VALUES (3, '2025-06-05 11:14:31', '2025-06-10 14:34:07', 'inventory', '库维部', '-1', 'DEPT', '1', 1, 'FOOD', NULL,
+VALUES (3, '2025-06-05 11:14:31', '2025-06-10 14:34:07', 'inventory', '库维部', 'hyss1', 'DEPT', '1', 1, 'FOOD', NULL,
         NULL, NULL, 3)
 ;
 INSERT INTO `process_position`
@@ -80,6 +80,9 @@ VALUES (12, '2025-06-20 10:30:47', '2025-06-20 10:30:47', 'batch-packer', '秒�
 INSERT INTO `process_position`
 VALUES (13, '2025-06-20 10:30:47', '2025-06-20 10:30:47', 'batch-packaging', '批量包装', 'batch-packer',
         'INDIRECT_PROCESS', '4', 1, 'FOOD', NULL, NULL, 'indirectWorkType == \"B3\"? true : false', 1);
+INSERT INTO process_position
+VALUES (14, '2025-07-02 16:57:58', '2025-07-17 15:11:02', 'hyss1', '行业实施1', '-1', 'ROOT', '0', 13, 'FOOD', null, null, null, 1);
+
 
 -- 初始化计算参数
 INSERT INTO `calc_dynamic_param`

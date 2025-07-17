@@ -25,19 +25,24 @@ func CreateProcessImplementationDao(client *gorm.DB) *ProcessImplementationDao {
 func (d *ProcessImplementationDao) FindByIndustry(industryCode string, subIndustryCode string) *entity.ProcessImplementationEntity {
 	processImplementation := &entity.ProcessImplementationEntity{}
 	if subIndustryCode != "" {
-		d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'subIndustry' and target_code=? and status = 'online'", subIndustryCode).First(processImplementation)
+		d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'subIndustry' and target_code=? ", subIndustryCode).First(processImplementation)
 		if processImplementation != nil {
 			return processImplementation
 		}
 	}
-	d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'industry' and target_code=? and status = 'online'", industryCode).First(processImplementation)
+	d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'industry' and target_code=? ", industryCode).First(processImplementation)
 	return processImplementation
 }
 
 func (d *ProcessImplementationDao) FindByWorkplaceCode(workplaceCode string) *entity.ProcessImplementationEntity {
-	processImplementation := &entity.ProcessImplementationEntity{}
-	d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'workplace' and target_code=? and status = 'online'", workplaceCode).First(processImplementation)
-	return processImplementation
+	processImplementationList := make([]*entity.ProcessImplementationEntity, 0)
+	d.db.Model(entity.ProcessImplementationEntity{}).Where("status = 'online' and target_type = 'workplace' and target_code=? ", workplaceCode).First(&processImplementationList)
+
+	if len(processImplementationList) > 0 {
+		return processImplementationList[0]
+	} else {
+		return nil
+	}
 }
 
 func (d *ProcessImplementationDao) QueryProcessImplementation(query query.ProcessImplementationQuery) []*entity.ProcessImplementationEntity {
@@ -107,4 +112,8 @@ func (d *ProcessImplementationDao) FindById(id int64) *entity.ProcessImplementat
 
 func (d *ProcessImplementationDao) ChangeStatusById(id int64, status entity.ImplementationStatus) {
 	d.db.Model(entity.ProcessImplementationEntity{}).Where("id = ?", id).Update("status", status)
+}
+
+func (d *ProcessImplementationDao) ChangeProcessPositionRootIdById(id int64, processPositionRootId int64) {
+	d.db.Model(entity.ProcessImplementationEntity{}).Where("id = ?", id).Update("process_position_root_id", processPositionRootId)
 }

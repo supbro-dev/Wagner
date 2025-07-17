@@ -34,6 +34,9 @@ type ProcessService interface {
 	FindProcessByCode(code string, version int64) *domain.ProcessPosition
 	DeleteProcessPosition(id int64)
 	ChangeImplStatus(id int64, status entity.ImplementationStatus) *business_error.BusinessError
+	GetWorkplaceStructureTree(workplaceCode string) (*domain.ProcessPositionTreeNode, *business_error.BusinessError)
+	// 更新环节实施的ProcessPositionRootId字段，同时该字段也是process_position的version
+	UpdateProcessPositionRootId(id int64, processPositionRootId int64)
 }
 
 type ProcessServiceImpl struct {
@@ -49,6 +52,26 @@ func CreateProcessServiceImpl(processPositionDao *dao.ProcessPositionDao, proces
 var OtherProcess = &domain.ProcessPosition{
 	Name: "其他",
 	Code: "Others",
+}
+
+func (service *ProcessServiceImpl) UpdateProcessPositionRootId(id int64, processPositionRootId int64) {
+	service.processImplementationDao.ChangeProcessPositionRootIdById(id, processPositionRootId)
+}
+
+func (service *ProcessServiceImpl) GetWorkplaceStructureTree(workplaceCode string) (*domain.ProcessPositionTreeNode, *business_error.BusinessError) {
+	impl := service.processImplementationDao.FindByWorkplaceCode(workplaceCode)
+	if impl == nil {
+		workplace := service.workplaceDao.FindByCode(workplaceCode)
+		impl = service.processImplementationDao.FindByIndustry(workplace.IndustryCode, workplace.SubIndustryCode)
+	}
+
+	if impl == nil {
+		return nil, business_error.CannotFindImplByWorkplaceCode(workplaceCode)
+	}
+
+	tree := service.GetProcessPositionTree(impl.Id)
+
+	return tree, nil
 }
 
 func (service *ProcessServiceImpl) UpdateVersionById(id int64, version int64) {
@@ -91,6 +114,7 @@ func (service *ProcessServiceImpl) SaveProcessPosition(processPosition *domain.P
 		service.processPositionDao.Update(e)
 	} else {
 		service.processPositionDao.Insert(e)
+		processPosition.Id = e.Id
 	}
 }
 

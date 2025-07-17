@@ -132,6 +132,8 @@ func (p ProcessHandler) SaveImplementation(c *gin.Context) {
 		service.DomainHolder.ProcessService.SaveProcessPosition(&root)
 		rootId := root.Id
 		service.DomainHolder.ProcessService.UpdateVersionById(rootId, rootId)
+
+		service.DomainHolder.ProcessService.UpdateProcessPositionRootId(id, rootId)
 		// 创建必要的计算参数
 		service.Holder.EfficiencyComputeService.CopyCalcDynamicParam(&impl)
 	}
@@ -168,7 +170,38 @@ func (p ProcessHandler) GetProcessPositionTree(c *gin.Context) {
 
 	tree := service.DomainHolder.ProcessService.GetProcessPositionTree(int64(id))
 
-	treeNodeVo := p.iterateConvert2Vo(tree)
+	treeNodeVo := p.iterateConvert2Vo(tree, nil)
+
+	response.ReturnSuccessJson(c, treeNodeVo)
+}
+
+func (p ProcessHandler) GetWorkplaceStructureTree(c *gin.Context) {
+	workplaceCode := c.Query("workplaceCode")
+	if workplaceCode == "" {
+		response.ReturnError(c, business_error.ParamIsNil("workplaceCode"))
+		return
+	}
+
+	tree, err := service.DomainHolder.ProcessService.GetWorkplaceStructureTree(workplaceCode)
+
+	if err != nil {
+		response.ReturnError(c, err)
+		return
+	}
+
+	workGroupService := service.DomainHolder.WorkGroupService
+
+	workGroupList := workGroupService.FindGroupListByWorkplace(workplaceCode)
+
+	positionCode2WorkGroupList := make(map[string][]*domain.WorkGroup)
+	for _, group := range workGroupList {
+		if _, exists := positionCode2WorkGroupList[group.PositionCode]; !exists {
+			positionCode2WorkGroupList[group.PositionCode] = make([]*domain.WorkGroup, 0)
+		}
+		positionCode2WorkGroupList[group.PositionCode] = append(positionCode2WorkGroupList[group.PositionCode], group)
+	}
+
+	treeNodeVo := p.iterateConvert2Vo(tree, positionCode2WorkGroupList)
 
 	response.ReturnSuccessJson(c, treeNodeVo)
 }
@@ -397,7 +430,10 @@ func (p ProcessHandler) convertProcessDomainList2Detail(processPositionList []*d
 	return detailList
 }
 
-func (p ProcessHandler) iterateConvert2Vo(node *domain.ProcessPositionTreeNode) *vo.ProcessPositionTreeNodeVo {
+func (p ProcessHandler) iterateConvert2Vo(node *domain.ProcessPositionTreeNode, positionCode2WorkGroupList map[string][]*domain.WorkGroup) *vo.ProcessPositionTreeNodeVo {
+	if node == nil {
+		return nil
+	}
 	v := vo.ProcessPositionTreeNodeVo{
 		Id:             node.Id,
 		Title:          node.Name,
@@ -413,10 +449,28 @@ func (p ProcessHandler) iterateConvert2Vo(node *domain.ProcessPositionTreeNode) 
 	if node.Children != nil && len(node.Children) > 0 {
 		children := make([]*vo.ProcessPositionTreeNodeVo, 0)
 		for _, c := range node.Children {
-			childVo := p.iterateConvert2Vo(c)
+			childVo := p.iterateConvert2Vo(c, positionCode2WorkGroupList)
 			children = append(children, childVo)
 		}
 		v.Children = children
+	} else if node.Type == entity.POSITION && positionCode2WorkGroupList != nil {
+		if groupList, exists := positionCode2WorkGroupList[node.Code]; exists {
+			children := make([]*vo.ProcessPositionTreeNodeVo, 0)
+			for i, group := range groupList {
+				g := vo.ProcessPositionTreeNodeVo{
+					Title:      group.Name,
+					Key:        group.Code,
+					Type:       string(entity.WORK_GROUP),
+					ParentName: node.ParentName,
+					ParentCode: node.ParentCode,
+					SortIndex:  i + 1,
+					Children:   make([]*vo.ProcessPositionTreeNodeVo, 0),
+				}
+
+				children = append(children, &g)
+			}
+			v.Children = children
+		}
 	}
 
 	return &v

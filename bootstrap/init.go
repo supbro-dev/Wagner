@@ -14,6 +14,7 @@ import (
 	"wagner/app/service/position"
 	"wagner/app/service/process"
 	"wagner/app/service/sink"
+	"wagner/app/service/work_group"
 	"wagner/app/service/workplace"
 	"wagner/app/utils/gorm"
 	"wagner/app/utils/lock"
@@ -81,6 +82,8 @@ func init() {
 
 	positionService := position.CreatePositionService(dao.CreatePositionDao(client))
 
+	workGroupService := work_group.CreateWorkGroupService(dao.CreateWorkGroupDao(client))
+
 	domainServiceHolder := service.DomainServiceHolder{
 		EmployeeSnapshotService: employeeSnapshotService,
 		ActionService:           actionService,
@@ -88,6 +91,7 @@ func init() {
 		CalcDynamicParamService: calcDynamicParamService,
 		WorkplaceService:        workplaceService,
 		PositionService:         positionService,
+		WorkGroupService:        workGroupService,
 	}
 
 	service.DomainHolder = domainServiceHolder

@@ -56,7 +56,7 @@ func (dao *ProcessPositionDao) FindByParentCodeAndVersion(parentCode string, ver
 }
 
 func (dao *ProcessPositionDao) Insert(e *entity.ProcessPositionEntity) {
-	dao.db.Omit("gmt_create", "gmt_modified").Create(e)
+	dao.db.Omit("id", "gmt_create", "gmt_modified").Create(e)
 }
 
 func (dao *ProcessPositionDao) Update(e *entity.ProcessPositionEntity) {

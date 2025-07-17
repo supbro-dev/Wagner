@@ -1,12 +1,10 @@
 package entity
 
 import (
-	"gorm.io/gorm"
 	"time"
 )
 
 type BaseEntity struct {
-	*gorm.DB    `gorm:"-" json:"-"`
 	Id          int64      `gorm:"primaryKey;autoIncrement" json:"id"`
 	GmtCreate   *time.Time `json:"gmt_create"` //日期时间字段统一设置为字符串即可
 	GmtModified *time.Time `json:"gmt_modified"`

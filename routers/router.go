@@ -58,6 +58,7 @@ func InitRouter() *gin.Engine {
 			process.POST("saveProcess", processHandler.SaveProcess)
 			process.POST("deleteProcessPosition", processHandler.DeleteProcessPosition)
 			process.POST("changeImplStatus", processHandler.ChangeImplStatus)
+			process.GET("getWorkplaceStructureTree", processHandler.GetWorkplaceStructureTree)
 		}
 		position := vApi.Group("position/")
 		{

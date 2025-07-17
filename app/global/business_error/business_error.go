@@ -152,3 +152,7 @@ func ExistSameCodeProcessPosition(code ...interface{}) *BusinessError {
 func SameTargetOnlyAllowedOneOnline(name ...interface{}) *BusinessError {
 	return &BusinessError{ProcessImplementationError, 9804, "当前类型已经有上线的环节实施数据:%v", name, nil}
 }
+
+func CannotFindImplByWorkplaceCode(workplaceCode ...interface{}) *BusinessError {
+	return &BusinessError{ProcessImplementationError, 9805, "根据工作点找不到环节实施数据:%v", workplaceCode, nil}
+}
