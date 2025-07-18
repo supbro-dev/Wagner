@@ -6,6 +6,7 @@ import (
 	"wagner/app/domain"
 	"wagner/infrastructure/persistence/dao"
 	"wagner/infrastructure/persistence/entity"
+	"wagner/infrastructure/persistence/query"
 )
 
 type EmployeeSnapshotService struct {
@@ -36,6 +37,15 @@ func (service *EmployeeSnapshotService) FindWorkplaceEmployeeSnapshot(workplace 
 	}
 
 	return employeeSnapshotList
+}
+
+func (service *EmployeeSnapshotService) FindByInfo(name string, workGroupCode string, workplaceCode string) *domain.EmployeeSnapshot {
+	q := query.EmployeeQuery{
+		name, workGroupCode, workplaceCode,
+	}
+	employeeEntity := service.employeeDao.FindByQuery(&q)
+
+	return convertEmployee(employeeEntity)
 }
 
 func convertEmployee(employee *entity.EmployeeEntity) *domain.EmployeeSnapshot {

@@ -8,8 +8,10 @@ package entity
 
 type PositionEntity struct {
 	BaseEntity
-	Name string `gorm:"column:name" json:"name"`
-	Code string `gorm:"column:code" json:"code"`
+	Name            string `gorm:"column:name" json:"name"`
+	Code            string `gorm:"column:code" json:"code"`
+	IndustryCode    string `gorm:"column:industry_code" json:"industry_code"`
+	SubIndustryCode string `gorm:"column:sub_industry_code" json:"sub_industry_code"`
 }
 
 func (u *PositionEntity) TableName() string {

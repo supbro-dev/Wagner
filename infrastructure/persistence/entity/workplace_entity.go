@@ -13,6 +13,7 @@ type WorkplaceEntity struct {
 	RegionCode      string `gorm:"column:region_code" json:"region_code"`
 	IndustryCode    string `gorm:"column:industry_code" json:"industry_code"`
 	SubIndustryCode string `gorm:"column:sub_industry_code" json:"sub_industry_code"`
+	Desc            string `gorm:"column:desc" json:"desc"`
 }
 
 func (u *WorkplaceEntity) TableName() string {

@@ -8,6 +8,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/copier"
+	"wagner/app/global/business_error"
 	"wagner/app/http/vo"
 	"wagner/app/service"
 	"wagner/app/utils/response"
@@ -53,4 +55,19 @@ func (p WorkplaceHandler) FindAllSubIndustry(c *gin.Context) {
 		})
 	}
 	response.ReturnSuccessJson(c, selectList)
+}
+
+func (p WorkplaceHandler) FindWorkplaceByCode(c *gin.Context) {
+	workplaceCode := c.Query("workplaceCode")
+	if workplaceCode == "" {
+		response.ReturnError(c, business_error.ParamIsNil("workplaceCode"))
+		return
+	}
+
+	workplace := service.DomainHolder.WorkplaceService.FindByCode(workplaceCode)
+
+	workplaceVo := vo.WorkplaceVo{}
+	copier.Copy(&workplaceVo, &workplace)
+
+	response.ReturnSuccessJson(c, workplaceVo)
 }

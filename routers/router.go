@@ -38,13 +38,26 @@ func InitRouter() *gin.Engine {
 	//  创建一个门户类接口路由组
 	vApi := router.Group("/api/v1/")
 	{
+		employee := vApi.Group("/employee")
+		employeeHandler := controller.EmployeeHandler{}
+		{
+			employee.GET("findByInfo", employeeHandler.FindByInfo)
+		}
+
 		workplace := vApi.Group("workplace/")
 		workplaceHandler := controller.WorkplaceHandler{}
 		{
 			workplace.GET("all", workplaceHandler.FindAll)
 			workplace.GET("allIndustry", workplaceHandler.FindAllIndustry)
 			workplace.GET("allSubIndustry", workplaceHandler.FindAllSubIndustry)
+			workplace.GET("findWorkplaceByCode", workplaceHandler.FindWorkplaceByCode)
 		}
+		workGroup := vApi.Group("workGroup/")
+		workGroupHandler := controller.WorkGroupHandler{}
+		{
+			workGroup.GET("findByCode", workGroupHandler.FindByCode)
+		}
+
 		process := vApi.Group("process/")
 		processHandler := controller.ProcessHandler{}
 		{

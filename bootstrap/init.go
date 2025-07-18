@@ -65,6 +65,7 @@ func init() {
 	workplaceDao := dao.CreateWorkplaceDao(client)
 	scriptDao := dao.CreateScriptDao(client)
 	employeeStatusDao := dao.CreateEmployeeStatusDao(client)
+	positionDao := dao.CreatePositionDao(client)
 
 	actionService := action.CreateActionService(dao.CreateActionRepository(client))
 
@@ -80,9 +81,9 @@ func init() {
 
 	employeeStatusSinkService := sink.CreateEmployeeStatusSinkService(employeeStatusDao)
 
-	positionService := position.CreatePositionService(dao.CreatePositionDao(client))
+	positionService := position.CreatePositionService(positionDao)
 
-	workGroupService := work_group.CreateWorkGroupService(dao.CreateWorkGroupDao(client))
+	workGroupService := work_group.CreateWorkGroupService(dao.CreateWorkGroupDao(client), workplaceDao, positionDao)
 
 	domainServiceHolder := service.DomainServiceHolder{
 		EmployeeSnapshotService: employeeSnapshotService,

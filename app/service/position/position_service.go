@@ -16,8 +16,8 @@ type PositionService struct {
 	positionDao *dao.PositionDao
 }
 
-func (s *PositionService) FindAll() []*domain.Position {
-	positionEntityList := s.positionDao.FindAll()
+func (s *PositionService) FindAll(industryCode, subIndustryCode string) []*domain.Position {
+	positionEntityList := s.positionDao.FindAll(industryCode, subIndustryCode)
 
 	positionList := make([]*domain.Position, 0)
 	for _, e := range positionEntityList {

@@ -12,4 +12,5 @@ type Workplace struct {
 	RegionCode      string
 	IndustryCode    string
 	SubIndustryCode string
+	Desc            string
 }

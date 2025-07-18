@@ -27,3 +27,12 @@ func (dao *WorkGroupDao) FindByWorkplaceCode(workplaceCode string) []*entity.Wor
 
 	return workGroups
 }
+
+func (dao *WorkGroupDao) FindByCode(workGroupCode, workplaceCode string) *entity.WorkGroupEntity {
+	list := make([]*entity.WorkGroupEntity, 0)
+	dao.db.Model(entity.WorkGroupEntity{}).Where("code = ? and workplace_code = ?", workGroupCode, workplaceCode).First(&list)
+	if len(list) > 0 {
+		return list[0]
+	}
+	return nil
+}

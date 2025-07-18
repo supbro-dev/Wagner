@@ -14,10 +14,12 @@ import (
 
 type WorkGroupService struct {
 	workGroupDao *dao.WorkGroupDao
+	workplaceDao *dao.WorkplaceDao
+	positionDao  *dao.PositionDao
 }
 
-func CreateWorkGroupService(workGroupDao *dao.WorkGroupDao) *WorkGroupService {
-	return &WorkGroupService{workGroupDao}
+func CreateWorkGroupService(workGroupDao *dao.WorkGroupDao, workplaceDao *dao.WorkplaceDao, positionDao *dao.PositionDao) *WorkGroupService {
+	return &WorkGroupService{workGroupDao, workplaceDao, positionDao}
 }
 
 func (service WorkGroupService) FindGroupListByWorkplace(workplaceCode string) []*domain.WorkGroup {
@@ -32,4 +34,18 @@ func (service WorkGroupService) FindGroupListByWorkplace(workplaceCode string) [
 	}
 
 	return groupDomainList
+}
+
+func (service WorkGroupService) FindByCode(workGroupCode, workplaceCode string) *domain.WorkGroup {
+	group := service.workGroupDao.FindByCode(workGroupCode, workplaceCode)
+
+	workGroup := domain.WorkGroup{}
+	copier.Copy(&workGroup, &group)
+
+	workplace := service.workplaceDao.FindByCode(workplaceCode)
+	position := service.positionDao.FindByCodeAndIndustry(group.PositionCode, workplace.IndustryCode, workplace.SubIndustryCode)
+
+	workGroup.PositionName = position.Name
+
+	return &workGroup
 }

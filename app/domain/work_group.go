@@ -10,5 +10,7 @@ type WorkGroup struct {
 	Name          string
 	Code          string
 	PositionCode  string
+	PositionName  string
 	WorkplaceCode string
+	Desc          string
 }
