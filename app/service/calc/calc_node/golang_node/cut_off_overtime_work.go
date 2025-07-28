@@ -8,6 +8,7 @@ package golang_node
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 	"wagner/app/domain"
 	"wagner/app/utils/datetime_util"
@@ -55,7 +56,9 @@ func getOrDefaultMaxTime(process *domain.ProcessPosition, defaultMaxTime int) in
 	}
 	if process.Properties != nil {
 		if value, exists := process.Properties[entity.MaxTimeInMinuteKey]; exists {
-			return value.(int)
+			if maxTimeInMinute, err := strconv.Atoi(fmt.Sprintf("%v", value)); err == nil {
+				return maxTimeInMinute
+			}
 		}
 	}
 

@@ -13,6 +13,7 @@ import (
 type HourSummaryResultQuery struct {
 	WorkplaceCode      string
 	EmployeeNumber     string
+	EmployeeNumberList []string
 	DateRange          []*time.Time
 	AggregateDimension string
 	IsCrossPosition    string

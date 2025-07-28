@@ -107,7 +107,14 @@ func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 	currentPageInt, _ := strconv.Atoi(currentPage)
 	pageSizeInt, _ := strconv.Atoi(pageSize)
 
-	efficiencyVO := service.Holder.EfficiencyService.EmployeeEfficiency(workplaceCode, employeeNumber, []*time.Time{&startDate, &endDate},
+	var employeeNumberList []string
+	if employeeNumber != "" {
+		employeeNumberList = strings.Split(employeeNumber, ",")
+	} else {
+		employeeNumberList = make([]string, 0)
+	}
+
+	efficiencyVO := service.Holder.EfficiencyService.EmployeeEfficiency(workplaceCode, employeeNumberList, []*time.Time{&startDate, &endDate},
 		domain.AggregateDimension(aggregateDimension), domain.IsCrossPosition(isCrossPosition), workLoadUnits, currentPageInt, pageSizeInt)
 
 	response.ReturnSuccessJson(c, efficiencyVO)

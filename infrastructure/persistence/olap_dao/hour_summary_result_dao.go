@@ -61,6 +61,13 @@ func (dao *HourSummaryResultDao) QueryEmployeeEfficiency(query query.HourSummary
 	if query.EmployeeNumber != "" {
 		where += " and employee_number = " + query.EmployeeNumber
 	}
+	if len(query.EmployeeNumberList) > 0 {
+		var employeeNumberStr = make([]string, 0)
+		for _, number := range query.EmployeeNumberList {
+			employeeNumberStr = append(employeeNumberStr, "'"+number+"'")
+		}
+		where += " and employee_number in (" + strings.Join(employeeNumberStr, ",") + ")"
+	}
 	if domain.IsCrossPosition(query.IsCrossPosition) == domain.Cross {
 		where += " and position_code = employee_position_code"
 	} else if domain.IsCrossPosition(query.IsCrossPosition) == domain.NoCross {
@@ -320,6 +327,13 @@ func (dao *HourSummaryResultDao) TotalEmployeeEfficiency(query query.HourSummary
 	where := "operate_day >= ? and operate_day <= ? and workplace_code = ? and is_deleted = 0 "
 	if query.EmployeeNumber != "" {
 		where += " and employee_number = " + query.EmployeeNumber
+	}
+	if len(query.EmployeeNumberList) > 0 {
+		var employeeNumberStr = make([]string, 0)
+		for _, number := range query.EmployeeNumberList {
+			employeeNumberStr = append(employeeNumberStr, "'"+number+"'")
+		}
+		where += " and employee_number in (" + strings.Join(employeeNumberStr, ",") + ")"
 	}
 	if domain.IsCrossPosition(query.IsCrossPosition) == domain.Cross {
 		where += " and position_code = employee_position_code"

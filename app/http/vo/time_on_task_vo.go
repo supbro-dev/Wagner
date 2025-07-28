@@ -12,11 +12,11 @@ import (
 )
 
 type TimeOnTaskVO struct {
-	EmployeeNumber string    `json:"employeeNumber"`
-	EmployeeName   string    `json:"employeeName"`
-	WorkplaceName  string    `json:"workplaceName"`
-	RegionCode     string    `json:"regionCode"`
-	OperateDay     time.Time `json:"operateDay"`
+	EmployeeNumber string `json:"employeeNumber"`
+	EmployeeName   string `json:"employeeName"`
+	WorkplaceName  string `json:"workplaceName"`
+	RegionCode     string `json:"regionCode"`
+	OperateDay     string `json:"operateDay"`
 
 	Attendance          *AttendanceVO        `json:"attendance"`
 	Scheduling          *SchedulingVO        `json:"scheduling"`

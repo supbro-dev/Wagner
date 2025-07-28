@@ -9,6 +9,7 @@ package golang_node
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"wagner/app/domain"
 	"wagner/app/utils/datetime_util"
 	"wagner/infrastructure/persistence/entity"
@@ -76,7 +77,9 @@ func getOrDefaultMinIdleTime(process *domain.ProcessPosition, defaultMinIdleTime
 	}
 	if process.Properties != nil {
 		if value, exists := process.Properties[entity.MinIdleTimeKey]; exists {
-			return value.(int)
+			if minIdleTime, err := strconv.Atoi(fmt.Sprintf("%v", value)); err == nil {
+				return minIdleTime
+			}
 		}
 	}
 

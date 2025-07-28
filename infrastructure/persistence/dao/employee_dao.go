@@ -27,12 +27,13 @@ func (dao *EmployeeDao) FindByWorkplaceCode(code string) []*entity.EmployeeEntit
 	return employeeList
 }
 
-func (dao *EmployeeDao) FindByQuery(q *query.EmployeeQuery) *entity.EmployeeEntity {
+func (dao *EmployeeDao) FindByQuery(q *query.EmployeeQuery) []*entity.EmployeeEntity {
 	list := make([]*entity.EmployeeEntity, 0)
-	dao.db.Model(entity.EmployeeEntity{}).Where("name = ? and work_group_code = ? and workplace_code = ?", q.Name, q.WorkGroupCode, q.WorkplaceCode).Find(&list)
-	if len(list) > 0 {
-		return list[0]
-	} else {
-		return nil
+	tx := dao.db.Model(entity.EmployeeEntity{}).Where("work_group_code = ? and workplace_code = ?", q.WorkGroupCode, q.WorkplaceCode)
+	if q.Name != "" {
+		tx = tx.Where("name = ?", q.Name)
 	}
+
+	tx.Find(&list)
+	return list
 }

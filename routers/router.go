@@ -41,7 +41,8 @@ func InitRouter() *gin.Engine {
 		employee := vApi.Group("/employee")
 		employeeHandler := controller.EmployeeHandler{}
 		{
-			employee.GET("findByInfo", employeeHandler.FindByInfo)
+			employee.GET("findByName", employeeHandler.FindByName)
+			employee.GET("findByWorkGroupCode", employeeHandler.FindByWorkGroupCode)
 		}
 
 		workplace := vApi.Group("workplace/")
@@ -89,6 +90,7 @@ func InitRouter() *gin.Engine {
 			efficiency.POST("saveOtherParams", efficiencyHandler.SaveOtherParams)
 			efficiency.GET("findCalcParamByImplementationId", efficiencyHandler.FindCalcParamByImplementationId)
 		}
+
 	}
 
 	// 前端静态文件加载

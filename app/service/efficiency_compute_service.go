@@ -106,7 +106,7 @@ func (service *EfficiencyComputeService) buildTimeOnTask(ctx *domain.ComputeCont
 		EmployeeName:   ctx.Employee.Name,
 		WorkplaceName:  ctx.Workplace.Name,
 		RegionCode:     ctx.Workplace.RegionCode,
-		OperateDay:     ctx.OperateDay,
+		OperateDay:     datetime_util.FormatDate(ctx.OperateDay),
 	}
 
 	if ctx.TodayAttendance != nil {
@@ -125,7 +125,7 @@ func (service *EfficiencyComputeService) buildTimeOnTask(ctx *domain.ComputeCont
 		}
 
 		if ctx.TodayRestList != nil && len(ctx.TodayRestList) > 0 {
-			restList := make([]vo.RestVO, len(ctx.TodayRestList))
+			restList := make([]vo.RestVO, 0)
 			for _, rest := range ctx.TodayRestList {
 				restList = append(restList, vo.RestVO{
 					ActionType: domain.REST,

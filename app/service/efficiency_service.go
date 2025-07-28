@@ -32,10 +32,10 @@ func CreateEfficiencyService(hourSummaryResultDao *olap_dao.HourSummaryResultDao
 	return &EfficiencyService{hourSummaryResultDao, employeeStatusDao}
 }
 
-func (service *EfficiencyService) EmployeeEfficiency(workplaceCode, employeeNumber string, dateRange []*time.Time, aggregateDimension domain.AggregateDimension, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, currentPage, pageSize int) *vo.EmployeeEfficiencyVO {
+func (service *EfficiencyService) EmployeeEfficiency(workplaceCode string, employeeNumberList []string, dateRange []*time.Time, aggregateDimension domain.AggregateDimension, isCrossPosition domain.IsCrossPosition, workLoadUnits []calc_dynamic_param.WorkLoadUnit, currentPage, pageSize int) *vo.EmployeeEfficiencyVO {
 	resultQuery := query.HourSummaryResultQuery{
 		WorkplaceCode:      workplaceCode,
-		EmployeeNumber:     employeeNumber,
+		EmployeeNumberList: employeeNumberList,
 		DateRange:          dateRange,
 		AggregateDimension: string(aggregateDimension),
 		IsCrossPosition:    string(isCrossPosition),

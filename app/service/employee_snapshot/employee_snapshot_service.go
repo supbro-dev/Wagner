@@ -43,9 +43,28 @@ func (service *EmployeeSnapshotService) FindByInfo(name string, workGroupCode st
 	q := query.EmployeeQuery{
 		name, workGroupCode, workplaceCode,
 	}
-	employeeEntity := service.employeeDao.FindByQuery(&q)
+	employeeEntityList := service.employeeDao.FindByQuery(&q)
 
-	return convertEmployee(employeeEntity)
+	if len(employeeEntityList) > 0 {
+		return convertEmployee(employeeEntityList[0])
+	} else {
+		return nil
+	}
+}
+
+func (service *EmployeeSnapshotService) FindByWorkGroupCode(workGroupCode string, workplaceCode string) []*domain.EmployeeSnapshot {
+	q := query.EmployeeQuery{
+		WorkGroupCode: workGroupCode,
+		WorkplaceCode: workplaceCode,
+	}
+	employeeEntityList := service.employeeDao.FindByQuery(&q)
+
+	domainList := make([]*domain.EmployeeSnapshot, 0)
+	for _, employeeEntity := range employeeEntityList {
+		domainList = append(domainList, convertEmployee(employeeEntity))
+	}
+
+	return domainList
 }
 
 func convertEmployee(employee *entity.EmployeeEntity) *domain.EmployeeSnapshot {

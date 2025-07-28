@@ -173,7 +173,7 @@ func (service *ActionService) convertRestListFromScheduling(scheduling *domain.S
 // Parameters: properties原始属性, param配置参数
 // return: 过滤后的属性
 func handleExtraProperty(properties string, param calc_dynamic_param.InjectSource) (map[string]interface{}, *business_error.BusinessError) {
-	if param.FieldSet.IsEmpty() || properties == "" {
+	if param.FieldSet == nil || param.FieldSet.IsEmpty() || properties == "" {
 		return nil, nil
 	}
 
