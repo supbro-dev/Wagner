@@ -7,8 +7,8 @@ Redis:
   Addr: "39.105.20.187:6379"
   Password: "qwer1234"
 Lock:
-  Type: "Distributed" # Local或Distributed
+  Type: "Local" # Local或Distributed
 Cache:
   HourSummaryCheck:
-    Type: "Distributed" # Local或Distributed
+    Type: "Local" # Local或Distributed
 

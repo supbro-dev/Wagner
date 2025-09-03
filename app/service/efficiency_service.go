@@ -79,6 +79,12 @@ func (service *EfficiencyService) convertEntity2Vo(entityList []*entity.WorkLoad
 
 		if e.WorkLoad != nil && len(e.WorkLoad) > 0 {
 			employeeSummary.WorkLoad = e.WorkLoad
+			employeeSummary.WorkLoadDesc = make(map[string]float64)
+			for _, unit := range workLoadUnits {
+				if value, exists := employeeSummary.WorkLoad[unit.Code]; exists && value > 0 {
+					employeeSummary.WorkLoadDesc[unit.Name] = value
+				}
+			}
 		}
 		tableDataList = append(tableDataList, &employeeSummary)
 	}
