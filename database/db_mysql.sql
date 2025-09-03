@@ -51,6 +51,7 @@ CREATE TABLE `workplace`
     `region_code`       varchar(45)          DEFAULT NULL COMMENT '区域编码',
     `industry_code`     varchar(45) NOT NULL COMMENT '行业编码',
     `sub_industry_code` varchar(45)          DEFAULT NULL COMMENT '子行业编码',
+    `desc`            text                               null comment '工作点描述',
     PRIMARY KEY (`id`),
     UNIQUE KEY `code_UNIQUE` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='工作点';
@@ -146,17 +147,34 @@ CREATE TABLE `employee_status`
     UNIQUE KEY `uk_wc_od_en` (`workplace_code`,`operate_day`,`employee_number`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='员工状态表';
 
--- 脚本定义表（暂时没用到）
-CREATE TABLE `script`
+
+create table work_group
 (
-    `id`           bigint      NOT NULL AUTO_INCREMENT,
-    `gmt_create`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `gmt_modified` datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-    `name`         varchar(45) NOT NULL COMMENT '脚本名称',
-    `type`         varchar(45) NOT NULL COMMENT '脚本类型',
-    `desc`         varchar(45)          DEFAULT NULL COMMENT '脚本描述',
-    `content`      text COMMENT '脚本内容',
-    `version`      int         NOT NULL COMMENT '版本',
+    id             bigint auto_increment comment 'id'
+        primary key,
+    gmt_create     datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    gmt_modified   datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '修改时间',
+    name           varchar(64)                        not null comment '工作组名称',
+    code           varchar(64)                        not null comment '工作组编码',
+    workplace_code varchar(64)                        not null comment '所属工作点',
+    position_code  varchar(64)                        not null comment '归属岗位编码',
+    `desc`         text                               null comment '工作组描述',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_name_version` (`name`,`version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='脚本';
+    UNIQUE KEY uk_wc_code (workplace_code, code)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='工作组';
+
+
+create table query_data_task
+(
+    id           bigint auto_increment comment 'id' primary key,
+    gmt_create   datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    gmt_modified datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '修改时间',
+    business_key varchar(64)                        not null comment '业务域',
+    name         varchar(128)                       not null comment '任务名称',
+    task_detail  json                               not null comment '任务信息',
+    invoke_times int      default 0                 not null comment '执行次数',
+    is_deleted   tinyint  default 0                 not null comment '是否删除',
+    execute_time datetime                           null comment '最近执行时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_bk_name` (business_key, name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='数据查询任务';

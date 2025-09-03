@@ -3,9 +3,15 @@ INSERT INTO workplace (`code`,
                        `name`,
                        `region_code`,
                        `industry_code`,
-                       `sub_industry_code`)
-VALUES ('workplace1', '1号工作点', 'NORTH', 'FOOD', null),
-       ('workplace2','2号工作点','SOUTH','ELECTRICAL_EQUIPMENT','SMALL_3C');
+                       `sub_industry_code`,
+                       `desc`)
+VALUES ('workplace1', '1号工作点', 'NORTH', 'FOOD', null, "仓库从事生产拣选作业小组"),
+       ('workplace2','2号工作点','SOUTH','ELECTRICAL_EQUIPMENT','SMALL_3C', null);
+
+INSERT INTO work_group (name, code, workplace_code, position_code, `desc`) VALUES ('拣选1组', 'WG1', 'workplace1', 'picker', '仓库从事生产拣选作业小组，组员共3人');
+INSERT INTO work_group (name, code, workplace_code, position_code, `desc`) VALUES ('包装1组', 'WG2', 'workplace1', 'packaging-operator', null);
+INSERT INTO work_group (name, code, workplace_code, position_code, `desc`) VALUES ('批量包装1组', 'WG3', 'workplace1', 'batch-packer', null);
+
 
 -- 初始化员工信息
 INSERT INTO `employee` (`id`,
@@ -94,3 +100,4 @@ VALUES (1, '2025-06-03 14:07:55', '2025-06-19 21:59:23', 'SINK_STORAGE', 'FOOD',
         '{\"nodeNames\": \"SetCrossDayAttendance,ComputeAttendanceDefaultEndTime,ComputeAttendanceDefaultStartTime,CutOffAttendanceTime,AddCrossDayData,FilterOtherDaysData,FilterExpiredData,MarchProcess,PaddingUnfinishedWorkEndTime,CutOffOvertimeWork,CutOffCrossWork,AddReasonableBreakTime,CutOffWorkByRest,CalcWorkTransitionTime,MatchRestProcess,GenerateIdleData\"}'),
        (5, '2025-06-05 17:50:14', '2025-06-05 17:50:14', 'CALC_PARAM', 'FOOD', NULL,
         '{"Work": {"LookBackDays": 3, "WorkLoadUnits": [{"Code": "itemNum", "Name": "件数"}, {"Code": "packageNum", "Name": "包裹数"}, {"Code": "skuNum", "Name": "SKU数"}], "DefaultMaxTimeInMinute": 30, "DefaultMinIdleTimeInMinute": 5}, "Attendance": {"MaxRunUpTimeInMinute": 15, "AttendanceAbsencePenaltyHour": 8.5}, "HourSummary": {"WorkLoadAggregateType": "end"}}');
+
