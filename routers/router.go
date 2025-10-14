@@ -83,6 +83,7 @@ func InitRouter() *gin.Engine {
 		{
 			efficiency.GET("computeEmployee", efficiencyHandler.ComputeEmployee)
 			efficiency.GET("computeWorkplace", efficiencyHandler.ComputeWorkplace)
+			efficiency.POST("employeePost", efficiencyHandler.EmployeeEfficiencyPost)
 			efficiency.GET("employee", efficiencyHandler.EmployeeEfficiency)
 			efficiency.GET("timeOnTask", efficiencyHandler.TimeOnTask)
 			efficiency.GET("workplace", efficiencyHandler.WorkplaceEfficiency)

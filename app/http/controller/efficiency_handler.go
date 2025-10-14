@@ -50,6 +50,73 @@ func (p EfficiencyHandler) EmployeeStatus(c *gin.Context) {
 	response.ReturnSuccessJson(c, employeeStatusVO)
 }
 
+func (p EfficiencyHandler) EmployeeEfficiencyPost(c *gin.Context) {
+	var req qo.EmployeeEfficiencyPageQueryQo
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.ReturnError(c, business_error.ParamIsWrong(err))
+		return
+	}
+
+	if req.WorkplaceCode == "" {
+		response.ReturnError(c, business_error.ParamIsNil("workplaceCode"))
+		return
+	}
+
+	if req.AggregateDimension == "" {
+		response.ReturnError(c, business_error.ParamIsNil("aggregateDimension"))
+		return
+	}
+
+	if req.StartDateStr == "" || req.EndDateStr == "" {
+		response.ReturnError(c, business_error.ParamIsNil("startDate", "endDate"))
+		return
+	}
+
+	if req.CurrentPage == "" || req.PageSize == "" {
+		response.ReturnError(c, business_error.ParamIsNil("currentPage", "pageSize"))
+		return
+	}
+
+	startDate, err := datetime_util.ParseDate(req.StartDateStr)
+	if err != nil {
+		response.ReturnError(c, business_error.ParamIsWrong("startDate"))
+		return
+	}
+
+	endDate, err := datetime_util.ParseDate(req.EndDateStr)
+	if err != nil {
+		response.ReturnError(c, business_error.ParamIsWrong("endDate"))
+		return
+	}
+
+	calcParam, e := service.DomainHolder.CalcDynamicParamService.FindParamsByWorkplace(req.WorkplaceCode)
+	if e != nil {
+		response.ReturnError(c, e)
+		return
+	}
+	if calcParam == nil {
+		response.ReturnError(c, business_error.CannotFindCalcParamByWorkplace(req.WorkplaceCode))
+		return
+	}
+
+	workLoadUnits := calcParam.CalcOtherParam.Work.WorkLoadUnits
+
+	currentPageInt, _ := strconv.Atoi(req.CurrentPage)
+	pageSizeInt, _ := strconv.Atoi(req.PageSize)
+
+	var employeeNumberList []string
+	if req.EmployeeNumber != "" {
+		employeeNumberList = strings.Split(req.EmployeeNumber, ",")
+	} else {
+		employeeNumberList = make([]string, 0)
+	}
+
+	efficiencyVO := service.Holder.EfficiencyService.EmployeeEfficiency(req.WorkplaceCode, employeeNumberList, []*time.Time{&startDate, &endDate},
+		domain.AggregateDimension(req.AggregateDimension), domain.IsCrossPosition(req.IsCrossPosition), workLoadUnits, currentPageInt, pageSizeInt)
+
+	response.ReturnSuccessJson(c, efficiencyVO)
+}
+
 func (p EfficiencyHandler) EmployeeEfficiency(c *gin.Context) {
 	employeeNumber := c.Query("employeeNumber")
 	workplaceCode := c.Query("workplaceCode")
